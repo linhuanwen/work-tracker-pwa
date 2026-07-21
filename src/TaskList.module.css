@@ -1,0 +1,153 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 8px;
+}
+
+.groupDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.groupDotUrgent {
+  background: #e53935;
+}
+.groupDotImportant {
+  background: #fb8c00;
+}
+.groupDotNormal {
+  background: #bdbdbd;
+}
+
+.groupTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+}
+
+.groupCount {
+  font-size: 13px;
+  color: #999;
+}
+
+.empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: #999;
+  font-size: 15px;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ================================================ */
+/* 紧急区：手机横滑 / 桌面留 5 条栈式 */
+/* ================================================ */
+
+.urgentGroup {
+  position: relative;
+}
+
+@media (max-width: 767px) {
+  .urgentGroup .cards {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+  .urgentGroup .cards > * {
+    flex: 0 0 85vw;
+    max-width: 340px;
+    min-width: 260px;
+    scroll-snap-align: start;
+  }
+  .urgentGroup .groupHeader {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+  }
+}
+
+/* ================================================ */
+/* 已归档折叠区 */
+/* ================================================ */
+
+.archiveSection {
+  border-top: 1px dashed #e0e0e0;
+  padding-top: 16px;
+}
+
+.archiveToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 4px;
+  font-size: 14px;
+  color: #999;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 4px;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+.archiveToggle:active {
+  background: #f0f0f0;
+  color: #666;
+}
+@media (hover: hover) {
+  .archiveToggle:hover {
+    background: #f5f5f5;
+    color: #666;
+  }
+}
+
+.archiveArrow {
+  font-size: 10px;
+  transition: transform 0.15s;
+  display: inline-block;
+}
+.archiveArrowOpen {
+  transform: rotate(90deg);
+}
+
+.archiveCount {
+  font-size: 12px;
+  color: #bbb;
+  background: #f0f0f0;
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.archiveCards {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  opacity: 0.7;
+}

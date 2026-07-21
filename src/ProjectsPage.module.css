@@ -1,0 +1,321 @@
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.backBtn {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.backBtn:hover {
+  background: #f5f5f5;
+}
+
+.title {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.addBtn {
+  padding: 6px 14px;
+  background: #4a6cf7;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.addBtn:hover {
+  background: #3b5de7;
+}
+
+/* Form */
+.form {
+  background: #fafbfc;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.formTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 14px 0;
+}
+
+.field {
+  margin-bottom: 12px;
+}
+
+.label {
+  display: block;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.input,
+.select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input:focus,
+.select:focus {
+  border-color: #4a6cf7;
+}
+
+.textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.textarea:focus {
+  border-color: #4a6cf7;
+}
+
+.dateRow {
+  display: flex;
+  gap: 12px;
+}
+
+.dateRow .field {
+  flex: 1;
+}
+
+.formActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.submitBtn {
+  padding: 8px 20px;
+  background: #4a6cf7;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.submitBtn:hover {
+  background: #3b5de7;
+}
+
+.submitBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  padding: 8px 20px;
+  background: #f5f5f5;
+  color: #555;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cancelBtn:hover {
+  background: #e0e0e0;
+}
+
+/* List */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty {
+  text-align: center;
+  color: #999;
+  padding: 40px 0;
+  font-size: 14px;
+}
+
+/* Card */
+.card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+  gap: 12px;
+}
+
+.card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.cardArchived {
+  opacity: 0.6;
+}
+
+.cardBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.categoryTag {
+  padding: 1px 8px;
+  background: #f0f4ff;
+  color: #4a6cf7;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.dateTag {
+  padding: 1px 8px;
+  background: #f5f5f5;
+  color: #888;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.taskCount {
+  padding: 1px 8px;
+  background: #f5f5f5;
+  color: #666;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.archivedBadge {
+  padding: 1px 8px;
+  background: #f0f0f0;
+  color: #999;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Progress bar */
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 6px;
+  background: #eee;
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 40px;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.progressText {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+  min-width: 30px;
+  text-align: right;
+}
+
+/* Card action buttons */
+.cardActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.editBtn,
+.archiveBtn {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 32px;
+  min-width: 32px;
+}
+
+.editBtn:hover {
+  background: #f0f4ff;
+  color: #4a6cf7;
+  border-color: #4a6cf7;
+}
+
+.archiveBtn:hover {
+  background: #fff5f5;
+  color: #c62828;
+  border-color: #c62828;
+}
+
+/* Archived section */
+.archivedSection {
+  margin-top: 24px;
+}
+
+.archivedTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #999;
+  margin: 0 0 10px 0;
+}
