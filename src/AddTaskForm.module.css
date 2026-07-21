@@ -1,0 +1,161 @@
+.form {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.input {
+  padding: 10px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+  min-width: 200px;
+  min-height: 44px;
+}
+.input:focus {
+  border-color: #4a6cf7;
+}
+
+.select {
+  padding: 10px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+  cursor: pointer;
+  min-width: 120px;
+  min-height: 44px;
+}
+.select:focus {
+  border-color: #4a6cf7;
+}
+
+.priorityGroup {
+  display: flex;
+  gap: 4px;
+}
+
+.priorityBtn {
+  padding: 8px 14px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: #555;
+  min-height: 44px;
+  min-width: 44px;
+  -webkit-tap-highlight-color: transparent;
+}
+.priorityBtn:active {
+  border-color: #4a6cf7;
+}
+@media (hover: hover) {
+  .priorityBtn:hover {
+    border-color: #4a6cf7;
+  }
+}
+.priorityBtnActive {
+  color: #fff;
+  border-color: transparent;
+}
+.priorityBtnActive[data-priority='urgent'] {
+  background: #e53935;
+}
+.priorityBtnActive[data-priority='important'] {
+  background: #fb8c00;
+}
+.priorityBtnActive[data-priority='normal'] {
+  background: #757575;
+}
+
+.submitBtn {
+  padding: 10px 20px;
+  background: #4a6cf7;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+.submitBtn:active {
+  background: #2f4cd6;
+}
+@media (hover: hover) {
+  .submitBtn:hover {
+    background: #3b5de7;
+  }
+}
+.submitBtn:disabled {
+  background: #b0bec5;
+  cursor: not-allowed;
+}
+
+/* Mobile: stack fields vertically */
+@media (max-width: 767px) {
+  .form {
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+  }
+
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .priorityGroup {
+    width: 100%;
+  }
+
+  .priorityBtn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .submitBtn {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+  }
+}

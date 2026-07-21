@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Environment secrets
+.env
+scripts/.env
+
+# IDE
+.vscode/
+.idea/
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo

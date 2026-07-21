@@ -1,0 +1,55 @@
+/* ============================================================
+   FAB — Floating Action Button
+   固定在右下角的蓝色圆形按钮，手机端始终可见
+   ============================================================ */
+
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
+  font-size: 28px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.fab:active {
+  transform: scale(0.92);
+  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.3);
+}
+
+/* Desktop: slightly smaller, with hover feedback */
+@media (min-width: 768px) {
+  .fab {
+    width: 48px;
+    height: 48px;
+    bottom: 32px;
+    right: calc(50% - 450px + 32px);
+  }
+  .fab:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 16px rgba(26, 115, 232, 0.5);
+  }
+  .fab:active {
+    transform: scale(0.95);
+  }
+}
+
+.fabIcon {
+  pointer-events: none;
+  font-size: 26px;
+  line-height: 1;
+}
