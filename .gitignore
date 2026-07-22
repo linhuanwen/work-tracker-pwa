@@ -15,3 +15,11 @@ node_modules/
 # Build output
 dist/
 *.tsbuildinfo
+
+# PyInstaller
+build/
+*.spec
+
+# Generated exe (rebuild with: pyinstaller --onefile --add-data "dist;dist" --name "工作清单" serve.py)
+工作清单.exe
+共享/
