@@ -1,6 +1,7 @@
 """
-工作清单 PWA 启动器
-双击此文件 -> 自动启动本地服务器 -> 打开浏览器
+工作清单 PWA 后台服务器
+由桌面 VBScript 启动，静默运行，无窗口
+关闭方式：任务管理器结束进程，或访问 http://127.0.0.1:5173/shutdown
 """
 
 import http.server
@@ -13,14 +14,6 @@ import socket
 
 PORT = 5173
 HOST = "127.0.0.1"
-
-
-def safe_print(msg):
-    """安全打印 - 兼容 Windows GBK 控制台"""
-    try:
-        print(msg)
-    except UnicodeEncodeError:
-        print(msg.encode('gbk', errors='replace').decode('gbk', errors='replace'))
 
 
 def get_dist_dir():
@@ -42,48 +35,39 @@ def get_dist_dir():
     if os.path.isdir(cwd_fallback):
         return cwd_fallback
 
-    safe_print("[错误] 找不到 dist/ 文件夹，请确保 dist/ 与启动程序在同一目录")
-    safe_print(f"   当前目录: {os.getcwd()}")
-    input("按任意键退出...")
     sys.exit(1)
 
 
-def is_port_in_use(port):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex((HOST, port)) == 0
+class RequestHandler(http.server.SimpleHTTPRequestHandler):
+    """自定义请求处理：静态文件 + /shutdown 端点"""
+
+    def do_GET(self):
+        # /shutdown 端点：优雅关闭服务器
+        if self.path == '/shutdown':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain; charset=utf-8')
+            self.end_headers()
+            self.wfile.write('服务器已停止，可以关闭此页面。'.encode('utf-8'))
+            # 在新线程中关闭，避免阻塞当前请求
+            threading.Thread(target=self.server.shutdown, daemon=True).start()
+            return
+
+        # 其他请求走静态文件
+        super().do_GET()
+
+    def log_message(self, format, *args):
+        pass  # 静默，无日志输出
 
 
 def main():
     dist_dir = get_dist_dir()
-
-    if is_port_in_use(PORT):
-        safe_print(f"[提示] 端口 {PORT} 已被占用，可能已有实例在运行，直接打开浏览器...")
-        webbrowser.open(f"http://{HOST}:{PORT}")
-        input("按任意键退出...")
-        return
-
     os.chdir(dist_dir)
 
-    class QuietHandler(http.server.SimpleHTTPRequestHandler):
-        def log_message(self, format, *args):
-            pass
+    server = http.server.ThreadingHTTPServer((HOST, PORT), RequestHandler)
 
-    server = http.server.ThreadingHTTPServer((HOST, PORT), QuietHandler)
-
-    safe_print("=" * 50)
-    safe_print("   工作清单 PWA 已启动")
-    safe_print("=" * 50)
-    safe_print(f"   地址: http://{HOST}:{PORT}")
-    safe_print(f"   文件目录: {dist_dir}")
-    safe_print("")
-    safe_print("   浏览器已自动打开，开始使用吧!")
-    safe_print("")
-    safe_print("   注意: 请勿关闭此窗口，否则程序会停止")
-    safe_print("   用完后直接关闭此窗口即可")
-    safe_print("=" * 50)
-
+    # 打开浏览器
     def open_browser():
-        time.sleep(0.5)
+        time.sleep(0.3)
         webbrowser.open(f"http://{HOST}:{PORT}")
 
     threading.Thread(target=open_browser, daemon=True).start()
@@ -91,10 +75,7 @@ def main():
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        safe_print("")
-        safe_print("正在关闭...")
         server.shutdown()
-        safe_print("已退出")
 
 
 if __name__ == "__main__":
