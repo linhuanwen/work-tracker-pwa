@@ -1,142 +1,412 @@
+/* ---- Collapsed card (idle) ---- */
+.collapsedCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--glass-bg-card);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
+  box-shadow: var(--glass-shadow);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+  min-height: 52px;
+  -webkit-tap-highlight-color: transparent;
+}
+.collapsedCard:hover {
+  background: var(--glass-bg-card-hover);
+  box-shadow: var(--glass-shadow-hover);
+  transform: translateY(-1px);
+}
+.collapsedCard:active {
+  background: var(--glass-bg-nested);
+}
+
+.collapsedIcon {
+  font-size: 20px;
+  color: var(--color-primary);
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.collapsedText {
+  font-size: var(--fs-body);
+  color: var(--color-text-muted);
+}
+
+/* ---- Active collapsed state ---- */
+.activeCollapsed {
+  background: var(--glass-bg-card);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-5);
+  box-shadow: var(--glass-shadow);
+  animation: expandIn 0.15s ease;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.activeCollapsed:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.activeInput {
+  flex: 1;
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-1);
+  border: none;
+  font-size: var(--fs-body);
+  outline: none;
+  background: transparent;
+  color: var(--color-text);
+  min-height: 36px;
+}
+.activeInput::placeholder {
+  color: var(--color-text-faded);
+}
+
+/* ---- Suffix area ---- */
+.suffixArea {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: var(--space-1);
+}
+
+.suffixBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.suffixBtn:hover {
+  background: var(--glass-bg-nested);
+  color: var(--color-text-secondary);
+}
+.suffixBtn:active {
+  background: var(--glass-bg-input);
+}
+.suffixBtn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.suffixBtnActive {
+  background: var(--glass-bg-nested);
+  color: var(--color-primary);
+}
+
+.expandBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-faded);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.expandBtn:hover {
+  background: var(--glass-bg-nested);
+  color: var(--color-text-secondary);
+}
+.expandBtn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* ---- Dropdown ---- */
+.dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  z-index: 50;
+  min-width: 140px;
+  background: var(--glass-bg-card);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--glass-shadow-hover);
+  padding: var(--space-1);
+  animation: dropdownIn 0.12s ease;
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdownItem {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: var(--fs-ui);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.dropdownItem:hover {
+  background: var(--glass-bg-nested);
+}
+.dropdownItem:active {
+  background: var(--glass-bg-input);
+}
+
+/* ---- Native date/datetime picker (visually accessible for tests) ---- */
+.datePickerInput {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 51;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* ---- Tags row ---- */
+.tagsRow {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+  padding: 0 var(--space-1);
+}
+
+/* ---- Expanded form ---- */
 .form {
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 10px;
-  padding: 18px 20px;
-  margin-bottom: 24px;
+  background: var(--glass-bg-card);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+  box-shadow: var(--glass-shadow);
+  animation: expandIn 0.2s ease;
 }
 
 .row {
   display: flex;
-  gap: 12px;
-  align-items: flex-end;
+  gap: var(--space-3);
+  align-items: center;
   flex-wrap: wrap;
+  margin-top: var(--space-3);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.label {
-  font-size: 13px;
-  color: #666;
-  font-weight: 500;
 }
 
 .input {
-  padding: 10px 12px;
-  border: 1px solid #d0d0d0;
-  border-radius: 6px;
-  font-size: 14px;
+  width: 100%;
+  padding: 10px var(--space-3);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-body);
   outline: none;
   transition: border-color 0.15s;
-  min-width: 200px;
   min-height: 44px;
+  background: var(--glass-bg-input);
+  box-sizing: border-box;
+  color: var(--color-text);
 }
 .input:focus {
-  border-color: #4a6cf7;
+  border-color: var(--color-primary);
+  background: var(--glass-bg-input-focus);
+}
+.input::placeholder {
+  color: var(--color-text-faded);
 }
 
 .select {
-  padding: 10px 12px;
-  border: 1px solid #d0d0d0;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 10px var(--space-3);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-ui);
   outline: none;
-  background: #fff;
+  background: var(--glass-bg-input);
   cursor: pointer;
-  min-width: 120px;
+  min-width: 110px;
   min-height: 44px;
+  color: var(--color-text);
 }
 .select:focus {
-  border-color: #4a6cf7;
+  border-color: var(--color-primary);
+  background: var(--glass-bg-input-focus);
 }
 
 .priorityGroup {
   display: flex;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .priorityBtn {
-  padding: 8px 14px;
-  border: 1px solid #d0d0d0;
-  border-radius: 6px;
-  font-size: 13px;
-  background: #fff;
+  padding: var(--space-2) 14px;
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-ui);
+  background: var(--glass-bg-input);
   cursor: pointer;
   transition: all 0.15s;
-  color: #555;
+  color: var(--color-text-secondary);
   min-height: 44px;
   min-width: 44px;
   -webkit-tap-highlight-color: transparent;
 }
 .priorityBtn:active {
-  border-color: #4a6cf7;
+  border-color: var(--color-primary);
 }
 @media (hover: hover) {
   .priorityBtn:hover {
-    border-color: #4a6cf7;
+    border-color: var(--color-primary);
   }
 }
+.priorityBtn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
 .priorityBtnActive {
-  color: #fff;
+  color: var(--color-on-primary);
   border-color: transparent;
 }
 .priorityBtnActive[data-priority='urgent'] {
-  background: #e53935;
+  background: var(--color-danger);
 }
 .priorityBtnActive[data-priority='important'] {
-  background: #fb8c00;
+  background: var(--color-warning);
 }
 .priorityBtnActive[data-priority='normal'] {
-  background: #757575;
+  background: var(--color-text-dim);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  justify-content: flex-end;
 }
 
 .submitBtn {
-  padding: 10px 20px;
-  background: #4a6cf7;
-  color: #fff;
+  padding: var(--space-2) var(--space-5);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-ui);
   cursor: pointer;
-  min-height: 44px;
+  min-height: 40px;
   min-width: 44px;
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s;
 }
 .submitBtn:active {
-  background: #2f4cd6;
+  background: var(--color-primary-active);
 }
 @media (hover: hover) {
   .submitBtn:hover {
-    background: #3b5de7;
+    background: var(--color-primary-hover);
   }
 }
+.submitBtn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 .submitBtn:disabled {
-  background: #b0bec5;
+  background: var(--color-disabled);
   cursor: not-allowed;
 }
 
-/* Mobile: stack fields vertically */
+.cancelBtn {
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-ui);
+  cursor: pointer;
+  min-height: 40px;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+}
+.cancelBtn:hover {
+  color: var(--color-text-secondary);
+  border-color: var(--color-text-faded);
+}
+
+/* Mobile */
 @media (max-width: 767px) {
+  .collapsedCard {
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  .activeCollapsed {
+    padding: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
   .form {
-    padding: 14px 16px;
-    margin-bottom: 16px;
-    border-radius: 8px;
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
   }
 
   .row {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .input {
-    min-width: 0;
-    width: 100%;
   }
 
   .select {
@@ -153,9 +423,15 @@
     text-align: center;
   }
 
+  .actions {
+    flex-direction: row;
+  }
+
   .submitBtn {
-    width: 100%;
-    padding: 12px;
-    font-size: 15px;
+    flex: 1;
+  }
+
+  .cancelBtn {
+    flex: 0;
   }
 }

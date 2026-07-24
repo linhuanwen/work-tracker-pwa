@@ -288,3 +288,90 @@ describe('dataReducer — updatedDate auto-set', () => {
     expect(next.tasks[0].completedDate).toBe(today);
   });
 });
+
+describe('dataReducer — DELETE_PROJECT', () => {
+  it('removes a project by id', () => {
+    const state = makeData({
+      projects: [
+        {
+          id: 'p-1',
+          title: '项目A',
+          category: '人力资源',
+          status: 'in-progress' as const,
+          startDate: '2026-01-01',
+          targetDate: '2026-12-31',
+          notes: '',
+          subtaskCount: { total: 0, done: 0 },
+        },
+        {
+          id: 'p-2',
+          title: '项目B',
+          category: '培训',
+          status: 'in-progress' as const,
+          startDate: '2026-01-01',
+          targetDate: '2026-12-31',
+          notes: '',
+          subtaskCount: { total: 0, done: 0 },
+        },
+      ],
+    });
+
+    const next = dataReducer(state, {
+      type: 'DELETE_PROJECT',
+      payload: { projectId: 'p-1' },
+    });
+
+    expect(next.projects).toHaveLength(1);
+    expect(next.projects[0].id).toBe('p-2');
+  });
+
+  it('does nothing when project id does not exist', () => {
+    const state = makeData({
+      projects: [
+        {
+          id: 'p-1',
+          title: '项目A',
+          category: '人力资源',
+          status: 'in-progress' as const,
+          startDate: '2026-01-01',
+          targetDate: '2026-12-31',
+          notes: '',
+          subtaskCount: { total: 0, done: 0 },
+        },
+      ],
+    });
+
+    const next = dataReducer(state, {
+      type: 'DELETE_PROJECT',
+      payload: { projectId: 'p-nonexistent' },
+    });
+
+    expect(next.projects).toHaveLength(1);
+    expect(next.projects[0].id).toBe('p-1');
+  });
+
+  it('does not mutate the previous state', () => {
+    const state = makeData({
+      projects: [
+        {
+          id: 'p-1',
+          title: '项目A',
+          category: '人力资源',
+          status: 'in-progress' as const,
+          startDate: '2026-01-01',
+          targetDate: '2026-12-31',
+          notes: '',
+          subtaskCount: { total: 0, done: 0 },
+        },
+      ],
+    });
+
+    const next = dataReducer(state, {
+      type: 'DELETE_PROJECT',
+      payload: { projectId: 'p-1' },
+    });
+
+    expect(next).not.toBe(state);
+    expect(next.projects).not.toBe(state.projects);
+  });
+});

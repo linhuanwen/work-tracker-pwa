@@ -2,6 +2,7 @@ import type { Task } from './types';
 import { useData } from './DataContext';
 import { formatDate } from './taskUtils';
 import { useToast } from './Toast';
+import { Icon } from './Icon';
 import styles from './HibernateDrawer.module.css';
 
 interface HibernateDrawerProps {
@@ -36,7 +37,7 @@ export function HibernateDrawer({ tasks, onClose }: HibernateDrawerProps) {
           <h3 className={styles.title}>休眠任务</h3>
           <span className={styles.count}>{tasks.length} 个</span>
           <button className={styles.closeBtn} onClick={onClose}>
-            ✕
+            <Icon name="x" size={18} />
           </button>
         </div>
 

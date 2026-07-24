@@ -1,20 +1,20 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-5);
 }
 
 .group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .groupHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 4px 8px;
+  gap: var(--space-2);
+  padding: 0 var(--space-1) var(--space-2);
 }
 
 .groupDot {
@@ -24,37 +24,40 @@
   flex-shrink: 0;
 }
 .groupDotUrgent {
-  background: #e53935;
+  background: var(--color-danger);
 }
 .groupDotImportant {
-  background: #fb8c00;
+  background: var(--color-warning);
 }
 .groupDotNormal {
-  background: #bdbdbd;
+  background: var(--color-status-todo);
 }
 
 .groupTitle {
-  font-size: 14px;
+  font-size: var(--fs-ui);
   font-weight: 600;
-  color: #444;
+  color: var(--color-text-heading);
 }
 
 .groupCount {
-  font-size: 13px;
-  color: #999;
+  font-size: var(--fs-tag);
+  color: var(--color-text-muted);
+  background: var(--glass-bg-subtle);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
 }
 
 .empty {
   text-align: center;
-  padding: 48px 16px;
-  color: #999;
-  font-size: 15px;
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--fs-body);
 }
 
 .cards {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 /* ================================================ */
@@ -69,13 +72,13 @@
   .urgentGroup .cards {
     display: flex;
     flex-direction: row;
-    gap: 8px;
+    gap: var(--space-2);
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
-    padding-left: 2px;
-    padding-right: 2px;
+    padding-bottom: var(--space-1);
+    padding-left: var(--space-1);
+    padding-right: var(--space-1);
   }
   .urgentGroup .cards > * {
     flex: 0 0 85vw;
@@ -87,6 +90,9 @@
     position: sticky;
     left: 0;
     z-index: 2;
+    background: var(--glass-bg-card);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 }
 
@@ -95,40 +101,44 @@
 /* ================================================ */
 
 .archiveSection {
-  border-top: 1px dashed #e0e0e0;
-  padding-top: 16px;
+  border-top: 1px solid var(--glass-border-subtle);
+  padding-top: var(--space-4);
 }
 
 .archiveToggle {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   width: 100%;
-  padding: 10px 4px;
-  font-size: 14px;
-  color: #999;
+  padding: var(--space-2) var(--space-1);
+  font-size: var(--fs-ui);
+  color: var(--color-text-muted);
   background: none;
   border: none;
   cursor: pointer;
   text-align: left;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   min-height: 44px;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 .archiveToggle:active {
-  background: #f0f0f0;
-  color: #666;
+  background: var(--glass-bg-subtle);
+  color: var(--color-text-dim);
 }
 @media (hover: hover) {
   .archiveToggle:hover {
-    background: #f5f5f5;
-    color: #666;
+    background: var(--glass-bg-subtle);
+    color: var(--color-text-dim);
   }
+}
+.archiveToggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .archiveArrow {
-  font-size: 10px;
+  font-size: var(--fs-caption);
   transition: transform 0.15s;
   display: inline-block;
 }
@@ -137,17 +147,24 @@
 }
 
 .archiveCount {
-  font-size: 12px;
-  color: #bbb;
-  background: #f0f0f0;
-  padding: 1px 6px;
-  border-radius: 8px;
+  font-size: var(--fs-tag);
+  color: var(--color-text-faded);
+  background: var(--glass-bg-subtle);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
 }
 
 .archiveCards {
+  display: grid;
+  margin-top: var(--space-2);
+  /* grid-template-rows set via inline style for animation */
+}
+
+.archiveCardsInner {
+  overflow: hidden;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 8px;
+  gap: var(--space-1);
   opacity: 0.7;
 }

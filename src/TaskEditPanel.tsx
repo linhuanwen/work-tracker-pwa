@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type { Task, Quantity, SubTask, Priority } from './types';
 import { useData, DEFAULT_CATEGORIES } from './DataContext';
 import { calcDefaultHibernateUntil, addSubtask, toggleSubtask, deleteSubtask } from './taskUtils';
+import { ConfirmDialog } from './ConfirmDialog';
+import { Icon } from './Icon';
 import styles from './TaskEditPanel.module.css';
 
 interface TaskEditPanelProps {
@@ -18,6 +20,7 @@ const PRIORITIES: { value: Priority; label: string }[] = [
 export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
   const { data, dispatch } = useData();
   const categories = data?.settings.categories ?? DEFAULT_CATEGORIES;
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const projects = data?.projects ?? [];
 
   // Editable fields
@@ -133,7 +136,7 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
         <div className={styles.header}>
           <h2 className={styles.title}>编辑任务</h2>
           <button className={styles.closeBtn} onClick={onClose} aria-label="关闭">
-            ×
+            <Icon name="x" size={20} />
           </button>
         </div>
 
@@ -184,29 +187,21 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
 
           <div className={styles.field}>
             <label className={styles.label}>优先级</label>
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div className={styles.priorityGroup}>
               {PRIORITIES.map((p) => (
                 <button
                   key={p.value}
                   type="button"
                   onClick={() => setPriority(p.value)}
-                  style={{
-                    padding: '6px 14px',
-                    border: '1px solid #d0d0d0',
-                    borderRadius: 6,
-                    fontSize: 13,
-                    cursor: 'pointer',
-                    background:
-                      priority === p.value
-                        ? p.value === 'urgent'
-                          ? '#e53935'
-                          : p.value === 'important'
-                            ? '#fb8c00'
-                            : '#757575'
-                        : '#fff',
-                    color: priority === p.value ? '#fff' : '#555',
-                    borderColor: priority === p.value ? 'transparent' : '#d0d0d0',
-                  }}
+                  className={`${styles.priorityBtn} ${
+                    priority === p.value
+                      ? p.value === 'urgent'
+                        ? styles.priorityBtnActiveUrgent
+                        : p.value === 'important'
+                          ? styles.priorityBtnActiveImportant
+                          : styles.priorityBtnActiveNormal
+                      : ''
+                  }`}
                 >
                   {p.label}
                 </button>
@@ -225,12 +220,12 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>备注</label>
+            <label className={styles.label}>具体内容</label>
             <textarea
               className={styles.textarea}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="备注内容…"
+              placeholder="具体内容…"
             />
           </div>
         </div>
@@ -288,7 +283,7 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
           <div className={styles.sectionTitle}>
             <span>量化产出</span>
             {quantities.length > 0 && (
-              <span style={{ fontWeight: 400, fontSize: 12, color: '#999' }}>
+              <span className={styles.sectionCounter}>
                 ({quantities.length}项)
               </span>
             )}
@@ -331,7 +326,7 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
                   aria-label="删除产出"
                   title="删除"
                 >
-                  ×
+                  <Icon name="x" size={14} />
                 </button>
               </div>
             ))}
@@ -342,7 +337,7 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
             className={styles.addQuantityBtn}
             onClick={handleAddQuantity}
           >
-            + 添加产出
+            <Icon name="plus" size={14} /> 添加产出
           </button>
         </div>
 
@@ -351,7 +346,7 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
           <div className={styles.sectionTitle}>
             <span>子任务</span>
             {subtasks.length > 0 && (
-              <span style={{ fontWeight: 400, fontSize: 12, color: '#999' }}>
+              <span className={styles.sectionCounter}>
                 ({subtasks.filter((s) => s.status === 'done').length}/{subtasks.length})
               </span>
             )}
@@ -364,15 +359,10 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
                   type="checkbox"
                   checked={sub.status === 'done'}
                   onChange={() => handleToggleSubtask(sub.id)}
-                  style={{ width: 18, height: 18, cursor: 'pointer', flexShrink: 0 }}
+                  className={styles.subtaskCheckbox}
                 />
                 <span
-                  style={{
-                    flex: 1,
-                    fontSize: 14,
-                    textDecoration: sub.status === 'done' ? 'line-through' : 'none',
-                    color: sub.status === 'done' ? '#999' : '#333',
-                  }}
+                  className={sub.status === 'done' ? styles.subtaskTitleDone : styles.subtaskTitle}
                 >
                   {sub.title}
                 </span>
@@ -383,13 +373,13 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
                   aria-label="删除子任务"
                   title="删除"
                 >
-                  ×
+                  <Icon name="x" size={14} />
                 </button>
               </div>
             ))}
           </div>
 
-          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+          <div className={styles.subtaskInputRow}>
             <input
               className={styles.input}
               type="text"
@@ -407,9 +397,8 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
               type="button"
               className={styles.addQuantityBtn}
               onClick={handleAddSubtask}
-              style={{ marginTop: 0 }}
             >
-              + 添加
+              <Icon name="plus" size={14} /> 添加
             </button>
           </div>
         </div>
@@ -443,7 +432,7 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
               <div className={styles.field}>
                 <label className={styles.label}>
                   休眠至
-                  <span style={{ fontWeight: 400, fontSize: 12, color: '#999' }}>
+                  <span className={styles.hintLabel}>
                     （默认截止前 60 天）
                   </span>
                 </label>
@@ -460,18 +449,38 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
 
         {/* Footer */}
         <div className={styles.footer}>
-          <button className={styles.cancelBtn} onClick={onClose}>
-            取消
-          </button>
           <button
-            className={styles.saveBtn}
-            onClick={handleSave}
-            disabled={!title.trim()}
+            className={styles.deleteBtn}
+            onClick={() => setConfirmDelete(true)}
           >
-            保存
+            删除任务
           </button>
+          <div className={styles.footerRight}>
+            <button className={styles.cancelBtn} onClick={onClose}>
+              取消
+            </button>
+            <button
+              className={styles.saveBtn}
+              onClick={handleSave}
+              disabled={!title.trim()}
+            >
+              保存
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Confirm delete dialog */}
+      <ConfirmDialog
+        open={confirmDelete}
+        title="确认删除"
+        message={`确定要删除任务"${task.title}"吗？此操作不可撤销。`}
+        onConfirm={() => {
+          dispatch({ type: 'DELETE_TASK', payload: { taskId: task.id } });
+          onClose();
+        }}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }

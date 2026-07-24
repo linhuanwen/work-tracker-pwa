@@ -7,33 +7,36 @@
 .backBtn {
   display: inline-block;
   padding: 6px 12px;
-  background: transparent;
-  border: 1px solid #d0d0d0;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #555;
+  background: var(--glass-bg-input);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-ui);
+  color: var(--color-text-secondary);
   cursor: pointer;
   white-space: nowrap;
   margin-bottom: 16px;
 }
 
 .backBtn:hover {
-  background: #f5f5f5;
+  background: var(--glass-bg-input-focus);
 }
 
 /* Summary */
 .summary {
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 10px;
+  background: var(--glass-bg-card);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
   padding: 20px;
   margin-bottom: 20px;
+  box-shadow: var(--glass-shadow);
 }
 
 .projectTitle {
-  font-size: 20px;
+  font-size: var(--fs-h2);
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--color-text);
   margin: 0 0 10px 0;
 }
 
@@ -47,34 +50,34 @@
 
 .categoryTag {
   padding: 2px 10px;
-  font-size: 12px;
-  background: #f0f4ff;
-  color: #4a6cf7;
-  border-radius: 4px;
+  font-size: var(--fs-tag);
+  background: var(--glass-bg-blue);
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
   white-space: nowrap;
 }
 
 .dateTag {
   padding: 2px 10px;
-  font-size: 12px;
-  background: #f5f5f5;
-  color: #888;
-  border-radius: 4px;
+  font-size: var(--fs-tag);
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
   white-space: nowrap;
 }
 
 .statTag {
   padding: 2px 10px;
-  font-size: 12px;
-  background: #f5f5f5;
-  color: #666;
-  border-radius: 4px;
+  font-size: var(--fs-tag);
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--color-text-dim);
+  border-radius: var(--radius-sm);
   white-space: nowrap;
 }
 
 .notes {
-  font-size: 13px;
-  color: #888;
+  font-size: var(--fs-ui);
+  color: var(--color-text-muted);
   margin: 10px 0 0 0;
   line-height: 1.5;
 }
@@ -89,21 +92,21 @@
 .progressBar {
   flex: 1;
   height: 10px;
-  background: #eee;
-  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-sm);
   overflow: hidden;
   min-width: 80px;
 }
 
 .progressFill {
   height: 100%;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   transition: width 0.3s;
 }
 
 .progressText {
-  font-size: 13px;
-  color: #666;
+  font-size: var(--fs-ui);
+  color: var(--color-text-dim);
   white-space: nowrap;
   font-weight: 500;
 }
@@ -121,17 +124,17 @@
 }
 
 .statusLabel {
-  font-size: 14px;
+  font-size: var(--fs-ui);
   font-weight: 600;
-  color: #555;
+  color: var(--color-text-secondary);
 }
 
 .statusCount {
-  font-size: 12px;
-  color: #999;
-  background: #f0f0f0;
+  font-size: var(--fs-tag);
+  color: var(--color-text-muted);
+  background: var(--glass-bg-input);
   padding: 0 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 .taskList {
@@ -145,21 +148,25 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: #fff;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
+  background: var(--glass-bg-card);
+  backdrop-filter: blur(var(--glass-blur-light));
+  -webkit-backdrop-filter: blur(var(--glass-blur-light));
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: box-shadow 0.15s;
+  transition: box-shadow 0.15s, background 0.15s;
   gap: 10px;
+  box-shadow: var(--glass-shadow);
 }
 
 .taskCard:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--glass-shadow-hover);
+  background: var(--glass-bg-card-hover);
 }
 
 .taskTitle {
-  font-size: 14px;
-  color: #333;
+  font-size: var(--fs-ui);
+  color: var(--color-text-heading);
   flex: 1;
   min-width: 0;
   white-space: nowrap;
@@ -168,18 +175,18 @@
 }
 
 .taskPriority {
-  font-size: 11px;
+  font-size: var(--fs-caption);
   padding: 2px 8px;
-  border-radius: 4px;
-  background: #f5f5f5;
-  color: #888;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--color-text-muted);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .empty {
   text-align: center;
-  color: #999;
+  color: var(--color-text-muted);
   padding: 40px 0;
-  font-size: 14px;
+  font-size: var(--fs-ui);
 }

@@ -1,0 +1,94 @@
+/* ============================================================
+   TitleBar — frameless window title bar
+   ============================================================ */
+
+.titleBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--titlebar-h, 36px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 12px;
+  user-select: none;
+  /* Must be non-transparent: fully transparent pixels are punched
+     through by the window's TransparencyKey and clicks fall to the
+     desktop. */
+  background: var(--glass-bg-warm);
+  backdrop-filter: blur(var(--glass-blur-light));
+  -webkit-backdrop-filter: blur(var(--glass-blur-light));
+  border-bottom: 1px solid var(--glass-border-subtle);
+}
+
+.titleBar[data-desktop='true'] {
+  cursor: grab;
+}
+.titleBar[data-desktop='true']:active {
+  cursor: grabbing;
+}
+
+/* ---- Brand (left) ---- */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none; /* let drags pass through to the bar */
+}
+
+.brandIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.brandName {
+  font-size: var(--fs-ui);
+  font-weight: 600;
+  color: var(--color-text-heading);
+  letter-spacing: 0.01em;
+}
+
+/* ---- Window controls (right) ---- */
+
+.controls {
+  display: flex;
+  align-items: stretch;
+  align-self: stretch;
+}
+
+.controlBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.controlBtn:hover {
+  background: var(--glass-border-subtle);
+  color: var(--color-text);
+}
+
+.controlBtn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.closeBtn:hover {
+  background: #e81123;
+  color: #fff;
+}

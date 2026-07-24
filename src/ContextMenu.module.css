@@ -1,0 +1,100 @@
+/* ================================================ */
+/* ContextMenu — floating glass right-click menu     */
+/* ================================================ */
+
+/* Transparent backdrop — covers viewport, catches outside clicks */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  /* Fully transparent — just a click target */
+}
+
+/* Menu panel — frosted glass */
+.menu {
+  position: fixed;
+  z-index: 10000;
+  min-width: 160px;
+  max-width: 240px;
+  padding: 6px;
+  background: var(--glass-bg-overlay);
+  backdrop-filter: blur(var(--glass-blur-heavy));
+  -webkit-backdrop-filter: blur(var(--glass-blur-heavy));
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  box-shadow: var(--glass-shadow-modal);
+  display: flex;
+  flex-direction: column;
+  /* Entrance animation */
+  animation: menuFadeIn 0.12s ease-out;
+}
+
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Individual menu item */
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--fs-ui);
+  cursor: pointer;
+  border-radius: 6px;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.1s;
+  line-height: 1.4;
+}
+
+.item:hover {
+  background: var(--glass-bg-card);
+}
+
+.item:active {
+  background: var(--glass-bg-card-hover);
+}
+
+/* Danger variant — red text */
+.danger {
+  color: var(--color-danger);
+}
+
+.danger:hover {
+  background: var(--glass-bg-red);
+}
+
+/* Icon wrapper */
+.itemIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Label text */
+.itemLabel {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Separator / divider */
+.separator {
+  height: 1px;
+  background: var(--glass-border);
+  margin: 4px 8px;
+  flex-shrink: 0;
+}

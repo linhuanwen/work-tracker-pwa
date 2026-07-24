@@ -7,9 +7,7 @@
 import http.server
 import os
 import sys
-import webbrowser
 import threading
-import time
 import socket
 
 PORT = 5173
@@ -65,12 +63,8 @@ def main():
 
     server = http.server.ThreadingHTTPServer((HOST, PORT), RequestHandler)
 
-    # 打开浏览器
-    def open_browser():
-        time.sleep(0.3)
-        webbrowser.open(f"http://{HOST}:{PORT}")
-
-    threading.Thread(target=open_browser, daemon=True).start()
+    # 浏览器由桌面 VBS 脚本负责打开，exe 只做纯服务器
+    print(f"Work journal server running at http://{HOST}:{PORT}")
 
     try:
         server.serve_forever()

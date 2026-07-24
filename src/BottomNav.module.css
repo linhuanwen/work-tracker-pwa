@@ -9,11 +9,19 @@
   gap: 4px;
   padding: 8px 16px;
   padding-bottom: max(8px, env(safe-area-inset-bottom));
-  background: #fff;
-  border-top: 1px solid #e8e8e8;
-  z-index: 1000;
+  background: var(--glass-bg-overlay);
+  backdrop-filter: blur(var(--glass-blur-heavy));
+  -webkit-backdrop-filter: blur(var(--glass-blur-heavy));
+  border-top: 1px solid var(--glass-border);
+  z-index: var(--z-bottomnav);
   max-width: 720px;
   margin: 0 auto;
+}
+
+/* Inside the rounded desktop window, follow the frame's bottom corners */
+.desktop-window .nav {
+  border-bottom-left-radius: var(--window-radius);
+  border-bottom-right-radius: var(--window-radius);
 }
 
 .tab {
@@ -25,16 +33,16 @@
   border: none;
   background: none;
   cursor: pointer;
-  color: #999;
-  font-size: 11px;
+  color: var(--color-text-muted);
+  font-size: var(--fs-caption);
   transition: color 0.15s;
   border-radius: 8px;
 }
 .tab:hover {
-  color: #4a6cf7;
+  color: var(--color-primary);
 }
 .active {
-  color: #4a6cf7;
+  color: var(--color-primary);
 }
 
 .hibernateBtn {
@@ -44,15 +52,15 @@
   gap: 2px;
   padding: 6px 10px;
   border: none;
-  background: #f0f4ff;
+  background: var(--glass-bg-blue);
   cursor: pointer;
-  color: #4a6cf7;
-  font-size: 11px;
+  color: var(--color-primary);
+  font-size: var(--fs-caption);
   border-radius: 8px;
   transition: background 0.15s;
 }
 .hibernateBtn:hover {
-  background: #dde4ff;
+  background: var(--glass-bg-blue);
 }
 
 .icon {
@@ -62,4 +70,11 @@
 
 .label {
   white-space: nowrap;
+}
+
+/* Hide bottom nav when sidebar is visible (≥768px) */
+@media (min-width: 768px) {
+  .nav {
+    display: none;
+  }
 }

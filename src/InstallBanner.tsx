@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Icon } from './Icon';
 import styles from './InstallBanner.module.css';
 
 const DISMISS_KEY = 'pwa-install-banner-dismissed';
@@ -7,7 +8,7 @@ const DISMISS_KEY = 'pwa-install-banner-dismissed';
  * InstallBanner — 首次打开检测是否已安装为 PWA
  *
  * 未安装且浏览器支持 beforeinstallprompt 时显示底部横幅
- * "📌 添加到桌面，像 App 一样使用"，点击触发安装。
+ * "添加到桌面，像 App 一样使用"，点击触发安装。
  * 已安装（standalone 模式）或已关闭则不再显示。
  */
 export function InstallBanner() {
@@ -81,7 +82,7 @@ export function InstallBanner() {
 
   return (
     <div className={styles.banner} role="banner">
-      <span className={styles.message}>📌 添加到桌面，像 App 一样使用</span>
+      <span className={styles.message}><Icon name="pin" size={16} /> 添加到桌面，像 App 一样使用</span>
       <span className={styles.actions}>
         <button
           className={styles.installBtn}
@@ -96,7 +97,7 @@ export function InstallBanner() {
           type="button"
           aria-label="关闭"
         >
-          ✕
+          <Icon name="x" size={16} />
         </button>
       </span>
     </div>

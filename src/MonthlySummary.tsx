@@ -1,8 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useData } from './DataContext';
 import { useToast } from './Toast';
+import { Icon } from './Icon';
 import type { MonthEntry } from './types';
 import { createTask } from './taskUtils';
+import { useHashRoute } from './useHashRoute';
+import { aiConfigPayload } from './aiConfig';
 import {
   getMonthKey,
   getMonthLabel,
@@ -16,6 +19,7 @@ import styles from './MonthlySummary.module.css';
 export function MonthlySummary() {
   const { data, dispatch } = useData();
   const { showToast } = useToast();
+  const { navigate } = useHashRoute();
 
   const today = new Date();
   const [year, setYear] = useState<number>(today.getFullYear());
@@ -36,6 +40,15 @@ export function MonthlySummary() {
 
   // ---- Generate template content ----
   const generateSummary = useCallback(() => {
+    // Completed tasks this month (reused by Section 1 and task-ID collection)
+    const monthDoneTasks = data.tasks
+      .filter((t) => t.status === 'done')
+      .filter((t) => {
+        if (!t.completedDate) return false;
+        const parts = t.completedDate.split('-');
+        return parseInt(parts[0], 10) === year && parseInt(parts[1], 10) === month;
+      });
+
     // Section 1: Quantitative summary table
     const quantities = aggregateMonthlyQuantities(data.tasks, year, month);
     let quantText = '';
@@ -46,6 +59,16 @@ export function MonthlySummary() {
       for (const q of quantities) {
         quantText += `| ${q.category} | ${q.label} | ${q.value} ${q.unit} |\n`;
       }
+    }
+
+    // Section 1 追加：重点任务内容（标题 + 具体内容）
+    const notedTasks = monthDoneTasks.filter((t) => t.notes.trim());
+    if (notedTasks.length > 0) {
+      quantText += '\n重点任务内容：\n';
+      for (const t of notedTasks) {
+        quantText += `- ${t.title}\n  具体内容：${t.notes.trim()}\n`;
+      }
+      quantText = quantText.trim();
     }
 
     // Section 2: Project progress review
@@ -85,16 +108,7 @@ export function MonthlySummary() {
     }
 
     // Collect task IDs for completed tasks this month
-    const completedTaskIds = data.tasks
-      .filter((t) => t.status === 'done')
-      .filter((t) => {
-        if (!t.completedDate) return false;
-        const parts = t.completedDate.split('-');
-        const tYear = parseInt(parts[0], 10);
-        const tMonth = parseInt(parts[1], 10);
-        return tYear === year && tMonth === month;
-      })
-      .map((t) => t.id);
+    const completedTaskIds = monthDoneTasks.map((t) => t.id);
 
     const entry: MonthEntry = {
       tasks: completedTaskIds,
@@ -147,16 +161,70 @@ export function MonthlySummary() {
   );
 
   // ---- AI polish ----
-  const requestAiPolish = useCallback(() => {
+  const [polishingSection, setPolishingSection] = useState<string | null>(null);
+
+  // ---- Generate Word summary document ----
+  const [generatingDoc, setGeneratingDoc] = useState(false);
+
+  const handleGenerateDoc = useCallback(async () => {
     if (!existingEntry) return;
-    dispatch({
-      type: 'UPDATE_ARCHIVE_MONTH',
-      payload: {
-        monthKey,
-        entry: { ...existingEntry, aiPolished: false },
-      },
-    });
-    showToast('已标记为待 AI 润色，等待本地脚本处理');
+    setGeneratingDoc(true);
+    try {
+      const sections = {
+        '量化汇总表': existingEntry.summary.quantitativeSummary,
+        '项目进度回顾': existingEntry.summary.projectReview,
+        '月度反思': existingEntry.summary.reflection,
+        '下月重点': existingEntry.summary.nextMonthFocus,
+      };
+      const resp = await fetch('/api/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'month', key: monthKey, sections, config: aiConfigPayload() }),
+      });
+      const result = await resp.json();
+      if (result.ok) {
+        showToast(`已生成：${result.path}`);
+      } else {
+        showToast(result.error || '生成总结文档失败');
+      }
+    } catch {
+      showToast('生成失败，请确认桌面应用已启动');
+    } finally {
+      setGeneratingDoc(false);
+    }
+  }, [existingEntry, monthKey, showToast]);
+
+  const requestAiPolish = useCallback(async (sectionKey: string, text: string) => {
+    if (!existingEntry) return;
+    setPolishingSection(sectionKey);
+    try {
+      const resp = await fetch('/api/polish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, type: 'month', config: aiConfigPayload() }),
+      });
+      const result = await resp.json();
+      if (result.ok && result.polished) {
+        dispatch({
+          type: 'UPDATE_ARCHIVE_MONTH',
+          payload: {
+            monthKey,
+            entry: {
+              ...existingEntry,
+              summary: { ...existingEntry.summary, [sectionKey]: result.polished },
+              aiPolished: true,
+            },
+          },
+        });
+        showToast('AI 润色完成');
+      } else {
+        showToast(result.error || '润色失败，请检查 API 配置');
+      }
+    } catch {
+      showToast('润色请求失败，请确认桌面应用已启动');
+    } finally {
+      setPolishingSection(null);
+    }
   }, [existingEntry, monthKey, dispatch, showToast]);
 
   // ---- Add plan task ----
@@ -214,33 +282,45 @@ export function MonthlySummary() {
 
   return (
     <div className={styles.container}>
+      <button className={styles.backBtn} onClick={() => navigate('/')}>
+        <Icon name="arrow-left" size={16} /> 返回工作清单
+      </button>
       <h2 className={styles.heading}>月小结</h2>
 
       {/* Month selector */}
       <div className={styles.monthSelector}>
         <button className={styles.monthBtn} onClick={goPrevMonth} aria-label="上一月">
-          ←
+          <Icon name="chevron-left" size={18} />
         </button>
         <span className={styles.monthLabel}>{monthLabel}</span>
         <button className={styles.monthBtn} onClick={goNextMonth} aria-label="下一月">
-          →
+          <Icon name="chevron-right" size={18} />
         </button>
       </div>
 
       {/* Generate button */}
       {!existingEntry && (
         <button className={styles.generateBtn} onClick={generateSummary}>
-          ✨ 生成本月小结
+          <Icon name="sparkles" size={16} /> 生成本月小结
         </button>
       )}
 
       {existingEntry && (
         <button
-          className={styles.generateBtn}
+          className={`${styles.generateBtn} ${styles.regenerateBtn}`}
           onClick={generateSummary}
-          style={{ opacity: 0.7, marginBottom: 4 }}
         >
-          🔄 重新生成
+          <Icon name="refresh-cw" size={16} /> 重新生成
+        </button>
+      )}
+
+      {existingEntry && (
+        <button
+          className={`${styles.generateBtn} ${styles.summaryBtn}`}
+          onClick={handleGenerateDoc}
+          disabled={generatingDoc}
+        >
+          <Icon name="download" size={16} /> {generatingDoc ? '生成中…' : '生成总结文档'}
         </button>
       )}
 
@@ -252,10 +332,11 @@ export function MonthlySummary() {
               <h3 className={styles.sectionTitle}>一、量化汇总表</h3>
               <button
                 className={styles.aiBtn}
-                onClick={requestAiPolish}
+                onClick={() => requestAiPolish('quantitativeSummary', existingEntry.summary.quantitativeSummary)}
+                disabled={polishingSection === 'quantitativeSummary'}
                 title="请求 AI 润色"
               >
-                🤖 请求润色
+                <Icon name="bot" size={14} /> {polishingSection === 'quantitativeSummary' ? '润色中…' : '请求润色'}
               </button>
             </div>
             <div
@@ -274,10 +355,11 @@ export function MonthlySummary() {
               <h3 className={styles.sectionTitle}>二、项目进度回顾</h3>
               <button
                 className={styles.aiBtn}
-                onClick={requestAiPolish}
+                onClick={() => requestAiPolish('projectReview', existingEntry.summary.projectReview)}
+                disabled={polishingSection === 'projectReview'}
                 title="请求 AI 润色"
               >
-                🤖 请求润色
+                <Icon name="bot" size={14} /> {polishingSection === 'projectReview' ? '润色中…' : '请求润色'}
               </button>
             </div>
             <div
@@ -296,10 +378,11 @@ export function MonthlySummary() {
               <h3 className={styles.sectionTitle}>三、月度反思</h3>
               <button
                 className={styles.aiBtn}
-                onClick={requestAiPolish}
+                onClick={() => requestAiPolish('reflection', existingEntry.summary.reflection)}
+                disabled={polishingSection === 'reflection'}
                 title="请求 AI 润色"
               >
-                🤖 请求润色
+                <Icon name="bot" size={14} /> {polishingSection === 'reflection' ? '润色中…' : '请求润色'}
               </button>
             </div>
             <textarea
@@ -317,10 +400,11 @@ export function MonthlySummary() {
               <h3 className={styles.sectionTitle}>四、下月重点</h3>
               <button
                 className={styles.aiBtn}
-                onClick={requestAiPolish}
+                onClick={() => requestAiPolish('nextMonthFocus', existingEntry.summary.nextMonthFocus)}
+                disabled={polishingSection === 'nextMonthFocus'}
                 title="请求 AI 润色"
               >
-                🤖 请求润色
+                <Icon name="bot" size={14} /> {polishingSection === 'nextMonthFocus' ? '润色中…' : '请求润色'}
               </button>
             </div>
             <div
@@ -347,9 +431,9 @@ export function MonthlySummary() {
           {/* Status indicator */}
           <div className={styles.statusBar}>
             {existingEntry.aiPolished ? (
-              <span className={styles.statusOk}>✅ 已润色</span>
+              <span className={styles.statusOk}><Icon name="check-circle" size={14} /> 已润色</span>
             ) : (
-              <span className={styles.statusPending}>⏳ 待 AI 润色</span>
+              <span className={styles.statusPending}><Icon name="clock" size={14} /> 待 AI 润色</span>
             )}
           </div>
         </div>

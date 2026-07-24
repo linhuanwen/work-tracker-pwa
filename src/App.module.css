@@ -1,44 +1,89 @@
-.app {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 24px 16px 96px;
+/* Scroll container — the page scrolls inside the rounded window frame
+   so the frame corners and glass edge stay put. */
+.scroll {
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
 }
 
+.app {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: calc(var(--titlebar-h) + var(--space-4)) var(--space-4) 96px;
+}
+
+/* ---- Main page header: date + subtitle + hibernate entry ---- */
 .header {
-  margin-bottom: 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.headerText {
+  min-width: 0;
 }
 
 .title {
-  font-size: 24px;
+  font-size: var(--fs-h1);
   font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 4px;
+  color: var(--color-text);
+  margin: 0 0 2px;
 }
 
 .subtitle {
-  font-size: 14px;
-  color: #999;
+  font-size: var(--fs-ui);
+  color: var(--color-text-muted);
   margin: 0;
 }
 
+.hibernateEntry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--glass-bg-blue);
+  backdrop-filter: blur(var(--glass-blur-light));
+  -webkit-backdrop-filter: blur(var(--glass-blur-light));
+  color: var(--color-primary);
+  font-size: var(--fs-tag);
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.hibernateEntry:hover {
+  background: var(--glass-bg-card-hover);
+}
+
+/* ---- Folder bar (initial picker / auto-loading) ---- */
 .folderBar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: #f7f8fc;
-  border: 1px solid #e8ecf4;
-  border-radius: 8px;
-  margin-bottom: 24px;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--glass-bg-blue);
+  backdrop-filter: blur(var(--glass-blur-light));
+  -webkit-backdrop-filter: blur(var(--glass-blur-light));
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
 }
 
 .folderBtn {
   padding: 10px 20px;
-  background: #4a6cf7;
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-ui);
   cursor: pointer;
   min-height: 44px;
   min-width: 44px;
@@ -46,20 +91,20 @@
   -webkit-tap-highlight-color: transparent;
 }
 .folderBtn:hover {
-  background: #3b5de7;
+  background: var(--color-primary-hover);
 }
 .folderBtn:active {
-  background: #2f4cd6;
+  background: var(--color-primary-active);
 }
 .folderBtn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  background: #b0bec5;
+  background: var(--color-disabled);
 }
 
 .folderPath {
-  font-size: 13px;
-  color: #555;
+  font-size: var(--fs-tag);
+  color: var(--color-text-secondary);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -68,53 +113,69 @@
 
 .error {
   padding: 10px 14px;
-  background: #fff0f0;
-  color: #c62828;
-  border-radius: 6px;
-  font-size: 14px;
-  margin-bottom: 16px;
+  background: var(--glass-bg-red);
+  backdrop-filter: blur(var(--glass-blur-light));
+  -webkit-backdrop-filter: blur(var(--glass-blur-light));
+  color: var(--color-danger-dark);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-ui);
+  margin-bottom: var(--space-4);
 }
 
-/* Navigation */
-.nav {
+/* ---- Bottom folder bar (change folder) ---- */
+.bottomFolderBar {
   display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: 40px;
+  padding: var(--space-4) 0 var(--space-2);
+  border-top: 1px solid var(--glass-border-subtle);
 }
 
-.navBtn {
-  padding: 6px 14px;
-  background: #f0f4ff;
-  color: #4a6cf7;
-  border: 1px solid #d0d8f0;
-  border-radius: 6px;
-  font-size: 13px;
+.bottomFolderLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-caption);
+  color: var(--color-text-muted);
+}
+
+.changeFolderBtn {
+  padding: 4px 12px;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-caption);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.15s;
+  min-height: 32px;
 }
 
-.navBtn:hover {
-  background: #dce4fc;
+.changeFolderBtn:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 /* Mobile: smaller padding, optimize for touch */
 @media (max-width: 767px) {
   .app {
-    padding: 12px 12px 120px;
+    padding: calc(var(--titlebar-h) + var(--space-3)) var(--space-3) 120px;
   }
 
   .header {
-    margin-bottom: 20px;
+    margin-bottom: var(--space-4);
   }
 
   .title {
-    font-size: 20px;
+    font-size: var(--fs-h2);
   }
 
   .folderBar {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .folderBtn {
@@ -122,6 +183,14 @@
   }
 
   .folderPath {
-    font-size: 12px;
+    font-size: var(--fs-tag);
+  }
+}
+
+/* Sidebar spacing — desktop (≥768px) */
+@media (min-width: 768px) {
+  .app {
+    padding-left: calc(var(--sidebar-width, 56px) + var(--space-4));
+    transition: padding-left 0.2s ease;
   }
 }

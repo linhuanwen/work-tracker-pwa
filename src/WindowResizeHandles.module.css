@@ -1,0 +1,85 @@
+/* ============================================================
+   WindowResizeHandles — invisible frameless-window resize grips
+   ============================================================ */
+
+.handle {
+  position: fixed;
+  z-index: 1100; /* above titlebar so every edge stays resizable */
+  /* Nearly invisible, but not fully transparent: fully transparent
+     pixels are punched through by the window TransparencyKey and
+     clicks would fall through to the desktop. */
+  background: rgba(255, 255, 255, 0.02);
+  touch-action: none;
+}
+
+/* ---- Edges (inset past the corners) ---- */
+
+.n {
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.s {
+  bottom: 0;
+  left: 16px;
+  right: 16px;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.e {
+  top: 16px;
+  bottom: 16px;
+  right: 0;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.w {
+  top: 16px;
+  bottom: 16px;
+  left: 0;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+/* ---- Corners (rounded to match the window frame) ---- */
+
+.nw {
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  border-top-left-radius: var(--window-radius, 12px);
+  cursor: nwse-resize;
+}
+
+.ne {
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  border-top-right-radius: var(--window-radius, 12px);
+  cursor: nesw-resize;
+}
+
+.sw {
+  bottom: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  border-bottom-left-radius: var(--window-radius, 12px);
+  cursor: nesw-resize;
+}
+
+.se {
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  border-bottom-right-radius: var(--window-radius, 12px);
+  cursor: nwse-resize;
+}

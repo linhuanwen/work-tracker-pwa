@@ -13,9 +13,9 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: #1a73e8;
+  background: var(--color-install-bg);
   color: #fff;
-  font-size: 14px;
+  font-size: var(--fs-ui);
   box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.15);
   animation: slideUp 0.3s ease-out;
 }
@@ -44,10 +44,10 @@
 .installBtn {
   padding: 8px 16px;
   background: #fff;
-  color: #1a73e8;
+  color: var(--color-install-bg);
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: var(--fs-ui);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -57,7 +57,7 @@
 }
 
 .installBtn:active {
-  background: #e8f0fe;
+  background: var(--glass-bg-blue);
 }
 
 .dismissBtn {

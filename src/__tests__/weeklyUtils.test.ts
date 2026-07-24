@@ -231,6 +231,29 @@ describe('getCompletedTasksByCategory', () => {
     expect(result[0].tasks[0].quantityText).toBe('考核 120 人');
   });
 
+  it('includes trimmed task notes (empty when not set)', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: '1',
+        title: '带内容任务',
+        category: '绩效管理',
+        status: 'done',
+        completedDate: '2026-07-21',
+        notes: '  完成了考核方案设计与落地  ',
+      }),
+      makeTask({
+        id: '2',
+        title: '无内容任务',
+        category: '绩效管理',
+        status: 'done',
+        completedDate: '2026-07-22',
+      }),
+    ];
+    const result = getCompletedTasksByCategory(tasks, '2026-W30', categories);
+    expect(result[0].tasks[0].notes).toBe('完成了考核方案设计与落地');
+    expect(result[0].tasks[1].notes).toBe('');
+  });
+
   it('excludes tasks with status done but completedDate outside the week', () => {
     const tasks: Task[] = [
       makeTask({ id: '1', title: '旧任务', category: '绩效管理', status: 'done', completedDate: '2026-07-13' }),
