@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useData } from './DataContext';
 import { useToast } from './Toast';
-import { generateTaskCSV, generateReportText } from './reportUtils';
+import { generateReportText } from './reportUtils';
+import { getWeekKey } from './weeklyUtils';
+import { getMonthKey } from './monthlyUtils';
+import { aiConfigPayload } from './aiConfig';
+import { Icon } from './Icon';
 import styles from './Reports.module.css';
 
 type ReportTab = 'weekly' | 'monthly' | 'yearly';
@@ -68,18 +72,86 @@ export function Reports() {
     }
   };
 
-  const handleExportCSV = () => {
-    const csv = generateTaskCSV(data.tasks);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `任务导出_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast('已导出');
+  // ---- 生成总结 Word 文档 ----
+  const [generating, setGenerating] = useState(false);
+
+  /** 优先取归档小结内容；没有归档时退回当前 Tab 的预览内容。 */
+  const getSummaryPayload = (): { type: 'week' | 'month' | 'year'; key: string; sections: Record<string, string> } => {
+    const now = new Date();
+    if (activeTab === 'weekly') {
+      const key = getWeekKey(now);
+      const entry = data.archives.weeks[key];
+      if (entry) {
+        return {
+          type: 'week',
+          key,
+          sections: {
+            '本周完成任务': entry.summary.doneTasks,
+            '长期项目推进': entry.summary.projectProgress,
+            '下周计划': entry.summary.nextWeekPlan,
+            '需协调事项': entry.summary.blockers,
+          },
+        };
+      }
+      return { type: 'week', key, sections: getReportSections() };
+    }
+    if (activeTab === 'monthly') {
+      const key = getMonthKey(now.getFullYear(), now.getMonth() + 1);
+      const entry = data.archives.months[key];
+      if (entry) {
+        return {
+          type: 'month',
+          key,
+          sections: {
+            '量化汇总表': entry.summary.quantitativeSummary,
+            '项目进度回顾': entry.summary.projectReview,
+            '月度反思': entry.summary.reflection,
+            '下月重点': entry.summary.nextMonthFocus,
+          },
+        };
+      }
+      return { type: 'month', key, sections: getReportSections() };
+    }
+    const key = String(now.getFullYear());
+    const entry = data.archives.years[key];
+    if (entry) {
+      return {
+        type: 'year',
+        key,
+        sections: {
+          '人员调配': entry.summary.personnelAllocation,
+          '内部招聘/晋升晋等': entry.summary.internalRecruitment,
+          '奖惩管理': entry.summary.rewardDiscipline,
+          '绩效管理': entry.summary.performance,
+          '劳动关系': entry.summary.laborRelations,
+          '领导交办': entry.summary.leaderAssigned,
+          '一句话总结': entry.summary.other,
+        },
+      };
+    }
+    return { type: 'year', key, sections: getReportSections() };
+  };
+
+  const handleGenerateSummary = async () => {
+    setGenerating(true);
+    try {
+      const payload = getSummaryPayload();
+      const resp = await fetch('/api/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, config: aiConfigPayload() }),
+      });
+      const result = await resp.json();
+      if (result.ok) {
+        showToast(`已生成：${result.path}`);
+      } else {
+        showToast(result.error || '生成总结文档失败');
+      }
+    } catch {
+      showToast('生成失败，请确认桌面应用已启动');
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const sections = getReportSections();
@@ -104,10 +176,10 @@ export function Reports() {
       {/* Action buttons */}
       <div className={styles.actions}>
         <button className={styles.actionBtn} onClick={handleCopy}>
-          📋 复制
+          <Icon name="copy" size={16} /> 复制
         </button>
-        <button className={styles.actionBtn} onClick={handleExportCSV}>
-          📥 导出 CSV
+        <button className={styles.actionBtn} onClick={handleGenerateSummary} disabled={generating}>
+          <Icon name="download" size={16} /> {generating ? '生成中…' : '生成总结'}
         </button>
       </div>
 

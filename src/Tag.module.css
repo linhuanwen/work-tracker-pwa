@@ -1,0 +1,58 @@
+/* ================================================ */
+/* Tag 标签芯片组件 */
+/* ================================================ */
+
+.tag {
+  display: inline-block;
+  padding: 0px var(--space-1);
+  font-size: var(--fs-caption);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  line-height: 1.35;
+}
+
+/* ================================================ */
+/* Priority 变体 — 彩色左边框 */
+/* ================================================ */
+
+.priority {
+  border-left: 3px solid transparent;
+  padding-left: 5px;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.priorityUrgent {
+  border-left-color: var(--color-danger-dark);
+  color: var(--color-danger-dark);
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+}
+
+.priorityImportant {
+  border-left-color: var(--color-warning-dark);
+  color: var(--color-warning-dark);
+  background: color-mix(in srgb, var(--color-warning) 8%, transparent);
+}
+
+.priorityNormal {
+  border-left-color: var(--color-status-todo);
+  color: var(--color-text-dim);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* ================================================ */
+/* Category 变体 — 半透明底 */
+/* ================================================ */
+
+.category {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+}
+
+/* ================================================ */
+/* Date 变体 — 相对时间 */
+/* ================================================ */
+
+.date {
+  background: color-mix(in srgb, var(--color-deadline) 8%, transparent);
+  color: var(--color-deadline);
+}

@@ -229,6 +229,18 @@ describe('getYearlyTasksByDimension', () => {
     expect(dim.taskTitles).toContain('面试组织');
   });
 
+  it('keeps taskNotes aligned with taskTitles (trimmed, empty when unset)', () => {
+    const tasks: Task[] = [
+      makeTask({ id: '1', title: '招聘公告发布', category: '内部招聘', status: 'done', completedDate: '2026-03-15', notes: '  发布 3 个岗位公告  ' }),
+      makeTask({ id: '2', title: '面试组织', category: '内部招聘', status: 'done', completedDate: '2026-04-20' }),
+    ];
+    const result = getYearlyTasksByDimension(tasks, 2026, defaultCategories);
+    const dim = result.find((d) => d.dimension === '内部招聘（晋升晋等）')!;
+    expect(dim.taskNotes).toHaveLength(dim.taskTitles.length);
+    expect(dim.taskNotes[dim.taskTitles.indexOf('招聘公告发布')]).toBe('发布 3 个岗位公告');
+    expect(dim.taskNotes[dim.taskTitles.indexOf('面试组织')]).toBe('');
+  });
+
   it('returns all six dimensions even if some are empty (with taskCount 0)', () => {
     const tasks: Task[] = [
       makeTask({ id: '1', title: '唯一任务', category: '绩效管理', status: 'done', completedDate: '2026-06-01' }),

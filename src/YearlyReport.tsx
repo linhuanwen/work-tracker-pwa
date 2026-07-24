@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useData } from './DataContext';
 import { useToast } from './Toast';
+import { Icon } from './Icon';
 import type { YearEntry } from './types';
 import {
   YEARLY_DIMENSIONS,
@@ -9,6 +10,8 @@ import {
   buildYearlyQuantityTable,
   generateYearlyOneLiner,
 } from './yearlyUtils';
+import { useHashRoute } from './useHashRoute';
+import { aiConfigPayload } from './aiConfig';
 import styles from './YearlyReport.module.css';
 
 /** Map a dimension to the corresponding YearEntry summary field */
@@ -27,6 +30,7 @@ function dimToField(dim: string): keyof YearEntry['summary'] {
 export function YearlyReport() {
   const { data, dispatch } = useData();
   const { showToast } = useToast();
+  const { navigate } = useHashRoute();
 
   const today = new Date();
   const [year, setYear] = useState<number>(today.getFullYear());
@@ -57,9 +61,13 @@ export function YearlyReport() {
       text += `，量化产出：${parts.join('，')}`;
     }
     text += '\n\n任务列表：\n';
-    for (const title of dim.taskTitles) {
+    dim.taskTitles.forEach((title, i) => {
       text += `- ${title}\n`;
-    }
+      const notes = dim.taskNotes[i];
+      if (notes) {
+        text += `  具体内容：${notes}\n`;
+      }
+    });
     return text.trim();
   };
 
@@ -162,16 +170,71 @@ export function YearlyReport() {
   );
 
   // ---- AI polish ----
-  const requestAiPolish = useCallback(() => {
+  const [polishing, setPolishing] = useState(false);
+
+  // ---- Generate Word summary document ----
+  const [generatingDoc, setGeneratingDoc] = useState(false);
+
+  const handleGenerateDoc = useCallback(async () => {
     if (!existingEntry) return;
-    dispatch({
-      type: 'UPDATE_ARCHIVE_YEAR',
-      payload: {
-        yearKey,
-        entry: { ...existingEntry, aiPolished: false },
-      },
-    });
-    showToast('已标记为待 AI 润色，等待本地脚本处理');
+    setGeneratingDoc(true);
+    try {
+      const sections: Record<string, string> = {};
+      for (const dim of YEARLY_DIMENSIONS) {
+        const field = dimToField(dim);
+        sections[dim] = existingEntry.summary[field] || '';
+      }
+      sections['一句话总结'] = existingEntry.summary.other || autoOneLiner;
+
+      const resp = await fetch('/api/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'year', key: yearKey, sections, config: aiConfigPayload() }),
+      });
+      const result = await resp.json();
+      if (result.ok) {
+        showToast(`已生成：${result.path}`);
+      } else {
+        showToast(result.error || '生成总结文档失败');
+      }
+    } catch {
+      showToast('生成失败，请确认桌面应用已启动');
+    } finally {
+      setGeneratingDoc(false);
+    }
+  }, [existingEntry, yearKey, autoOneLiner, showToast]);
+
+  const requestAiPolish = useCallback(async () => {
+    if (!existingEntry) return;
+    setPolishing(true);
+    // Combine all section texts for polishing
+    const combinedText = Object.entries(existingEntry.summary)
+      .map(([key, value]) => `【${key}】\n${value}`)
+      .join('\n\n');
+    try {
+      const resp = await fetch('/api/polish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: combinedText, type: 'year', config: aiConfigPayload() }),
+      });
+      const result = await resp.json();
+      if (result.ok) {
+        dispatch({
+          type: 'UPDATE_ARCHIVE_YEAR',
+          payload: {
+            yearKey,
+            entry: { ...existingEntry, aiPolished: true },
+          },
+        });
+        showToast('AI 润色完成');
+      } else {
+        showToast(result.error || '润色失败，请检查 API 配置');
+      }
+    } catch {
+      showToast('润色请求失败，请确认桌面应用已启动');
+    } finally {
+      setPolishing(false);
+    }
   }, [existingEntry, yearKey, dispatch, showToast]);
 
   // ---- Sync keypoint refs when entry changes ----
@@ -192,42 +255,54 @@ export function YearlyReport() {
 
   return (
     <div className={styles.container}>
+      <button className={styles.backBtn} onClick={() => navigate('/')}>
+        <Icon name="arrow-left" size={16} /> 返回工作清单
+      </button>
       <h2 className={styles.heading}>年度报告</h2>
 
       {/* Year selector */}
       <div className={styles.yearSelector}>
         <button className={styles.yearBtn} onClick={() => setYear((y) => y - 1)} aria-label="上一年">
-          ←
+          <Icon name="chevron-left" size={18} />
         </button>
         <span className={styles.yearLabel}>{year}年</span>
         <button className={styles.yearBtn} onClick={() => setYear((y) => y + 1)} aria-label="下一年">
-          →
+          <Icon name="chevron-right" size={18} />
         </button>
       </div>
 
       {/* Generate button */}
       {!existingEntry && (
         <button className={styles.generateBtn} onClick={generateReport}>
-          ✨ 生成年度报告
+          <Icon name="sparkles" size={16} /> 生成年度报告
         </button>
       )}
 
       {existingEntry && (
         <button
-          className={styles.generateBtn}
+          className={`${styles.generateBtn} ${styles.regenerateBtn}`}
           onClick={generateReport}
-          style={{ opacity: 0.7, marginBottom: 4 }}
         >
-          🔄 重新生成
+          <Icon name="refresh-cw" size={16} /> 重新生成
+        </button>
+      )}
+
+      {existingEntry && (
+        <button
+          className={`${styles.generateBtn} ${styles.summaryBtn}`}
+          onClick={handleGenerateDoc}
+          disabled={generatingDoc}
+        >
+          <Icon name="download" size={16} /> {generatingDoc ? '生成中…' : '生成总结文档'}
         </button>
       )}
 
       {existingEntry && (
         <div className={styles.sections}>
           {/* AI polish button at top */}
-          <div style={{ textAlign: 'right' }}>
-            <button className={styles.aiBtn} onClick={requestAiPolish}>
-              🤖 请求 AI 润色
+          <div className={styles.aiBtnRow}>
+            <button className={styles.aiBtn} onClick={requestAiPolish} disabled={polishing}>
+              <Icon name="bot" size={14} /> {polishing ? '润色中…' : '请求 AI 润色'}
             </button>
           </div>
 
@@ -251,7 +326,7 @@ export function YearlyReport() {
                 </div>
 
                 {/* Manual keypoint textarea */}
-                <div className={styles.keypointLabel}>✍️ 关键业绩提炼：</div>
+                <div className={styles.keypointLabel}><Icon name="pen-line" size={14} /> 关键业绩提炼：</div>
                 <textarea
                   ref={(el) => { keypointRefs.current[dim.dimension] = el; }}
                   className={styles.keypointTextarea}
@@ -269,7 +344,7 @@ export function YearlyReport() {
             <div className={styles.sectionHeader}>
               <h3 className={styles.sectionTitle}>附表一：月度趋势表</h3>
             </div>
-            <div style={{ overflowX: 'auto' }}>
+            <div className={styles.tableWrapper}>
               <table className={styles.auxTable}>
                 <thead>
                   <tr>
@@ -287,7 +362,7 @@ export function YearlyReport() {
                       {categories.map((cat) => (
                         <td key={cat}>{row.categoryCounts[cat] || 0}</td>
                       ))}
-                      <td style={{ fontWeight: 600 }}>{row.total}</td>
+                      <td className={styles.boldCell}>{row.total}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -301,11 +376,11 @@ export function YearlyReport() {
               <h3 className={styles.sectionTitle}>附表二：全年量化产出总表</h3>
             </div>
             {quantityTable.length === 0 ? (
-              <p style={{ color: '#999', fontSize: 14, textAlign: 'center' }}>
+              <p className={styles.emptyState}>
                 （本年度无量化产出记录）
               </p>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
+              <div className={styles.tableWrapper}>
                 <table className={styles.auxTable}>
                   <thead>
                     <tr>
@@ -318,7 +393,7 @@ export function YearlyReport() {
                     {quantityTable.map((q) => (
                       <tr key={q.label}>
                         <td>{q.label}</td>
-                        <td style={{ fontWeight: 600 }}>{q.value}</td>
+                        <td className={styles.boldCell}>{q.value}</td>
                         <td>{q.unit}</td>
                       </tr>
                     ))}
@@ -345,9 +420,9 @@ export function YearlyReport() {
           {/* Status indicator */}
           <div className={styles.statusBar}>
             {existingEntry.aiPolished ? (
-              <span className={styles.statusOk}>✅ 已润色</span>
+              <span className={styles.statusOk}><Icon name="check-circle" size={14} /> 已润色</span>
             ) : (
-              <span className={styles.statusPending}>⏳ 待 AI 润色</span>
+              <span className={styles.statusPending}><Icon name="clock" size={14} /> 待 AI 润色</span>
             )}
           </div>
         </div>

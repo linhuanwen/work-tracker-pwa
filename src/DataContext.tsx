@@ -49,7 +49,7 @@ import { debounce } from './useAutoSave';
 
 export type Action =
   | { type: 'SET_DATA'; payload: DataJson }
-  | { type: 'ADD_TASK'; payload: { title: string; category: string; priority: Priority; projectId?: string | null } }
+  | { type: 'ADD_TASK'; payload: { title: string; category: string; priority: Priority; projectId?: string | null; deadline?: string | null } }
   | { type: 'TOGGLE_TASK'; payload: { taskId: string } }
   | { type: 'UPDATE_TASK'; payload: { taskId: string; patch: UpdateTaskPatch } }
   | { type: 'TRANSITION_STATUS'; payload: { taskId: string; newStatus: TaskStatus } }
@@ -60,6 +60,7 @@ export type Action =
   | { type: 'ADD_PROJECT'; payload: { title: string; category: string; startDate: string; targetDate: string; notes: string } }
   | { type: 'UPDATE_PROJECT'; payload: { projectId: string; patch: Partial<Pick<Project, 'title' | 'category' | 'startDate' | 'targetDate' | 'notes'>> } }
   | { type: 'ARCHIVE_PROJECT'; payload: { projectId: string } }
+  | { type: 'DELETE_PROJECT'; payload: { projectId: string } }
   | { type: 'UPDATE_ARCHIVE_WEEK'; payload: { weekKey: string; entry: import('./types').WeekEntry } }
   | { type: 'UPDATE_ARCHIVE_MONTH'; payload: { monthKey: string; entry: import('./types').MonthEntry } }
   | { type: 'UPDATE_ARCHIVE_YEAR'; payload: { yearKey: string; entry: import('./types').YearEntry } };
@@ -79,6 +80,7 @@ export function dataReducer(state: DataJson, action: Action): DataJson {
         category: action.payload.category,
         priority: action.payload.priority,
         projectId: action.payload.projectId ?? null,
+        deadline: action.payload.deadline ?? null,
       });
       return {
         ...state,
@@ -112,6 +114,15 @@ export function dataReducer(state: DataJson, action: Action): DataJson {
           p.id === action.payload.projectId
             ? { ...p, status: 'archived' as const }
             : p,
+        ),
+      };
+    }
+
+    case 'DELETE_PROJECT': {
+      return {
+        ...state,
+        projects: state.projects.filter(
+          (p) => p.id !== action.payload.projectId,
         ),
       };
     }
@@ -276,6 +287,9 @@ interface DataContextValue {
   error: string | null;
   hasStoredHandle: boolean;
   reopenStored: () => Promise<DataJson | null>;
+  lastFolderInfo: { folderName: string; lastOpened: string } | null;
+  backendMode: boolean;
+  backendFolderPath: string | null;
 }
 
 const DataContext = createContext<DataContextValue | null>(null);
@@ -289,6 +303,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     error: fsError,
     hasStoredHandle,
     reopenStored,
+    lastFolderInfo,
+    backendMode,
+    backendFolderPath,
   } = useFileSystem();
 
   const [data, dispatch] = useReducer(
@@ -330,6 +347,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     error: fsError,
     hasStoredHandle,
     reopenStored,
+    lastFolderInfo,
+    backendMode,
+    backendFolderPath,
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

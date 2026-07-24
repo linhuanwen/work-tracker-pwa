@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import type { Task } from './types';
+import { ConfirmDialog } from './ConfirmDialog';
+import { Icon } from './Icon';
 import styles from './UrgentZone.module.css';
 
 interface UrgentZoneProps {
   tasks: Task[];
   onEditTask: (task: Task) => void;
+  onDeleteTask?: (taskId: string) => void;
   onMoveUp: (taskId: string) => void;
   onMoveDown: (taskId: string) => void;
 }
@@ -11,16 +15,21 @@ interface UrgentZoneProps {
 export function UrgentZone({
   tasks,
   onEditTask,
+  onDeleteTask,
   onMoveUp,
   onMoveDown,
 }: UrgentZoneProps) {
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+
   if (tasks.length === 0) return null;
+
+  const targetTask = deleteTargetId ? tasks.find(t => t.id === deleteTargetId) : null;
 
   return (
     <div className={styles.zone}>
       <div className={styles.header}>
         <span className={styles.headerIcon} aria-hidden="true">
-          🔴
+          <Icon name="circle" size={12} color="#ef4444" />
         </span>
         <span className={styles.headerTitle}>紧急处理</span>
         <span className={styles.headerCount}>{tasks.length}</span>
@@ -67,7 +76,7 @@ export function UrgentZone({
                 </div>
               </div>
 
-              {/* Up/down reorder arrows */}
+              {/* Up/down reorder arrows + delete */}
               <div className={styles.arrows}>
                 <button
                   className={styles.arrowBtn}
@@ -79,7 +88,7 @@ export function UrgentZone({
                   aria-label="上移"
                   title="上移"
                 >
-                  ▲
+                  <Icon name="chevron-up" size={16} />
                 </button>
                 <button
                   className={styles.arrowBtn}
@@ -91,13 +100,40 @@ export function UrgentZone({
                   aria-label="下移"
                   title="下移"
                 >
-                  ▼
+                  <Icon name="chevron-down" size={16} />
                 </button>
+                {onDeleteTask && (
+                  <button
+                    className={styles.deleteBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteTargetId(task.id);
+                    }}
+                    aria-label="删除任务"
+                    title="删除"
+                  >
+                    <Icon name="x" size={14} />
+                  </button>
+                )}
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* Confirm delete dialog */}
+      {onDeleteTask && targetTask && (
+        <ConfirmDialog
+          open={deleteTargetId !== null}
+          title="确认删除"
+          message={`确定要删除紧急任务"${targetTask.title}"吗？此操作不可撤销。`}
+          onConfirm={() => {
+            onDeleteTask(targetTask.id);
+            setDeleteTargetId(null);
+          }}
+          onCancel={() => setDeleteTargetId(null)}
+        />
+      )}
     </div>
   );
 }

@@ -101,7 +101,7 @@ export function formatQuantityText(task: Task): string {
 
 export interface CategoryTaskGroup {
   category: string;
-  tasks: { title: string; quantityText: string }[];
+  tasks: { title: string; quantityText: string; notes: string }[];
 }
 
 /**
@@ -118,7 +118,10 @@ export function getCompletedTasksByCategory(
     (t) => t.status === 'done' && isDateInWeek(t.completedDate, weekKey),
   );
 
-  const grouped: Record<string, { title: string; quantityText: string }[]> = {};
+  const grouped: Record<
+    string,
+    { title: string; quantityText: string; notes: string }[]
+  > = {};
   for (const task of completed) {
     if (!grouped[task.category]) {
       grouped[task.category] = [];
@@ -126,6 +129,7 @@ export function getCompletedTasksByCategory(
     grouped[task.category].push({
       title: task.title,
       quantityText: formatQuantityText(task),
+      notes: task.notes.trim(),
     });
   }
 

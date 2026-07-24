@@ -1,6 +1,7 @@
 import type { Task, TaskStatus } from './types';
 import { useData } from './DataContext';
 import { calcProjectProgress, getProgressColor } from './taskUtils';
+import { Icon } from './Icon';
 import styles from './ProjectDetailPage.module.css';
 
 interface ProjectDetailPageProps {
@@ -29,7 +30,7 @@ export function ProjectDetailPage({ projectId, onNavigate, onEditTask }: Project
     return (
       <div className={styles.container}>
         <button className={styles.backBtn} onClick={() => onNavigate('/projects')}>
-          ← 返回
+          <Icon name="arrow-left" size={16} /> 返回
         </button>
         <div className={styles.empty}>项目不存在或已被删除。</div>
       </div>
@@ -61,7 +62,7 @@ export function ProjectDetailPage({ projectId, onNavigate, onEditTask }: Project
     <div className={styles.container}>
       {/* Header */}
       <button className={styles.backBtn} onClick={() => onNavigate('/projects')}>
-        ← 返回项目列表
+        <Icon name="arrow-left" size={16} /> 返回项目列表
       </button>
 
       {/* Project summary */}

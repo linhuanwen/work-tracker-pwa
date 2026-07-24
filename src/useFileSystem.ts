@@ -2,16 +2,35 @@ import { useCallback, useRef, useState } from 'react';
 import type { DataJson } from './types';
 import { createDefaultDataJson } from './types';
 
-const DIR_HANDLE_KEY = 'wps-dir-handle-name';
+const DB_NAME = 'wjl-fs-handles';
+const DB_VERSION = 1;
+const STORE_NAME = 'handles';
+const HANDLE_KEY = 'current-dir';
 const DATA_FILE_NAME = 'data.json';
 
 /**
  * File System Access API hook
  *
- * Handles opening a WPS 云文档 directory, reading data.json,
- * writing changes back, and persisting the directory handle name
- * in IndexedDB so the browser retains access across sessions.
+ * Persists the FileSystemDirectoryHandle in IndexedDB so the browser can
+ * silently re-acquire readwrite access across sessions (no picker UI).
+ *
+ * Also supports a "backend mode" when running under launcher.py: if the
+ * Python backend reports a configured `dataFolderPath`, all file I/O is
+ * delegated to `/api/data` endpoints, bypassing the browser picker entirely.
  */
+
+export interface StoredFolderInfo {
+  folderName: string;
+  lastOpened: string; // ISO timestamp
+}
+
+interface BackendInfo {
+  dataFolderPath?: string;
+  lastFolderName?: string;
+  lastOpened?: string;
+}
+
+type DataSource = 'backend' | 'fsa' | null;
 
 interface UseFileSystemReturn {
   /** Currently loaded data, or null if not yet opened */
@@ -24,48 +43,165 @@ interface UseFileSystemReturn {
   loading: boolean;
   /** Error message, if any */
   error: string | null;
-  /** Whether a directory has been opened before (handle stored) */
+  /** Whether a directory has been opened before (handle stored in IndexedDB) */
   hasStoredHandle: boolean;
-  /** Try to reopen the previously used directory */
+  /** Try to reopen the previously used directory (silent if permission persisted) */
   reopenStored: () => Promise<DataJson | null>;
+  /** Info about the last-used folder from Python backend */
+  lastFolderInfo: StoredFolderInfo | null;
+  /** True when running under launcher.py with a configured dataFolderPath */
+  backendMode: boolean;
+  /** The configured backend data folder path, if any */
+  backendFolderPath: string | null;
 }
 
-/** Persist the directory handle name to sessionStorage */
-function storeHandleName(name: string): void {
-  sessionStorage.setItem(DIR_HANDLE_KEY, name);
+// ============================================================
+// IndexedDB helpers — persist the live FileSystemDirectoryHandle
+// ============================================================
+
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      if (!req.result.objectStoreNames.contains(STORE_NAME)) {
+        req.result.createObjectStore(STORE_NAME);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
 }
 
-/** Retrieve the stored directory handle name */
-function getStoredHandleName(): string | null {
-  return sessionStorage.getItem(DIR_HANDLE_KEY);
+async function storeHandle(handle: FileSystemDirectoryHandle): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(handle, HANDLE_KEY);
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
 }
 
-/**
- * Request permission and re-acquire a directory handle by name.
- * Browsers don't allow storing FileSystemDirectoryHandle directly
- * in IndexedDB, but we can store the name and re-request access.
- * Some browsers support `indexedDB` storage of handles; we try
- * sessionStorage first as a simpler approach.
- */
-async function requestDirectoryByName(
-  name: string,
-): Promise<FileSystemDirectoryHandle | null> {
-  // Browsers don't allow enumerating directories by name.
-  // We use sessionStorage to cache the handle name; re-opening
-  // requires user to pick the folder again, but the stored name
-  // helps guide the user.
-  // For now, we rely on requesting permission to the same folder.
+async function getStoredHandle(): Promise<FileSystemDirectoryHandle | null> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).get(HANDLE_KEY);
+    req.onsuccess = () => {
+      db.close();
+      resolve(req.result ?? null);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function clearStoredHandle(): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).delete(HANDLE_KEY);
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
+}
+
+async function hasStoredHandleCheck(): Promise<boolean> {
+  const handle = await getStoredHandle();
+  return handle !== null;
+}
+
+// ============================================================
+// Python backend helpers
+// ============================================================
+
+async function fetchBackendInfo(): Promise<BackendInfo | null> {
   try {
-    // Try to get the directory handle from the stored permission
-    const handle = await window.showDirectoryPicker({
-      id: name,
-      mode: 'readwrite',
-    });
-    return handle;
+    const resp = await fetch('/api/state', { cache: 'no-store' });
+    if (!resp.ok) return null;
+    const state = await resp.json();
+    if (state.dataFolderPath) {
+      return {
+        dataFolderPath: state.dataFolderPath,
+        lastFolderName: state.lastFolderName,
+        lastOpened: state.lastOpened,
+      };
+    }
+    return null;
   } catch {
     return null;
   }
 }
+
+async function fetchLastFolderInfo(): Promise<StoredFolderInfo | null> {
+  try {
+    const resp = await fetch('/api/state', { cache: 'no-store' });
+    if (!resp.ok) return null;
+    const state = await resp.json();
+    if (state.lastFolderName && state.lastOpened) {
+      return {
+        folderName: state.lastFolderName,
+        lastOpened: state.lastOpened,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveLastFolderInfo(info: StoredFolderInfo): Promise<void> {
+  try {
+    await fetch('/api/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lastFolderName: info.folderName,
+        lastOpened: info.lastOpened,
+      }),
+    });
+  } catch {
+    // Non-critical — IndexedDB is the primary store in FSA mode
+  }
+}
+
+async function loadBackendData(): Promise<DataJson | null> {
+  try {
+    const resp = await fetch('/api/data', { cache: 'no-store' });
+    if (!resp.ok) return null;
+    return (await resp.json()) as DataJson;
+  } catch {
+    return null;
+  }
+}
+
+async function saveBackendData(data: DataJson): Promise<boolean> {
+  try {
+    const toSave: DataJson = {
+      ...data,
+      lastModified: new Date().toISOString(),
+    };
+    const resp = await fetch('/api/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(toSave),
+    });
+    return resp.ok;
+  } catch {
+    return false;
+  }
+}
+
+// ============================================================
+// File I/O helpers
+// ============================================================
 
 async function readJsonFile(
   dirHandle: FileSystemDirectoryHandle,
@@ -79,7 +215,7 @@ async function readJsonFile(
   } catch (err) {
     const domErr = err as DOMException;
     if (domErr.name === 'NotFoundError') {
-      return null; // File doesn't exist yet, will be created
+      return null;
     }
     throw err;
   }
@@ -90,7 +226,6 @@ async function writeJsonFile(
   fileName: string,
   data: DataJson,
 ): Promise<void> {
-  // Always create a new file handle (overwrite)
   const fileHandle = await dirHandle.getFileHandle(fileName, {
     create: true,
   });
@@ -100,12 +235,45 @@ async function writeJsonFile(
   await writable.close();
 }
 
+// ============================================================
+// Hook
+// ============================================================
+
 export function useFileSystem(): UseFileSystemReturn {
   const [data, setData] = useState<DataJson | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasHandle, setHasHandle] = useState(false);
+  const [lastFolderInfo, setLastFolderInfo] = useState<StoredFolderInfo | null>(null);
+  const [backendMode, setBackendMode] = useState(false);
+  const [backendFolderPath, setBackendFolderPath] = useState<string | null>(null);
   const dirHandleRef = useRef<FileSystemDirectoryHandle | null>(null);
-  const hasStoredHandle = getStoredHandleName() !== null;
+  const dataSourceRef = useRef<DataSource>(null);
+
+  // Check backend + IndexedDB on mount (runs once)
+  const checkedRef = useRef(false);
+  if (!checkedRef.current) {
+    checkedRef.current = true;
+
+    fetchBackendInfo().then((info) => {
+      if (info?.dataFolderPath) {
+        setBackendMode(true);
+        setBackendFolderPath(info.dataFolderPath);
+        setHasHandle(true);
+        setLastFolderInfo({
+          folderName: info.lastFolderName ?? info.dataFolderPath,
+          lastOpened: info.lastOpened ?? new Date().toISOString(),
+        });
+        dataSourceRef.current = 'backend';
+        loadBackendData().then((loaded) => {
+          if (loaded) setData(loaded);
+        });
+      } else {
+        hasStoredHandleCheck().then(setHasHandle);
+        fetchLastFolderInfo().then(setLastFolderInfo);
+      }
+    });
+  }
 
   const openDirectory = useCallback(async (): Promise<DataJson> => {
     setLoading(true);
@@ -115,11 +283,27 @@ export function useFileSystem(): UseFileSystemReturn {
         mode: 'readwrite',
       });
       dirHandleRef.current = dirHandle;
-      storeHandleName(dirHandle.name);
+      dataSourceRef.current = 'fsa';
+
+      // Persist the actual handle in IndexedDB
+      await storeHandle(dirHandle);
+      setHasHandle(true);
+      // Leaving backend mode: user explicitly picked a different folder
+      setBackendMode(false);
+      setBackendFolderPath(null);
+
+      // Persist folder name to Python backend
+      await saveLastFolderInfo({
+        folderName: dirHandle.name,
+        lastOpened: new Date().toISOString(),
+      });
+      setLastFolderInfo({
+        folderName: dirHandle.name,
+        lastOpened: new Date().toISOString(),
+      });
 
       let existingData = await readJsonFile(dirHandle, DATA_FILE_NAME);
       if (!existingData) {
-        // First time: initialize with default data
         existingData = createDefaultDataJson();
         await writeJsonFile(dirHandle, DATA_FILE_NAME, existingData);
       }
@@ -137,45 +321,82 @@ export function useFileSystem(): UseFileSystemReturn {
   }, []);
 
   const reopenStored = useCallback(async (): Promise<DataJson | null> => {
-    const storedName = getStoredHandleName();
-    if (!storedName) return null;
-
     setLoading(true);
     setError(null);
     try {
-      const dirHandle = await requestDirectoryByName(storedName);
-      if (!dirHandle) return null;
+      // Backend mode: reload from Python-managed folder
+      if (dataSourceRef.current === 'backend' || backendMode) {
+        const loaded = await loadBackendData();
+        if (loaded) {
+          setData(loaded);
+          return loaded;
+        }
+      }
 
-      dirHandleRef.current = dirHandle;
-      storeHandleName(dirHandle.name);
+      const storedHandle = await getStoredHandle();
+      if (!storedHandle) return null;
 
-      let existingData = await readJsonFile(dirHandle, DATA_FILE_NAME);
+      // Check current permission state
+      const opts: FileSystemHandlePermissionDescriptor = { mode: 'readwrite' };
+      let permission = await storedHandle.queryPermission(opts);
+
+      if (permission !== 'granted') {
+        permission = await storedHandle.requestPermission(opts);
+        if (permission !== 'granted') {
+          await clearStoredHandle();
+          setHasHandle(false);
+          return null;
+        }
+      }
+
+      dirHandleRef.current = storedHandle;
+      dataSourceRef.current = 'fsa';
+
+      let existingData = await readJsonFile(storedHandle, DATA_FILE_NAME);
       if (!existingData) {
         existingData = createDefaultDataJson();
-        await writeJsonFile(dirHandle, DATA_FILE_NAME, existingData);
+        await writeJsonFile(storedHandle, DATA_FILE_NAME, existingData);
       }
+
+      await saveLastFolderInfo({
+        folderName: storedHandle.name,
+        lastOpened: new Date().toISOString(),
+      });
 
       setData(existingData);
       return existingData;
     } catch {
+      await clearStoredHandle();
+      setHasHandle(false);
       return null;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [backendMode]);
 
   const saveData = useCallback(
     async (newData: DataJson): Promise<void> => {
+      const toSave: DataJson = {
+        ...newData,
+        lastModified: new Date().toISOString(),
+      };
+
+      if (dataSourceRef.current === 'backend') {
+        const ok = await saveBackendData(toSave);
+        if (ok) {
+          setData(toSave);
+          return;
+        }
+        setError('后端保存失败，请检查 wjl-config.txt 配置');
+        return;
+      }
+
       const dirHandle = dirHandleRef.current;
       if (!dirHandle) {
         setError('尚未打开文件夹');
         return;
       }
       try {
-        const toSave: DataJson = {
-          ...newData,
-          lastModified: new Date().toISOString(),
-        };
         await writeJsonFile(dirHandle, DATA_FILE_NAME, toSave);
         setData(toSave);
       } catch (err) {
@@ -193,7 +414,10 @@ export function useFileSystem(): UseFileSystemReturn {
     saveData,
     loading,
     error,
-    hasStoredHandle,
+    hasStoredHandle: hasHandle,
     reopenStored,
+    lastFolderInfo,
+    backendMode,
+    backendFolderPath,
   };
 }

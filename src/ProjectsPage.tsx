@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { Project } from './types';
 import { useData, DEFAULT_CATEGORIES } from './DataContext';
 import { calcProjectProgress, getProgressColor } from './taskUtils';
+import { ConfirmDialog } from './ConfirmDialog';
+import { ContextMenu, type ContextMenuItem } from './ContextMenu';
+import { Icon } from './Icon';
 import styles from './ProjectsPage.module.css';
 
 interface ProjectsPageProps {
@@ -22,6 +25,18 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
   const [formStartDate, setFormStartDate] = useState('');
   const [formTargetDate, setFormTargetDate] = useState('');
   const [formNotes, setFormNotes] = useState('');
+
+  // Confirm delete state
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
+  const deleteTargetProject = deleteProjectId ? projects.find(p => p.id === deleteProjectId) : null;
+
+  // Context menu state
+  const [ctxMenu, setCtxMenu] = useState<{
+    open: boolean;
+    x: number;
+    y: number;
+    projectId: string | null;
+  }>({ open: false, x: 0, y: 0, projectId: null });
 
   const activeProjects = projects.filter((p) => p.status !== 'archived');
   const archivedProjects = projects.filter((p) => p.status === 'archived');
@@ -85,12 +100,50 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
     dispatch({ type: 'ARCHIVE_PROJECT', payload: { projectId } });
   };
 
+  // Context menu
+  const handleProjectContextMenu = useCallback(
+    (e: React.MouseEvent, projectId: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setCtxMenu({ open: true, x: e.clientX, y: e.clientY, projectId });
+    },
+    [],
+  );
+
+  const closeContextMenu = useCallback(() => {
+    setCtxMenu((prev) => ({ ...prev, open: false }));
+  }, []);
+
+  // Build context menu items for the selected project
+  const ctxProject = ctxMenu.projectId
+    ? projects.find((p) => p.id === ctxMenu.projectId)
+    : null;
+
+  const ctxMenuItems: ContextMenuItem[] = ctxProject
+    ? [
+        {
+          id: 'edit',
+          label: '编辑',
+          icon: 'pen-line',
+          onClick: () => handleEdit(ctxProject),
+        },
+        { id: 'sep-1', label: '', separator: true },
+        {
+          id: 'delete',
+          label: '删除',
+          icon: 'x',
+          danger: true,
+          onClick: () => setDeleteProjectId(ctxProject.id),
+        },
+      ]
+    : [];
+
   return (
     <div className={styles.container}>
       {/* Header */}
       <div className={styles.header}>
         <button className={styles.backBtn} onClick={() => onNavigate('/')}>
-          ← 返回
+          <Icon name="arrow-left" size={16} /> 返回
         </button>
         <h1 className={styles.title}>项目</h1>
         <button
@@ -100,7 +153,7 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
             setShowForm(true);
           }}
         >
-          + 新建
+          <Icon name="plus" size={16} /> 新建
         </button>
       </div>
 
@@ -195,6 +248,7 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
             <div
               key={project.id}
               className={styles.card}
+              onContextMenu={(e) => handleProjectContextMenu(e, project.id)}
               onClick={() => onNavigate(`/project/${project.id}`)}
               role="button"
               tabIndex={0}
@@ -254,6 +308,16 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
                 >
                   归档
                 </button>
+                <button
+                  className={styles.deleteBtn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteProjectId(project.id);
+                  }}
+                  aria-label="删除项目"
+                >
+                  删除
+                </button>
               </div>
             </div>
           );
@@ -286,6 +350,29 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
           ))}
         </div>
       )}
+
+      {/* Confirm delete dialog */}
+      {deleteTargetProject && (
+        <ConfirmDialog
+          open={deleteProjectId !== null}
+          title="确认删除"
+          message={`确定要删除项目"${deleteTargetProject.title}"吗？该项目下的任务不会被删除，但会解除关联。此操作不可撤销。`}
+          onConfirm={() => {
+            dispatch({ type: 'DELETE_PROJECT', payload: { projectId: deleteTargetProject.id } });
+            setDeleteProjectId(null);
+          }}
+          onCancel={() => setDeleteProjectId(null)}
+        />
+      )}
+
+      {/* Right-click context menu */}
+      <ContextMenu
+        items={ctxMenuItems}
+        x={ctxMenu.x}
+        y={ctxMenu.y}
+        open={ctxMenu.open}
+        onClose={closeContextMenu}
+      />
     </div>
   );
 }

@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useData } from './DataContext';
 import { useToast } from './Toast';
+import { ThemeToggle } from './ThemeToggle';
+import { ThemePicker } from './ThemePicker';
+import { loadAiConfig, saveAiConfig, DEFAULT_AI_CONFIG } from './aiConfig';
 import styles from './Settings.module.css';
 
 const WEEK_DAYS = [
@@ -26,6 +29,9 @@ export function Settings() {
   const [editValue, setEditValue] = useState('');
   const [newCatValue, setNewCatValue] = useState('');
   const [showAddInput, setShowAddInput] = useState(false);
+
+  // AI 配置（存 localStorage，不进 data.json，避免 API Key 同步到云文档）
+  const [aiConfig, setAiConfig] = useState(() => loadAiConfig());
 
   if (!data) return null;
 
@@ -111,6 +117,15 @@ export function Settings() {
       type: 'UPDATE_SETTINGS',
       payload: { patch: { [field]: value } },
     });
+  };
+
+  const handleSaveAiConfig = () => {
+    saveAiConfig({
+      apiKey: aiConfig.apiKey.trim(),
+      endpoint: aiConfig.endpoint.trim() || DEFAULT_AI_CONFIG.endpoint,
+      model: aiConfig.model.trim() || DEFAULT_AI_CONFIG.model,
+    });
+    showToast('AI 配置已保存');
   };
 
   return (
@@ -235,6 +250,61 @@ export function Settings() {
             ))}
           </select>
         </div>
+      </section>
+
+      {/* ---- AI 配置 ---- */}
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>AI 配置</h3>
+        <div className={styles.aiField}>
+          <label className={styles.aiLabel}>API Key</label>
+          <input
+            className={styles.aiInput}
+            type="password"
+            value={aiConfig.apiKey}
+            onChange={(e) => setAiConfig({ ...aiConfig, apiKey: e.target.value })}
+            placeholder="sk-…"
+            autoComplete="off"
+          />
+        </div>
+        <div className={styles.aiField}>
+          <label className={styles.aiLabel}>接口地址</label>
+          <input
+            className={styles.aiInput}
+            type="text"
+            value={aiConfig.endpoint}
+            onChange={(e) => setAiConfig({ ...aiConfig, endpoint: e.target.value })}
+            placeholder={DEFAULT_AI_CONFIG.endpoint}
+          />
+        </div>
+        <div className={styles.aiField}>
+          <label className={styles.aiLabel}>模型</label>
+          <input
+            className={styles.aiInput}
+            type="text"
+            value={aiConfig.model}
+            onChange={(e) => setAiConfig({ ...aiConfig, model: e.target.value })}
+            placeholder={DEFAULT_AI_CONFIG.model}
+          />
+        </div>
+        <button className={styles.aiSaveBtn} onClick={handleSaveAiConfig}>
+          保存 AI 配置
+        </button>
+        <p className={styles.aiHint}>
+          配置仅保存在本机浏览器存储中，不会写入共享的 data.json。
+          留空 API Key 时，将使用 scripts/.env 中的配置。
+        </p>
+      </section>
+
+      {/* ---- 主题色 ---- */}
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>主题色</h3>
+        <ThemePicker />
+      </section>
+
+      {/* ---- 主题模式 ---- */}
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>主题模式</h3>
+        <ThemeToggle />
       </section>
     </div>
   );

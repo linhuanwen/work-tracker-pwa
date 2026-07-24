@@ -63,6 +63,8 @@ export interface DimensionSummary {
   dimension: string;
   taskCount: number;
   taskTitles: string[];
+  /** 与 taskTitles 对齐的任务具体内容（无内容为空字符串） */
+  taskNotes: string[];
   quantities: Quantity[];
 }
 
@@ -88,6 +90,7 @@ export function getYearlyTasksByDimension(
       dimension: dim,
       taskCount: 0,
       taskTitles: [],
+      taskNotes: [],
       quantities: [],
     };
   }
@@ -100,6 +103,7 @@ export function getYearlyTasksByDimension(
 
     entry.taskCount += 1;
     entry.taskTitles.push(task.title);
+    entry.taskNotes.push(task.notes.trim());
 
     // Aggregate quantities
     for (const q of task.quantities) {

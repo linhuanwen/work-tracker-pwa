@@ -1,0 +1,98 @@
+/* ================================================ */
+/* ConfirmDialog — frosted glass dialog             */
+/* ================================================ */
+
+.dialog {
+  /* Reset native dialog styles */
+  border: none;
+  border-radius: 16px;
+  padding: 0;
+  max-width: 400px;
+  width: calc(100vw - 48px);
+  box-shadow: var(--glass-shadow-modal);
+  background: transparent;
+  outline: none;
+  overflow: visible;
+}
+
+/* Frosted glass backdrop — via ::backdrop pseudo-element */
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Content wrapper with frosted glass */
+.content {
+  background: var(--glass-bg-card);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 28px 24px 20px;
+}
+
+/* Header */
+.header {
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Message body */
+.message {
+  font-size: var(--fs-body);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+/* Footer — action buttons */
+.footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Cancel button */
+.cancelBtn {
+  padding: 8px 20px;
+  background: var(--glass-bg-input);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: 8px;
+  font-size: var(--fs-ui);
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.cancelBtn:hover {
+  background: var(--glass-bg-input-focus);
+}
+
+/* Confirm (danger) button */
+.confirmBtn {
+  padding: 8px 20px;
+  background: var(--color-danger);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: var(--fs-ui);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.confirmBtn:hover {
+  background: var(--color-danger-dark);
+}
+
+.confirmBtn:active {
+  background: #b71c1c;
+}

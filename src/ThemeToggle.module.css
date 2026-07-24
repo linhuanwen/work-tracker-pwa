@@ -1,0 +1,56 @@
+.container {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--glass-bg-input);
+  border-radius: 8px;
+}
+
+.option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 6px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: var(--fs-ui);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 44px;
+  min-width: 44px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.option:hover {
+  color: var(--color-text);
+}
+
+.optionActive {
+  background: var(--glass-bg-card-hover);
+  color: var(--color-primary);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.emoji {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.label {
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .option {
+    padding: 8px 4px;
+    gap: 4px;
+  }
+  .label {
+    font-size: var(--fs-tag);
+  }
+}

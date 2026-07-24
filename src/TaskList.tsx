@@ -4,6 +4,7 @@ import type { UpdateTaskPatch } from './taskUtils';
 import { filterActiveTasks, filterCancelledTasks, groupTasksByPriority } from './taskUtils';
 import { TaskCard } from './TaskCard';
 import { UrgentZone } from './UrgentZone';
+import { Icon } from './Icon';
 import styles from './TaskList.module.css';
 
 // ============================================================
@@ -16,6 +17,7 @@ interface TaskListProps {
   onTransitionStatus: (taskId: string, newStatus: TaskStatus) => void;
   onUpdateTask: (taskId: string, patch: UpdateTaskPatch) => void;
   onEditTask: (task: Task) => void;
+  onDeleteTask: (taskId: string) => void;
   onMoveUrgentUp: (taskId: string) => void;
   onMoveUrgentDown: (taskId: string) => void;
   toast: (message: string) => void;
@@ -50,6 +52,7 @@ export function TaskList({
   onTransitionStatus,
   onUpdateTask,
   onEditTask,
+  onDeleteTask,
   onMoveUrgentUp,
   onMoveUrgentDown,
   toast: _toast,
@@ -68,6 +71,7 @@ export function TaskList({
       <UrgentZone
         tasks={groups.urgent}
         onEditTask={onEditTask}
+        onDeleteTask={onDeleteTask}
         onMoveUp={onMoveUrgentUp}
         onMoveDown={onMoveUrgentDown}
       />
@@ -83,7 +87,7 @@ export function TaskList({
 
       {active.length === 0 && cancelled.length > 0 && (
         <div className={styles.empty}>
-          所有任务已归档。在下方"已归档"区查看已取消的任务。
+          所有任务已归档。在下方"已完成"区查看已取消的任务。
         </div>
       )}
 
@@ -112,6 +116,7 @@ export function TaskList({
                   categories={categories}
                   onTransitionStatus={onTransitionStatus}
                   onUpdateTask={onUpdateTask}
+                  onDelete={onDeleteTask}
                 />
               ))}
             </div>
@@ -120,7 +125,7 @@ export function TaskList({
       })}
 
       {/* ================================================ */}
-      {/* 已归档折叠区（取消的任务） */}
+      {/* 已完成折叠区（取消的任务） */}
       {/* ================================================ */}
       {cancelled.length > 0 && (
         <div className={styles.archiveSection}>
@@ -133,14 +138,24 @@ export function TaskList({
               className={`${styles.archiveArrow} ${archiveOpen ? styles.archiveArrowOpen : ''}`}
               aria-hidden="true"
             >
-              ▸
+              <Icon name="chevron-right" size={14} />
             </span>
-            已归档
+            已完成
             <span className={styles.archiveCount}>{cancelled.length}</span>
           </button>
 
-          {archiveOpen && (
-            <div className={styles.archiveCards}>
+          <div
+            className={styles.archiveCards}
+            data-archive-inner=""
+            style={{
+              display: 'grid',
+              gridTemplateRows: archiveOpen ? '1fr' : '0fr',
+              transition: 'grid-template-rows 200ms',
+            }}
+          >
+            <div
+              className={styles.archiveCardsInner}
+            >
               {cancelled.map((task) => (
                 <TaskCard
                   key={task.id}
@@ -148,10 +163,11 @@ export function TaskList({
                   categories={categories}
                   onTransitionStatus={onTransitionStatus}
                   onUpdateTask={onUpdateTask}
+                  onDelete={onDeleteTask}
                 />
               ))}
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>

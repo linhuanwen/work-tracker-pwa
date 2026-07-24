@@ -18,8 +18,15 @@ dist/
 
 # PyInstaller
 build/
-*.spec
 
-# Generated exe (rebuild with: pyinstaller --onefile --add-data "dist;dist" --name "工作清单" serve.py)
+# Local runtime state
+.wjl-state.json
+backups/
+.claude/
+app.py
+app.css
+
+# Generated exe / installer output
+release/
 工作清单.exe
 共享/

@@ -9,7 +9,6 @@ vi.mock('../AddTaskForm.module.css', () => ({ default: { form: 'form', row: 'row
 vi.mock('../TaskCard.module.css', () => ({ default: { card: 'card', cardHeader: 'cardHeader', cardHeaderExpanded: 'cardHeaderExpanded', statusDot: 'statusDot', statusTodo: 'statusTodo', statusInProgress: 'statusInProgress', statusDone: 'statusDone', statusCancelled: 'statusCancelled', body: 'body', title: 'title', titleDone: 'titleDone', titleCancelled: 'titleCancelled', meta: 'meta', categoryTag: 'categoryTag', priorityTag: 'priorityTag', priorityUrgent: 'priorityUrgent', priorityImportant: 'priorityImportant', priorityNormal: 'priorityNormal', deadlineTag: 'deadlineTag', dateFooter: 'dateFooter', dateText: 'dateText', statusSelect: 'statusSelect', expandArrow: 'expandArrow', expandArrowOpen: 'expandArrowOpen', editPanel: 'editPanel', editLabel: 'editLabel', editRow: 'editRow', editInput: 'editInput', editSelect: 'editSelect', editTextarea: 'editTextarea', editHint: 'editHint', priorityBtnGroup: 'priorityBtnGroup', priorityBtnActive: 'priorityBtnActive' } }));
 vi.mock('../TaskList.module.css', () => ({ default: { container: 'container', group: 'group', groupHeader: 'groupHeader', groupDot: 'groupDot', groupDotUrgent: 'groupDotUrgent', groupDotImportant: 'groupDotImportant', groupDotNormal: 'groupDotNormal', groupTitle: 'groupTitle', groupCount: 'groupCount', empty: 'empty', cards: 'cards', urgentGroup: 'urgentGroup', archiveSection: 'archiveSection', archiveToggle: 'archiveToggle', archiveArrow: 'archiveArrow', archiveArrowOpen: 'archiveArrowOpen', archiveCount: 'archiveCount', archiveCards: 'archiveCards' } }));
 vi.mock('../UrgentZone.module.css', () => ({ default: { zone: 'zone', header: 'header', headerIcon: 'headerIcon', headerTitle: 'headerTitle', headerCount: 'headerCount', cards: 'cards', urgentCard: 'urgentCard', cardBody: 'cardBody', cardTitle: 'cardTitle', cardTitleDone: 'cardTitleDone', cardMeta: 'cardMeta', categoryTag: 'categoryTag', leaderBadge: 'leaderBadge', quantityTag: 'quantityTag', arrows: 'arrows', arrowBtn: 'arrowBtn' } }));
-vi.mock('../Fab.module.css', () => ({ default: { fab: 'fab', fabIcon: 'fabIcon' } }));
 vi.mock('../InstallBanner.module.css', () => ({ default: { banner: 'banner', message: 'message', actions: 'actions', installBtn: 'installBtn', dismissBtn: 'dismissBtn' } }));
 
 /**
@@ -176,40 +175,54 @@ describe('TaskCard — touch-friendly rendering', () => {
 });
 
 // ----------------------------------------------------------------
-// Seam 4b: FAB renders correctly
+// Seam 4b: FAB renders correctly (inline in App.tsx)
 // ----------------------------------------------------------------
 
 describe('FAB — Floating Action Button', () => {
-  let Fab: React.ComponentType<{ onClick: () => void; label?: string }>;
+  let Icon: React.ComponentType<{ name: string; size?: number }>;
 
   beforeEach(async () => {
-    const mod = await import('../Fab');
-    Fab = mod.Fab;
+    const mod = await import('../Icon');
+    Icon = mod.Icon;
   });
 
   it('renders with aria-label for accessibility', () => {
     const handleClick = vi.fn();
-    render(<Fab onClick={handleClick} />);
+    render(
+      <button onClick={handleClick} aria-label="添加任务">
+        <Icon name="plus" size={24} />
+      </button>,
+    );
 
     const button = screen.getByRole('button', { name: '添加任务' });
     expect(button).toBeDefined();
-    expect(button.textContent).toContain('+');
+    // FAB now renders a lucide Plus SVG icon instead of '+' character
+    expect(button.querySelector('svg')).not.toBeNull();
   });
 
   it('calls onClick when clicked', () => {
     const handleClick = vi.fn();
-    render(<Fab onClick={handleClick} />);
+    render(
+      <button onClick={handleClick} aria-label="添加任务">
+        <Icon name="plus" size={24} />
+      </button>,
+    );
 
     const button = screen.getByRole('button', { name: '添加任务' });
     fireEvent.click(button);
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
-  it('renders with custom label', () => {
+  it('renders SVG Plus icon (no bare + character)', () => {
     const handleClick = vi.fn();
-    render(<Fab onClick={handleClick} label="新建任务" />);
+    render(
+      <button onClick={handleClick} aria-label="添加任务">
+        <Icon name="plus" size={24} />
+      </button>,
+    );
 
-    expect(screen.getByRole('button', { name: '新建任务' })).toBeDefined();
+    const button = screen.getByRole('button', { name: '添加任务' });
+    expect(button.textContent).not.toBe('+');
   });
 });
 

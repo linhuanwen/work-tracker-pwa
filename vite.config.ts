@@ -23,7 +23,7 @@ export default defineConfig({
         name: '工作清单',
         short_name: '工作清单',
         description: '个人工作管理 & 自动小结 PWA',
-        theme_color: '#1a73e8',
+        theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
