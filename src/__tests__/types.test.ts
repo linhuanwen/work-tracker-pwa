@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { DataJson, Task, Project, Settings, Archive } from '../types';
-import { createDefaultDataJson, validateDataJson } from '../types';
+import { createDefaultDataJson, validateDataJson, migrateDataJson, parseDataJson, DATA_VERSION } from '../types';
 
 /**
  * Seam 1: data.json TypeScript types
@@ -62,6 +62,7 @@ const VALID_ARCHIVE: Archive = {
 
 const VALID_DATA_JSON: DataJson = {
   version: 1,
+  revision: 0,
   lastModified: '2026-07-21T10:00:00.000+08:00',
   settings: VALID_SETTINGS,
   projects: [VALID_PROJECT],
@@ -159,5 +160,52 @@ describe('createDefaultDataJson', () => {
     const after = new Date().toISOString();
     expect(data.lastModified >= before).toBe(true);
     expect(data.lastModified <= after).toBe(true);
+  });
+});
+
+describe('migrateDataJson — 版本迁移', () => {
+  it('接受当前版本的合法数据并归一化 version 字段', () => {
+    const data = migrateDataJson(VALID_DATA_JSON);
+    expect(data.version).toBe(DATA_VERSION);
+    expect(validateDataJson(data).valid).toBe(true);
+  });
+
+  it('version 缺失时视为 v1 并补齐 version 字段', () => {
+    const { version: _omit, ...rest } = VALID_DATA_JSON;
+    const data = migrateDataJson(rest);
+    expect(data.version).toBe(DATA_VERSION);
+  });
+
+  it('version 高于当前版本时抛错', () => {
+    const future = { ...VALID_DATA_JSON, version: DATA_VERSION + 1 };
+    expect(() => migrateDataJson(future)).toThrow(/高于当前应用支持/);
+  });
+
+  it('非对象输入抛错', () => {
+    expect(() => migrateDataJson(null)).toThrow(/根节点必须是对象/);
+    expect(() => migrateDataJson('hello')).toThrow(/根节点必须是对象/);
+    expect(() => migrateDataJson([1, 2, 3])).toThrow(/根节点必须是对象/);
+  });
+});
+
+describe('parseDataJson — 安全解析', () => {
+  it('解析合法 JSON 文本', () => {
+    const data = parseDataJson(JSON.stringify(VALID_DATA_JSON));
+    expect(data.version).toBe(DATA_VERSION);
+    expect(validateDataJson(data).valid).toBe(true);
+  });
+
+  it('非法 JSON 抛错', () => {
+    expect(() => parseDataJson('{ not json')).toThrow(/不是有效的 JSON/);
+  });
+
+  it('字段缺失抛错并给出原因', () => {
+    const { tasks: _omit, ...rest } = VALID_DATA_JSON;
+    expect(() => parseDataJson(JSON.stringify(rest))).toThrow(/内容不完整或已损坏/);
+  });
+
+  it('字段类型错误（如 version 为字符串）抛错', () => {
+    const bad = { ...VALID_DATA_JSON, version: '1' };
+    expect(() => parseDataJson(JSON.stringify(bad))).toThrow(/version 字段类型错误/);
   });
 });

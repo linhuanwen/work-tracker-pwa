@@ -1,13 +1,9 @@
-# 桌面启动器（launcher.py）
+# 桌面启动器（launcher.py，含 --headless 纯服务器模式）
 pywebview>=6.0
 pystray>=0.19
 Pillow>=10.0
 python-docx>=1.0
 requests>=2.28
-
-# Qt 桌面替代（main.py / models / screens / services）
-PySide6>=6.5.0
-pydantic>=2.0
 
 # 打包工具
 pyinstaller>=6.0

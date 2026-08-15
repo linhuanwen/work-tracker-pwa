@@ -52,14 +52,14 @@
 npm install
 npm run build
 
-# 启动本地 HTTP 服务器
-python serve.py
+# 启动本地 HTTP 服务器（无窗口，纯 HTTP，含完整 API）
+python launcher.py --headless
 ```
 
 4. 浏览器打开 `http://127.0.0.1:5173`
 5. 浏览器地址栏右侧会出现"安装"图标 → 点击安装为独立 PWA 应用 → 钉到任务栏
 
-每次使用时，先运行 `python serve.py` 启动服务器，然后打开 PWA 应用。
+每次使用时，先运行 `python launcher.py --headless` 启动服务器，然后打开 PWA 应用。
 
 ---
 

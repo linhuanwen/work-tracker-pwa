@@ -133,6 +133,7 @@ export interface Settings {
 /** data.json 顶层结构 */
 export interface DataJson {
   version: number;
+  revision: number; // 数据修改计数：每次保存 +1，用于多设备冲突检测
   lastModified: string; // ISO8601
   settings: Settings;
   projects: Project[];
@@ -143,6 +144,9 @@ export interface DataJson {
 // ============================================================
 // 默认数据工厂
 // ============================================================
+
+/** data.json 当前 schema 版本。升级 schema 时递增，并在 migrateDataJson 中补迁移逻辑。 */
+export const DATA_VERSION = 1;
 
 export const DEFAULT_CATEGORIES: string[] = [
   '人员调配',
@@ -156,7 +160,8 @@ export const DEFAULT_CATEGORIES: string[] = [
 
 export function createDefaultDataJson(): DataJson {
   return {
-    version: 1,
+    version: DATA_VERSION,
+    revision: 0,
     lastModified: new Date().toISOString(),
     settings: {
       weeklySummaryDay: 5, // 周五
@@ -340,6 +345,8 @@ export function validateDataJson(data: unknown): ValidationResult {
 
   if (!isNumber(data.version))
     errors.push('version: must be a number');
+  if (!isNumber(data.revision))
+    errors.push('revision: must be a number');
   if (!isString(data.lastModified))
     errors.push('lastModified: must be a string');
 
@@ -361,4 +368,72 @@ export function validateDataJson(data: unknown): ValidationResult {
     errors.push('archives: must be an object');
 
   return { valid: errors.length === 0, errors };
+}
+
+// ============================================================
+// 数据版本迁移 & 安全解析
+// ============================================================
+
+/**
+ * 将任意来源的 data.json 内容迁移到当前数据版本。
+ *
+ * - 非对象 → 抛错
+ * - version 缺失 → 视为 1（项目自 v1 起步，早期文件可能缺少该字段）
+ * - version 高于当前 → 抛错（数据由更新版本的应用写出，需先升级应用）
+ * - version 低于当前 → 依次执行各版本迁移（当前无迁移，预留钩子）
+ *
+ * 迁移只负责版本号相关的结构升级；字段级完整性由 validateDataJson 校验。
+ */
+export function migrateDataJson(raw: unknown): DataJson {
+  if (!isObject(raw)) {
+    throw new Error('数据文件格式错误：根节点必须是对象');
+  }
+
+  // version 字段：缺失容忍（早期文件），存在但非数字视为损坏
+  const rawVersion = raw.version;
+  if (rawVersion !== undefined && typeof rawVersion !== 'number') {
+    throw new Error('数据文件 version 字段类型错误，可能已损坏');
+  }
+  const version = typeof rawVersion === 'number' ? rawVersion : 1;
+  if (version > DATA_VERSION) {
+    throw new Error(
+      `数据文件版本 ${version} 高于当前应用支持的版本 ${DATA_VERSION}，请升级应用后再打开`,
+    );
+  }
+
+  // 预留版本迁移钩子：当 DATA_VERSION 递增时，在此处按版本号逐级补结构。
+  // 例：if (version < 2) { data = migrateV1ToV2(data); }
+  const rawRecord = raw as Record<string, unknown>;
+  const data: Record<string, unknown> = {
+    ...rawRecord,
+    version: DATA_VERSION,
+    // revision 缺失视为 0（老数据），后续保存时递增
+    revision: typeof rawRecord.revision === 'number' ? rawRecord.revision : 0,
+  };
+
+  return data as unknown as DataJson;
+}
+
+/**
+ * 解析 data.json 文本为 DataJson。
+ *
+ * 顺序：JSON.parse → migrateDataJson（版本迁移）→ validateDataJson（字段校验）。
+ * 任一环节失败都会抛错，错误消息面向用户，可直接展示。
+ */
+export function parseDataJson(text: string): DataJson {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error('数据文件不是有效的 JSON，可能已损坏');
+  }
+
+  const migrated = migrateDataJson(parsed);
+  const result = validateDataJson(migrated);
+  if (!result.valid) {
+    throw new Error(
+      `数据文件内容不完整或已损坏：${result.errors.slice(0, 3).join('；')}`,
+    );
+  }
+  return migrated;
 }

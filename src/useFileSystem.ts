@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import type { DataJson } from './types';
-import { createDefaultDataJson } from './types';
+import { createDefaultDataJson, parseDataJson } from './types';
 
 const DB_NAME = 'wjl-fs-handles';
 const DB_VERSION = 1;
@@ -182,20 +182,155 @@ async function loadBackendData(): Promise<DataJson | null> {
   }
 }
 
-async function saveBackendData(data: DataJson): Promise<boolean> {
+/** 后端保存结果。 */
+type SaveBackendResult =
+  | { status: 'ok'; revision: number }
+  | { status: 'conflict'; serverRevision: number }
+  | { status: 'error'; message: string };
+
+async function saveBackendData(data: DataJson): Promise<SaveBackendResult> {
+  const expectedRevision = data.revision ?? 0;
+  const body = {
+    ...data,
+    lastModified: new Date().toISOString(),
+    expectedRevision,
+  };
   try {
-    const toSave: DataJson = {
-      ...data,
-      lastModified: new Date().toISOString(),
-    };
     const resp = await fetch('/api/data', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(toSave),
+      body: JSON.stringify(body),
     });
-    return resp.ok;
+    const result = (await resp.json().catch(() => null)) as {
+      ok?: boolean;
+      conflict?: boolean;
+      revision?: number;
+      serverRevision?: number;
+      error?: string;
+    } | null;
+
+    if (resp.ok) {
+      return { status: 'ok', revision: result?.revision ?? expectedRevision + 1 };
+    }
+    if (resp.status === 409 && result?.conflict) {
+      return { status: 'conflict', serverRevision: result.serverRevision ?? -1 };
+    }
+    return { status: 'error', message: result?.error ?? `保存失败（HTTP ${resp.status}）` };
   } catch {
-    return false;
+    return { status: 'error', message: '后端不可达，请确认桌面应用已启动' };
+  }
+}
+
+// ============================================================
+// 冲突检测（revision 计数）
+// ============================================================
+
+/**
+ * 计算保存后的 revision 并检测冲突（纯函数，便于测试）。
+ * - local === remote：无外部修改，next = local + 1
+ * - local !== remote：磁盘已被其他设备改动，返回 conflict
+ */
+export function computeNextRevision(
+  local: number,
+  remote: number,
+): { conflict: boolean; next: number } {
+  if (local !== remote) return { conflict: true, next: local };
+  return { conflict: false, next: local + 1 };
+}
+
+// ============================================================
+// 自动快照（data.json 备份轮转）
+// ============================================================
+
+export const BACKUP_COUNT = 5;
+export const BACKUP_BASENAME = 'data.json.bak';
+
+/**
+ * 返回备份轮转步骤（纯函数，便于测试）。
+ * 每条 step：把 `from` 文件的内容写到 `to`；`from === null` 表示写入当前 data.json 内容。
+ * 最旧的一份（`{basename}.{count-1}`）由调用方先删除。
+ */
+export function backupRotationSteps(count = BACKUP_COUNT): { from: string | null; to: string }[] {
+  const steps: { from: string | null; to: string }[] = [];
+  for (let i = count - 1; i >= 1; i--) {
+    const from = i === 1 ? BACKUP_BASENAME : `${BACKUP_BASENAME}.${i - 1}`;
+    steps.push({ from, to: `${BACKUP_BASENAME}.${i}` });
+  }
+  steps.push({ from: null, to: BACKUP_BASENAME });
+  return steps;
+}
+
+async function tryRemoveEntry(
+  dirHandle: FileSystemDirectoryHandle,
+  name: string,
+): Promise<void> {
+  try {
+    await dirHandle.removeEntry(name);
+  } catch (err) {
+    if ((err as DOMException).name !== 'NotFoundError') throw err;
+  }
+}
+
+async function readTextIfExists(
+  dirHandle: FileSystemDirectoryHandle,
+  name: string,
+): Promise<string | null> {
+  try {
+    const fileHandle = await dirHandle.getFileHandle(name);
+    const file = await fileHandle.getFile();
+    return await file.text();
+  } catch (err) {
+    if ((err as DOMException).name === 'NotFoundError') return null;
+    throw err;
+  }
+}
+
+async function writeTextFile(
+  dirHandle: FileSystemDirectoryHandle,
+  name: string,
+  content: string,
+): Promise<void> {
+  const fileHandle = await dirHandle.getFileHandle(name, { create: true });
+  const writable = await fileHandle.createWritable();
+  await writable.write(content);
+  await writable.close();
+}
+
+/** 覆盖 data.json 前，把当前内容轮转进 .bak 快照链（保留最近 BACKUP_COUNT 份）。 */
+async function rotateBackups(
+  dirHandle: FileSystemDirectoryHandle,
+  currentContent: string,
+): Promise<void> {
+  const steps = backupRotationSteps();
+  await tryRemoveEntry(dirHandle, `${BACKUP_BASENAME}.${BACKUP_COUNT - 1}`);
+
+  for (const step of steps) {
+    if (step.from === null) {
+      await writeTextFile(dirHandle, step.to, currentContent);
+      continue;
+    }
+    const content = await readTextIfExists(dirHandle, step.from);
+    if (content !== null) {
+      await writeTextFile(dirHandle, step.to, content);
+    } else {
+      await tryRemoveEntry(dirHandle, step.to);
+    }
+  }
+}
+
+/** 数据损坏时把坏文件另存为带时间戳的 .corrupt 文件，便于排查，且不覆盖原坏文件。 */
+async function backupCorruptFile(
+  dirHandle: FileSystemDirectoryHandle,
+  fileName: string,
+): Promise<void> {
+  try {
+    const fileHandle = await dirHandle.getFileHandle(fileName);
+    const file = await fileHandle.getFile();
+    const text = await file.text();
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    await writeTextFile(dirHandle, `${fileName}.corrupt-${stamp}`, text);
+  } catch {
+    // 备份失败不阻断主流程——仍抛出原始错误
   }
 }
 
@@ -211,12 +346,15 @@ async function readJsonFile(
     const fileHandle = await dirHandle.getFileHandle(fileName);
     const file = await fileHandle.getFile();
     const text = await file.text();
-    return JSON.parse(text) as DataJson;
+    // 解析 + 版本迁移 + 字段校验，任一失败抛错（错误信息面向用户）
+    return parseDataJson(text);
   } catch (err) {
     const domErr = err as DOMException;
     if (domErr.name === 'NotFoundError') {
       return null;
     }
+    // 数据损坏：先备份坏文件，再抛出，避免在坏数据上继续运行
+    await backupCorruptFile(dirHandle, fileName);
     throw err;
   }
 }
@@ -226,6 +364,12 @@ async function writeJsonFile(
   fileName: string,
   data: DataJson,
 ): Promise<void> {
+  // 覆盖前先把当前内容轮转进快照链（保留最近 BACKUP_COUNT 份）
+  const currentContent = await readTextIfExists(dirHandle, fileName);
+  if (currentContent !== null) {
+    await rotateBackups(dirHandle, currentContent);
+  }
+
   const fileHandle = await dirHandle.getFileHandle(fileName, {
     create: true,
   });
@@ -365,9 +509,11 @@ export function useFileSystem(): UseFileSystemReturn {
 
       setData(existingData);
       return existingData;
-    } catch {
-      await clearStoredHandle();
-      setHasHandle(false);
+    } catch (err) {
+      // 读取/校验失败（如数据损坏）时保留已存 handle，避免用户误以为从未打开过文件夹；
+      // 错误消息交给 setError 展示，用户可重试或查看 .corrupt 备份。
+      const msg = err instanceof Error ? err.message : '无法读取数据文件';
+      setError(msg);
       return null;
     } finally {
       setLoading(false);
@@ -376,18 +522,24 @@ export function useFileSystem(): UseFileSystemReturn {
 
   const saveData = useCallback(
     async (newData: DataJson): Promise<void> => {
-      const toSave: DataJson = {
-        ...newData,
-        lastModified: new Date().toISOString(),
-      };
-
+      // backend 模式：POST 带 expectedRevision，由后端做冲突检测并递增 revision
       if (dataSourceRef.current === 'backend') {
-        const ok = await saveBackendData(toSave);
-        if (ok) {
-          setData(toSave);
+        const result = await saveBackendData(newData);
+        if (result.status === 'ok') {
+          setData({
+            ...newData,
+            revision: result.revision,
+            lastModified: new Date().toISOString(),
+          });
           return;
         }
-        setError('后端保存失败，请检查 wjl-config.txt 配置');
+        if (result.status === 'conflict') {
+          setError(
+            '检测到数据已被其他设备修改，已暂停自动保存以避免覆盖。请重新打开文件夹加载最新数据。',
+          );
+          return;
+        }
+        setError(result.message);
         return;
       }
 
@@ -397,6 +549,23 @@ export function useFileSystem(): UseFileSystemReturn {
         return;
       }
       try {
+        // FSA 模式：写盘前读磁盘当前 revision，对比内存 revision 做冲突检测
+        const remote = await readJsonFile(dirHandle, DATA_FILE_NAME);
+        const localRev = newData.revision ?? 0;
+        const remoteRev = remote ? (remote.revision ?? 0) : localRev;
+        const { conflict, next } = computeNextRevision(localRev, remoteRev);
+        if (conflict) {
+          setError(
+            '检测到数据已被其他设备修改，已暂停自动保存以避免覆盖。请重新打开文件夹加载最新数据。',
+          );
+          return;
+        }
+
+        const toSave: DataJson = {
+          ...newData,
+          revision: next,
+          lastModified: new Date().toISOString(),
+        };
         await writeJsonFile(dirHandle, DATA_FILE_NAME, toSave);
         setData(toSave);
       } catch (err) {

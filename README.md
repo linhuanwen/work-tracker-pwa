@@ -84,8 +84,8 @@ PWA 即浏览器打开的网页，可"安装"成独立桌面窗口——不需�
 npm install
 npm run build
 
-# 启动本地服务器
-python serve.py
+# 启动本地服务器（无窗口，纯 HTTP，含完整 API）
+python launcher.py --headless
 # 或: npx serve dist
 ```
 
@@ -115,6 +115,12 @@ python launcher.py
 2. 在应用设置中选择该文件夹
 3. 其他设备（手机/电脑）的 PWA 指向同一文件，数据自动同步
 
+## 数据安全与自动备份
+
+应用每次保存前会把旧的 `data.json` 轮转备份为 `data.json.bak`（保留最近 5 份：`.bak`、`.bak.1` … `.bak.4`），误删或覆盖后可从这些快照恢复。
+
+如果 `data.json` 被云同步或手改导致损坏（JSON 无效、字段缺失、版本不兼容），应用不会在坏数据上继续运行，而是把坏文件另存为 `data.json.corrupt-<时间戳>` 并提示检查，避免静默丢数据。
+
 ## 项目结构
 
 ```
@@ -129,8 +135,7 @@ python launcher.py
 │   └── .env.example
 ├── public/                          ← PWA 图标和静态资源
 ├── dist/                            ← 前端构建产物
-├── launcher.py                      ← 桌面启动器入口
-├── serve.py                         ← 轻量 HTTP 服务器
+├── launcher.py                      ← 桌面启动器 + HTTP 服务器（--headless 纯服务器模式）
 └── release/                         ← 打包好的安装包
 ```
 

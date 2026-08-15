@@ -17,8 +17,9 @@ HTML 透明区域可透出桌面壁纸，卡片以玻璃态悬浮。
   · 重复启动 = 通知已有实例显示窗口（单实例）
 
 用法:
-    pythonw launcher.py          （无控制台）
-    python launcher.py --debug   （带控制台信息）
+    pythonw launcher.py             （无控制台，带桌面窗口+托盘）
+    python launcher.py --debug      （带控制台信息）
+    python launcher.py --headless   （纯 HTTP 服务器，无窗口，供浏览器 PWA）
 """
 
 import http.server
@@ -745,6 +746,41 @@ def read_data_json() -> dict | None:
         return _default_data_dict()
 
 
+# 自动快照：覆盖 data.json 前，把当前内容轮转进 .bak 快照链（保留最近 BACKUP_COUNT 份）
+BACKUP_COUNT = 5
+BACKUP_BASENAME = "data.json.bak"
+
+
+def _backup_data_json(data_path: Path) -> None:
+    """Rotate data.json into a .bak snapshot chain before it is overwritten.
+
+    Never raises: a failed snapshot must not block saving the user's data.
+    """
+    import shutil
+
+    def p(name: str) -> Path:
+        return data_path.with_name(name)
+
+    try:
+        oldest = p(f"{BACKUP_BASENAME}.{BACKUP_COUNT - 1}")
+        if oldest.exists():
+            oldest.unlink()
+
+        # Shift older snapshots down (data.json.bak -> .bak.1 -> ... -> .bak.N-1)
+        for i in range(BACKUP_COUNT - 1, 0, -1):
+            src = p(BACKUP_BASENAME if i == 1 else f"{BACKUP_BASENAME}.{i - 1}")
+            dst = p(f"{BACKUP_BASENAME}.{i}")
+            if src.exists():
+                if dst.exists():
+                    dst.unlink()
+                src.replace(dst)
+
+        if data_path.exists():
+            shutil.copy2(data_path, p(BACKUP_BASENAME))
+    except OSError:
+        pass
+
+
 def write_data_json(data: dict) -> bool:
     """Write data.json to the configured data folder atomically."""
     if not _data_folder_path:
@@ -752,6 +788,8 @@ def write_data_json(data: dict) -> bool:
     data_path = Path(_data_folder_path) / "data.json"
     try:
         data_path.parent.mkdir(parents=True, exist_ok=True)
+        # Snapshot the current file before overwriting it
+        _backup_data_json(data_path)
         tmp_path = data_path.with_suffix(".tmp")
         with open(tmp_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
@@ -759,6 +797,26 @@ def write_data_json(data: dict) -> bool:
         return True
     except Exception:
         return False
+
+
+def _current_revision() -> int | None:
+    """Return the current data.json revision, or None if it cannot be determined.
+
+    None means "no conflict signal": the file is missing or unreadable, in
+    which case we do not block the write (the save will create/heal it).
+    """
+    if not _data_folder_path:
+        return None
+    data_path = Path(_data_folder_path) / "data.json"
+    if not data_path.exists():
+        return None
+    try:
+        with open(data_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        rev = data.get("revision")
+        return rev if isinstance(rev, int) else 0
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -936,11 +994,32 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             body = self.rfile.read(length)
             try:
                 payload = json.loads(body)
+
+                # 乐观并发控制：expectedRevision 由前端提供，检测多设备冲突
+                expected = payload.get("expectedRevision")
+                if isinstance(expected, int):
+                    current_rev = _current_revision()
+                    if current_rev is not None and current_rev != expected:
+                        self.send_response(409)
+                        self.send_header('Content-type', 'application/json; charset=utf-8')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({
+                            "ok": False,
+                            "conflict": True,
+                            "serverRevision": current_rev,
+                        }).encode('utf-8'))
+                        return
+                    # 无冲突：递增 revision 后再落盘
+                    payload["revision"] = expected + 1
+
                 ok = write_data_json(payload)
                 self.send_response(200 if ok else 500)
                 self.send_header('Content-type', 'application/json; charset=utf-8')
                 self.end_headers()
-                self.wfile.write(json.dumps({"ok": ok}).encode('utf-8'))
+                self.wfile.write(json.dumps({
+                    "ok": ok,
+                    "revision": payload.get("revision"),
+                }).encode('utf-8'))
             except json.JSONDecodeError:
                 self.send_response(400)
                 self.end_headers()
@@ -1036,12 +1115,13 @@ def is_server_running():
 
 def main():
     debug = "--debug" in sys.argv
+    headless = "--headless" in sys.argv
     global _debug_mode, _data_folder_path, _webview_window
     _debug_mode = debug
 
     # Load configured data folder (if any) so /api/data can serve it
     _data_folder_path = get_configured_data_folder(debug=debug)
-    if debug:
+    if debug or headless:
         if _data_folder_path:
             print(f"[*] 数据文件夹: {_data_folder_path}")
         else:
@@ -1050,6 +1130,11 @@ def main():
     # 0. 单实例：已有实例在跑 → 通知它显示窗口，本进程直接退出
     #    （避免第二个窗口 + 第二个托盘图标）
     if is_server_running():
+        if headless:
+            # 无窗口服务器已在运行，直接退出
+            if debug:
+                print("[*] 已有实例在运行，本进程退出")
+            sys.exit(0)
         if notify_existing_instance():
             if debug:
                 print("[*] 已有实例在运行，已通知其显示窗口，本进程退出")
@@ -1063,8 +1148,19 @@ def main():
         if is_server_running():
             break
         time.sleep(0.05)
-    if debug:
+    if debug or headless:
         print(f"Server started at {URL}")
+
+    # 1.5 headless 模式：纯 HTTP 服务器，无窗口无托盘
+    #     （供浏览器 PWA / 手机 backend 模式使用；不依赖 pywebview/pystray）
+    if headless:
+        print("Headless 模式运行中（Ctrl+C 退出）")
+        try:
+            while True:
+                time.sleep(3600)
+        except KeyboardInterrupt:
+            pass
+        return
 
     # 2. Create window
     import webview
