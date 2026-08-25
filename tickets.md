@@ -72,3 +72,4 @@ Spec: [docs/DESKTOP-SHORTCUT-SPEC.md](docs/DESKTOP-SHORTCUT-SPEC.md)
 | Ticket | GitHub                                                          | 标题                                  | 状态      |
 | ------ | --------------------------------------------------------------- | ------------------------------------- | --------- |
 | C1     | [#18](https://github.com/linhuanwen/work-tracker-pwa/issues/18) | 发布流程脚本化（一条命令出包 + 文档） | ✅ 已实现 |
+| C2     | [#19](https://github.com/linhuanwen/work-tracker-pwa/issues/19) | 代码质量门禁与本地检查脚本            | ✅ 已实现 |

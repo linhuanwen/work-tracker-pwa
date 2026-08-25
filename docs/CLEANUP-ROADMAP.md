@@ -23,6 +23,9 @@
 - [x] 打包瘦身：`launcher.spec` 排除 `numpy/scipy/pandas`，exe 从 82M 降到 31M
 - [x] 发布流程脚本化：`python scripts/build_release.py` 一条命令出包
 - [x] release 压缩包排除本地运行状态文件（如 `.wjl-state.json`）
+- [x] 引入 ESLint + Prettier，前端格式统一
+- [x] 引入 Ruff，Python 静态检查通过
+- [x] 新增 `python scripts/check_all.py` 统一质量门禁
 
 ## 后续优化候选
 
@@ -38,6 +41,7 @@
 
 ## Ticket 映射
 
-| Ticket            | GitHub                                                          | 状态      |
-| ----------------- | --------------------------------------------------------------- | --------- |
-| C1 发布流程脚本化 | [#18](https://github.com/linhuanwen/work-tracker-pwa/issues/18) | ✅ 已实现 |
+| Ticket                        | GitHub                                                          | 状态      |
+| ----------------------------- | --------------------------------------------------------------- | --------- |
+| C1 发布流程脚本化             | [#18](https://github.com/linhuanwen/work-tracker-pwa/issues/18) | ✅ 已实现 |
+| C2 代码质量门禁与本地检查脚本 | [#19](https://github.com/linhuanwen/work-tracker-pwa/issues/19) | ✅ 已实现 |

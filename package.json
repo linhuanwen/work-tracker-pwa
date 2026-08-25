@@ -13,7 +13,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint:strict": "eslint . --max-warnings=0"
+    "lint:strict": "eslint . --max-warnings=0",
+    "typecheck": "tsc -b"
   },
   "dependencies": {
     "lucide-react": "^1.26.0",
