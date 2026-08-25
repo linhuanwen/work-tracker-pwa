@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { Task, Quantity, SubTask, Priority } from './types';
 import { useData, DEFAULT_CATEGORIES } from './DataContext';
-import { calcDefaultHibernateUntil, addSubtask, toggleSubtask, deleteSubtask } from './taskUtils';
+import { calcDefaultHibernateUntil, addSubtask, updateSubtask } from './taskUtils';
+import { SubtaskEditor } from './SubtaskEditor';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Icon } from './Icon';
 import styles from './TaskEditPanel.module.css';
@@ -48,7 +49,6 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
 
   // 子任务
   const [subtasks, setSubtasks] = useState<SubTask[]>(task.subtasks ?? []);
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
 
   // 跨年休眠
   const [isCrossYear, setIsCrossYear] = useState(task.isCrossYear);
@@ -72,22 +72,6 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
       return { ...q, [field]: field === 'value' ? Number(value) || 0 : value };
     });
     setQuantities(updated);
-  };
-
-  // Subtask handlers
-  const handleAddSubtask = () => {
-    const trimmed = newSubtaskTitle.trim();
-    if (!trimmed) return;
-    setSubtasks(addSubtask(subtasks, trimmed));
-    setNewSubtaskTitle('');
-  };
-
-  const handleToggleSubtask = (subId: string) => {
-    setSubtasks(toggleSubtask(subtasks, subId));
-  };
-
-  const handleDeleteSubtask = (subId: string) => {
-    setSubtasks(deleteSubtask(subtasks, subId));
   };
 
   const handleSave = () => {
@@ -343,64 +327,23 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
 
         {/* 子任务 */}
         <div className={styles.section}>
-          <div className={styles.sectionTitle}>
-            <span>子任务</span>
-            {subtasks.length > 0 && (
-              <span className={styles.sectionCounter}>
-                ({subtasks.filter((s) => s.status === 'done').length}/{subtasks.length})
-              </span>
-            )}
-          </div>
-
-          <div className={styles.quantityList}>
-            {subtasks.map((sub) => (
-              <div key={sub.id} className={styles.quantityRow}>
-                <input
-                  type="checkbox"
-                  checked={sub.status === 'done'}
-                  onChange={() => handleToggleSubtask(sub.id)}
-                  className={styles.subtaskCheckbox}
-                />
-                <span
-                  className={sub.status === 'done' ? styles.subtaskTitleDone : styles.subtaskTitle}
-                >
-                  {sub.title}
-                </span>
-                <button
-                  type="button"
-                  className={styles.removeBtn}
-                  onClick={() => handleDeleteSubtask(sub.id)}
-                  aria-label="删除子任务"
-                  title="删除"
-                >
-                  <Icon name="x" size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div className={styles.subtaskInputRow}>
-            <input
-              className={styles.input}
-              type="text"
-              value={newSubtaskTitle}
-              onChange={(e) => setNewSubtaskTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddSubtask();
-                }
-              }}
-              placeholder="添加子任务步骤…"
-            />
-            <button
-              type="button"
-              className={styles.addQuantityBtn}
-              onClick={handleAddSubtask}
-            >
-              <Icon name="plus" size={14} /> 添加
-            </button>
-          </div>
+          <SubtaskEditor
+            subtasks={subtasks}
+            categories={categories}
+            onAdd={(title) => setSubtasks(addSubtask(subtasks, title))}
+            onToggle={(id) =>
+              setSubtasks(
+                updateSubtask(subtasks, id, {
+                  status:
+                    subtasks.find((s) => s.id === id)?.status === 'done'
+                      ? 'todo'
+                      : 'done',
+                }),
+              )
+            }
+            onDelete={(id) => setSubtasks(subtasks.filter((s) => s.id !== id))}
+            onUpdate={(id, patch) => setSubtasks(updateSubtask(subtasks, id, patch))}
+          />
         </div>
 
         {/* 跨年休眠 */}

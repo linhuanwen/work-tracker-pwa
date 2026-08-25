@@ -57,10 +57,10 @@ function AppShell() {
     close,
   } = useWindowControls();
 
-  // Title-bar drag — JS-driven (the native HTCAPTION move loop never
-  // engages on the pywebview WinForms window).
+  // Title-bar drag — 已彻底关闭：窗口固定为右侧侧边栏，不应被拖动移动。
+  // 后端 move_resize_window 也会强制右缘贴齐，前端不再发起移动事件。
   const { startDrag } = useWindowDrag({
-    disabled: !isDesktopWindow || maximized,
+    disabled: true,
   });
 
   // Collapse-to-titlebar — shrinks the OS window to the title bar and

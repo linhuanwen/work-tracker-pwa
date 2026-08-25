@@ -40,7 +40,7 @@ function createProject(input: {
   };
 }
 import type { UpdateTaskPatch } from './taskUtils';
-import { useFileSystem } from './useFileSystem';
+import { useFileSystem, type SaveResult } from './useFileSystem';
 import { debounce } from './useAutoSave';
 
 // ============================================================
@@ -49,6 +49,7 @@ import { debounce } from './useAutoSave';
 
 export type Action =
   | { type: 'SET_DATA'; payload: DataJson }
+  | { type: 'APPLY_SAVED_REVISION'; payload: { revision: number; lastModified: string } }
   | { type: 'ADD_TASK'; payload: { title: string; category: string; priority: Priority; projectId?: string | null; deadline?: string | null } }
   | { type: 'TOGGLE_TASK'; payload: { taskId: string } }
   | { type: 'UPDATE_TASK'; payload: { taskId: string; patch: UpdateTaskPatch } }
@@ -73,6 +74,15 @@ export function dataReducer(state: DataJson, action: Action): DataJson {
   switch (action.type) {
     case 'SET_DATA':
       return action.payload;
+
+    // 只更新保存后由后端/磁盘返回的版本元信息，不替换整个 state，
+    // 从而避免与正在进行的编辑产生竞态（旧实现会用 setData→SET_DATA 覆盖全量状态）。
+    case 'APPLY_SAVED_REVISION':
+      return {
+        ...state,
+        revision: action.payload.revision,
+        lastModified: action.payload.lastModified,
+      };
 
     case 'ADD_TASK': {
       const newTask = createTask({
@@ -282,7 +292,7 @@ interface DataContextValue {
   data: DataJson | null;
   dispatch: React.Dispatch<Action>;
   openDirectory: () => Promise<DataJson>;
-  saveData: (data: DataJson) => Promise<void>;
+  saveData: (data: DataJson) => Promise<SaveResult | null>;
   loading: boolean;
   error: string | null;
   hasStoredHandle: boolean;
@@ -313,28 +323,65 @@ export function DataProvider({ children }: { children: ReactNode }) {
     initialData ?? (null as unknown as DataJson),
   );
 
-  // Sync initial data from FSA hook into reducer
+  // ---- 自动保存 ----
+  // 设计要点：
+  //  1. 只保存“内容有变化”的数据：用内容指纹（排除 revision / lastModified）判断
+  //     是否真的需要写盘，从而避免保存回写 revision 后再次触发保存的死循环。
+  //  2. 保存执行时用 dataRef 取“当时最新的 reducer 状态”，而不是 debounce 排定时
+  //     捕获的快照，避免保存期间用户继续输入导致数据被旧快照覆盖（输入被清空）。
+  //  3. 保存成功后仅通过 APPLY_SAVED_REVISION 把新 revision 写回 reducer（不替换全量
+  //     状态），保留用户进行中的编辑。
+  const dataRef = useRef(data);
+  dataRef.current = data;
+
+  const lastSavedFingerprintRef = useRef<string | null>(null);
+
+  const contentFingerprint = (d: DataJson): string =>
+    JSON.stringify({
+      tasks: d.tasks,
+      projects: d.projects,
+      archives: d.archives,
+      settings: d.settings,
+    });
+
+  // Sync initial data from FSA hook into reducer。
+  // 注意：只在加载（打开/重开文件夹）时同步，自动保存成功后【不】回调 setData，
+  // 因此这里的 initialData 不会因普通保存而改变 → 打破“保存→SET_DATA→再保存”的死循环。
   useEffect(() => {
     if (initialData) {
+      // 刚加载的数据已经在磁盘上，重置“已保存内容基线”，避免刚打开就触发一次多余保存。
+      lastSavedFingerprintRef.current = contentFingerprint(initialData);
       dispatch({ type: 'SET_DATA', payload: initialData });
     }
   }, [initialData]);
 
-  // Auto-save on data change (debounced 500ms)
   const debouncedSaveRef = useRef(
-    debounce((d: DataJson) => {
-      saveData(d);
+    debounce(async () => {
+      const current = dataRef.current;
+      if (!current) return;
+      const result = await saveData(current);
+      if (!result) return; // 保存失败/冲突，revision 已停下，等用户处理
+      lastSavedFingerprintRef.current = contentFingerprint(current);
+      dispatch({
+        type: 'APPLY_SAVED_REVISION',
+        payload: { revision: result.revision, lastModified: result.lastModified },
+      });
     }, 500),
   );
 
-  const isInitialRender = useRef(true);
+  // 自动保存触发：仅“内容有变化”时才写盘。
+  // - 首次拿到数据（打开/重开文件夹）时以当前内容为基线，不触发保存；
+  // - 之后若内容指纹与上次成功保存的内容一致，说明只是 revision 回写导致的重渲染，
+  //   同样不触发，从而避免“保存→回写 revision→再保存”的死循环。
   useEffect(() => {
-    if (isInitialRender.current) {
-      isInitialRender.current = false;
+    if (!data) return;
+    if (lastSavedFingerprintRef.current === null) {
+      lastSavedFingerprintRef.current = contentFingerprint(data);
       return;
     }
-    if (data) {
-      debouncedSaveRef.current(data);
+    const fp = contentFingerprint(data);
+    if (fp !== lastSavedFingerprintRef.current) {
+      debouncedSaveRef.current();
     }
   }, [data]);
 

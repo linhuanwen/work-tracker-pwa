@@ -15,6 +15,7 @@ import {
   calcSubtaskProgress,
   getProgressColor,
   addSubtask,
+  updateSubtask,
   toggleSubtask,
   deleteSubtask,
   calcProjectProgress,
@@ -760,6 +761,30 @@ describe('toggleSubtask', () => {
     expect(result[0].status).toBe('todo'); // unchanged
     expect(result[1].status).toBe('done');  // unchanged
     expect(result[2].status).toBe('done');  // toggled
+  });
+});
+
+describe('updateSubtask', () => {
+  it('updates fields on matching subtask and returns new array', () => {
+    const subtasks: SubTask[] = [
+      { id: 's1', title: '步骤一', status: 'todo' },
+      { id: 's2', title: '步骤二', status: 'todo' },
+    ];
+    const result = updateSubtask(subtasks, 's1', {
+      notes: '补充材料',
+      deadline: '2026-09-01',
+      priority: 'urgent',
+    });
+    expect(result).not.toBe(subtasks);
+    expect(result[0].notes).toBe('补充材料');
+    expect(result[0].deadline).toBe('2026-09-01');
+    expect(result[0].priority).toBe('urgent');
+    expect(result[1]).toBe(subtasks[1]);
+  });
+
+  it('returns same array if id not found', () => {
+    const subtasks: SubTask[] = [];
+    expect(updateSubtask(subtasks, 'missing', { title: 'x' })).toBe(subtasks);
   });
 });
 

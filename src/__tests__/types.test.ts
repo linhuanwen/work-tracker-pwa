@@ -186,6 +186,35 @@ describe('migrateDataJson — 版本迁移', () => {
     expect(() => migrateDataJson('hello')).toThrow(/根节点必须是对象/);
     expect(() => migrateDataJson([1, 2, 3])).toThrow(/根节点必须是对象/);
   });
+
+  it('补齐旧数据缺失/类型错误的任务字段', () => {
+    const legacyTask = {
+      id: 't-old',
+      title: '旧任务',
+      category: '其他',
+      priority: 'normal',
+      status: 'todo',
+      createdDate: '2026-07-21',
+      updatedDate: '2026-07-21',
+      // projectId / deadline / completedDate 缺失
+      quantities: [],
+      subtasks: [],
+      notes: '',
+      isLeaderAssigned: false,
+      isCrossYear: false,
+      isBlocked: false,
+      hibernateUntil: null, // 旧数据可能存了 null
+    };
+    const data = migrateDataJson({
+      ...VALID_DATA_JSON,
+      tasks: [legacyTask],
+    });
+    expect(validateDataJson(data).valid).toBe(true);
+    expect(data.tasks[0].projectId).toBeNull();
+    expect(data.tasks[0].deadline).toBeNull();
+    expect(data.tasks[0].completedDate).toBeNull();
+    expect(data.tasks[0].hibernateUntil).toBeUndefined();
+  });
 });
 
 describe('parseDataJson — 安全解析', () => {

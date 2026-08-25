@@ -27,7 +27,8 @@
 
 ### 后续启动
 
-- 可以创建桌面快捷方式：右键 `工作清单.exe` → 发送到 → 桌面快捷方式
+- **首次启动会自动在桌面创建"工作清单"快捷方式**，之后可双击桌面快捷方式进入，exe 本体可以放在任意目录（保留整个文件夹即可）。
+- 桌面快捷方式如果已在，不会重复创建、也不会覆盖你自定义的图标或名称。
 - 关闭窗口（X）会最小化到系统托盘，不会退出程序
 - 在托盘图标上右键 → 退出，彻底关闭
 
@@ -53,13 +54,14 @@ npm install
 npm run build
 
 # 启动本地 HTTP 服务器（无窗口，纯 HTTP，含完整 API）
-python launcher.py --headless
+python run.py --headless
+# 或: python -m launcher --headless
 ```
 
 4. 浏览器打开 `http://127.0.0.1:5173`
 5. 浏览器地址栏右侧会出现"安装"图标 → 点击安装为独立 PWA 应用 → 钉到任务栏
 
-每次使用时，先运行 `python launcher.py --headless` 启动服务器，然后打开 PWA 应用。
+每次使用时，先运行 `python run.py --headless` 启动服务器，然后打开 PWA 应用。
 
 ---
 
@@ -82,7 +84,8 @@ npm run build
 pip install pywebview pystray Pillow python-docx requests
 
 # 4. 启动桌面启动器
-python launcher.py --debug
+python run.py --debug
+# 或: python -m launcher --debug
 ```
 
 ---
@@ -108,7 +111,7 @@ AI_MODEL=deepseek-chat
 #AI_MODEL=qwen-turbo
 ```
 
-3. 在应用"设置 → AI 配置"中填入 API 信息，或直接在 `.env` 中配置
+3. 在 `scripts/` 目录下复制 `.env.example` 为 `.env`，填入 API 信息；桌面启动器会优先读取该配置
 4. 在周报/月报/年报页面点击"AI 润色"按钮
 
 ### 依赖

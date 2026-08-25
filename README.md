@@ -12,7 +12,7 @@
 
 ### 📋 每日任务管理
 - 优先级三级（🔴紧急 / 🟡重要 / 🟢日常），紧急任务独立顶置区最多 5 条
-- 长期项目子任务拆解 + 自动进度条，推进感可量化
+- 长期项目子任务拆解 + 自动进度条，推进感可量化；任务卡片展开即可添加/勾选/删除子任务
 - 特殊标记（来源、交办时间、时限），不遗漏重要事项
 - 多项量化产出录入（如"完成 3 项""处理 15 件"等）
 - 跨年任务休眠：平时不占空间，临近截止前自动激活
@@ -37,6 +37,12 @@
 - 调用 AI API 润色小结语言，使表达更正式、简洁、结构化
 - 润色结果始终可手动编辑，保留最终修改权
 - 支持 DeepSeek / 通义千问等多种 API
+
+### 💾 数据迁移（导出 / 导入）
+- 一键导出全部数据为单个 JSON 文件，方便备份或迁移到新电脑
+- 支持导入快照文件或旧版 data.json
+- 覆盖导入 / 合并导入两种模式，导入前自动备份当前数据
+
 
 ## 技术方案
 
@@ -74,7 +80,7 @@ PWA 即浏览器打开的网页，可"安装"成独立桌面窗口——不需�
 
 1. 下载 `release/` 文件夹到本地
 2. 确保系统已安装 [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)（Windows 11 已内置）
-3. 双击 `工作清单.exe` 运行
+3. 双击 `工作清单.exe` 运行（首次运行会自动在桌面创建"工作清单"快捷方式，之后可从桌面快捷方式进入，exe 本体可放在任意目录）
 4. 首次运行选择数据文件存放位置（建议放在云同步文件夹中）
 
 ### 方式二：PWA 模式（浏览器）
@@ -85,7 +91,8 @@ npm install
 npm run build
 
 # 启动本地服务器（无窗口，纯 HTTP，含完整 API）
-python launcher.py --headless
+python run.py --headless
+# 或: python -m launcher --headless
 # 或: npx serve dist
 ```
 
@@ -102,10 +109,23 @@ npm run build
 pip install pywebview pystray Pillow python-docx requests
 
 # 启动
-python launcher.py
+python run.py
+# 或: python -m launcher
 ```
 
 详细说明见 [docs/INSTALL.md](docs/INSTALL.md)。
+
+### 方式四：一条命令出包（发布/更新 release）
+
+```bash
+python scripts/build_release.py
+```
+
+脚本会依次执行：前端构建 → 生成图标 → PyInstaller 打包 → 更新 `release/工作清单/` → 生成 `release/工作清单.zip`。
+
+可选参数：
+- `--skip-frontend`：跳过前端构建
+- `--skip-installer`：跳过 PyInstaller，只重新拷贝已有 exe 到 release 并打 zip
 
 ## 数据同步
 
@@ -130,12 +150,14 @@ python launcher.py
 │   ├── INSTALL.md                   ← 安装指南
 │   └── USER-GUIDE.md                ← 使用手册
 ├── src/                             ← React 前端源码
+├── src/transferUtils.ts                 ← 数据导出/导入工具层
 ├── scripts/                         ← Python AI 润色脚本
 │   ├── polish.py
 │   └── .env.example
 ├── public/                          ← PWA 图标和静态资源
 ├── dist/                            ← 前端构建产物
-├── launcher.py                      ← 桌面启动器 + HTTP 服务器（--headless 纯服务器模式）
+├── run.py                           ← 桌面启动器入口
+├── launcher/                        ← 桌面启动器 + HTTP 服务器包（--headless 纯服务器模式）
 └── release/                         ← 打包好的安装包
 ```
 

@@ -1,4 +1,4 @@
-import type { Task, Priority, TaskStatus } from './types';
+import type { Task, Priority, TaskStatus, SubTask } from './types';
 
 /** 排除 cancelled 状态的任务 */
 export function filterActiveTasks(tasks: Task[]): Task[] {
@@ -226,7 +226,7 @@ export interface SubtaskProgress {
 }
 
 export function calcSubtaskProgress(
-  subtasks: { id: string; status: 'todo' | 'done' }[],
+  subtasks: SubTask[],
 ): SubtaskProgress {
   const total = subtasks.length;
   if (total === 0) return { total: 0, done: 0, percent: 0 };
@@ -256,22 +256,39 @@ function generateSubId(): string {
 
 /** 添加子任务（返回新数组） */
 export function addSubtask(
-  subtasks: { id: string; title: string; status: 'todo' | 'done' }[],
+  subtasks: SubTask[],
   title: string,
-): { id: string; title: string; status: 'todo' | 'done' }[] {
-  const newSub: { id: string; title: string; status: 'todo' | 'done' } = {
+): SubTask[] {
+  const newSub: SubTask = {
     id: generateSubId(),
     title: title.trim(),
     status: 'todo',
+    notes: '',
+    deadline: null,
+    priority: 'normal',
+    quantities: [],
   };
   return [...subtasks, newSub];
 }
 
+/** 更新子任务单个或多个字段（返回新数组），id 不存在则返回原数组 */
+export function updateSubtask(
+  subtasks: SubTask[],
+  id: string,
+  patch: Partial<SubTask>,
+): SubTask[] {
+  const idx = subtasks.findIndex((s) => s.id === id);
+  if (idx === -1) return subtasks;
+  const updated = [...subtasks];
+  updated[idx] = { ...updated[idx], ...patch };
+  return updated;
+}
+
 /** 切换子任务勾选状态（返回新数组），id 不存在则返回原数组 */
 export function toggleSubtask(
-  subtasks: { id: string; title: string; status: 'todo' | 'done' }[],
+  subtasks: SubTask[],
   id: string,
-): { id: string; title: string; status: 'todo' | 'done' }[] {
+): SubTask[] {
   const idx = subtasks.findIndex((s) => s.id === id);
   if (idx === -1) return subtasks;
   const updated = [...subtasks];
@@ -284,9 +301,9 @@ export function toggleSubtask(
 
 /** 删除子任务（返回新数组），id 不存在则返回原数组 */
 export function deleteSubtask(
-  subtasks: { id: string; title: string; status: 'todo' | 'done' }[],
+  subtasks: SubTask[],
   id: string,
-): { id: string; title: string; status: 'todo' | 'done' }[] {
+): SubTask[] {
   const idx = subtasks.findIndex((s) => s.id === id);
   if (idx === -1) return subtasks;
   return subtasks.filter((s) => s.id !== id);

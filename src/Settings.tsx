@@ -1,9 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useData } from './DataContext';
 import { useToast } from './Toast';
 import { ThemeToggle } from './ThemeToggle';
 import { ThemePicker } from './ThemePicker';
 import { loadAiConfig, saveAiConfig, DEFAULT_AI_CONFIG } from './aiConfig';
+import {
+  createSnapshotText,
+  defaultExportFileName,
+  parseImportText,
+  mergeForImport,
+} from './transferUtils';
 import styles from './Settings.module.css';
 
 const WEEK_DAYS = [
@@ -33,7 +39,96 @@ export function Settings() {
   // AI 配置（存 localStorage，不进 data.json，避免 API Key 同步到云文档）
   const [aiConfig, setAiConfig] = useState(() => loadAiConfig());
 
+  // ---- 数据迁移（导入 / 导出）----
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importPending, setImportPending] = useState<{
+    name: string;
+    data: ReturnType<typeof parseImportText>;
+  } | null>(null);
+
   if (!data) return null;
+
+  const handleExport = async () => {
+    const text = createSnapshotText(data);
+    const blob = new Blob([text], { type: 'application/json' });
+    const fileName = defaultExportFileName();
+
+    const w = window as unknown as {
+      showSaveFilePicker?: (opts: {
+        suggestedName?: string;
+        types?: { description?: string; accept: Record<string, string[]> }[];
+      }) => Promise<{ createWritable: () => Promise<{ write: (d: unknown) => Promise<void>; close: () => Promise<void> }> }>;
+    };
+
+    if (typeof w.showSaveFilePicker === 'function') {
+      try {
+        const handle = await w.showSaveFilePicker({
+          suggestedName: fileName,
+          types: [
+            {
+              description: 'JSON 数据文件',
+              accept: { 'application/json': ['.json'] },
+            },
+          ],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        showToast('已导出全部数据');
+        return;
+      } catch (err) {
+        if ((err as DOMException).name === 'AbortError') return;
+        // 降级到下载
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('已导出全部数据');
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const imported = parseImportText(String(reader.result ?? ''));
+        setImportPending({ name: file.name, data: imported });
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : '导入文件无效');
+      }
+    };
+    reader.readAsText(file);
+    // 允许重复选择同一文件
+    e.target.value = '';
+  };
+
+  const handleConfirmOverwrite = () => {
+    if (!importPending || !data) return;
+    dispatch({ type: 'SET_DATA', payload: importPending.data });
+    setImportPending(null);
+    showToast(`已覆盖导入（含 ${importPending.data.tasks.length} 个任务、${importPending.data.projects.length} 个项目）`);
+  };
+
+  const handleConfirmMerge = () => {
+    if (!importPending || !data) return;
+    const { data: merged, summary } = mergeForImport(data, importPending.data);
+    dispatch({ type: 'SET_DATA', payload: merged });
+    setImportPending(null);
+    const parts = [
+      `合并结果：${merged.tasks.length} 个任务`,
+      `${merged.projects.length} 个项目`,
+    ];
+    if (summary.remappedTaskIds > 0) parts.push(`${summary.remappedTaskIds} 个任务 id 冲突已重命名`);
+    if (summary.remappedProjectIds > 0) parts.push(`${summary.remappedProjectIds} 个项目 id 冲突已重命名`);
+    showToast(parts.join('、'));
+  };
 
   const categories = data.settings.categories;
   const weeklyDay = data.settings.weeklySummaryDay;
@@ -291,8 +386,61 @@ export function Settings() {
         </button>
         <p className={styles.aiHint}>
           配置仅保存在本机浏览器存储中，不会写入共享的 data.json。
-          留空 API Key 时，将使用 scripts/.env 中的配置。
+          桌面端启动器固定读取 scripts/.env 中的 AI 配置；浏览器端（PWA）使用此处配置。
         </p>
+      </section>
+
+      {/* ---- 数据迁移 ---- */}
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>数据迁移</h3>
+        <p className={styles.migrationHint}>
+          导出全部数据为单个 JSON 文件，可在新电脑上导入，用于迁移或备份。
+        </p>
+        <div className={styles.migrationRow}>
+          <button className={styles.migrationBtn} onClick={handleExport}>
+            导出全部数据
+          </button>
+          <button
+            className={styles.migrationBtn}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            导入数据文件…
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
+        </div>
+
+        {importPending && (
+          <div className={styles.importPreview}>
+            <p>
+              文件 <strong>{importPending.name}</strong> 包含{' '}
+              {importPending.data.tasks.length} 个任务、{' '}
+              {importPending.data.projects.length} 个项目。请选择导入方式：
+            </p>
+            <div className={styles.migrationRow}>
+              <button className={styles.migrationBtn} onClick={handleConfirmMerge}>
+                合并导入
+              </button>
+              <button
+                className={styles.migrationBtnDanger}
+                onClick={handleConfirmOverwrite}
+              >
+                覆盖导入
+              </button>
+              <button
+                className={styles.migrationBtnGhost}
+                onClick={() => setImportPending(null)}
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ---- 主题色 ---- */}

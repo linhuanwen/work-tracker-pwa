@@ -1,7 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from pathlib import Path
 a = Analysis(
-    ['launcher.py'],
+    ['run.py'],
     pathex=[],
     binaries=[],
     datas=[
@@ -36,6 +37,9 @@ a = Analysis(
         'PyQt5',
         'PyQt6',
         'matplotlib',
+        'numpy',
+        'scipy',
+        'pandas',
     ],
     noarchive=False,
     optimize=0,
@@ -61,5 +65,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,
+    icon=str(Path('assets') / '工作清单.ico'),
 )

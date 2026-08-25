@@ -41,6 +41,9 @@
 
 /* ---- Active collapsed state ---- */
 .activeCollapsed {
+  position: relative;
+  /* 确保日期/时间下拉和原生选择器浮层位于下方任务之上 */
+  z-index: calc(var(--z-bottomnav) + 60);
   background: var(--glass-bg-card);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
@@ -159,7 +162,8 @@
   position: absolute;
   top: calc(100% + var(--space-1));
   right: 0;
-  z-index: 50;
+  /* 必须高于底部导航栏 --z-bottomnav，避免下拉被固定底栏遮挡。 */
+  z-index: calc(var(--z-bottomnav) + 50);
   min-width: 140px;
   background: var(--glass-bg-card);
   backdrop-filter: blur(var(--glass-blur));
@@ -208,11 +212,23 @@
   position: absolute;
   top: 100%;
   left: 0;
-  z-index: 51;
+  /* 高于底部导航，防止原生选择器锚点/弹层被固定底栏覆盖。 */
+  z-index: calc(var(--z-bottomnav) + 51);
   opacity: 0;
   width: 1px;
   height: 1px;
   pointer-events: none;
+}
+
+/* -- 空间不足时向上弹出 -- */
+.openUp .dropdown {
+  top: auto;
+  bottom: calc(100% + var(--space-1));
+}
+
+.openUp .datePickerInput {
+  top: auto;
+  bottom: calc(100% + var(--space-1));
 }
 
 /* ---- Tags row ---- */
@@ -226,6 +242,8 @@
 
 /* ---- Expanded form ---- */
 .form {
+  position: relative;
+  z-index: calc(var(--z-bottomnav) + 60);
   background: var(--glass-bg-card);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));

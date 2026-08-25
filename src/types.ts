@@ -24,6 +24,12 @@ export interface SubTask {
   id: string;
   title: string;
   status: 'todo' | 'done';
+  /** 与父任务保持一致的可选扩展字段 */
+  notes?: string;
+  deadline?: string | null;
+  priority?: Priority;
+  quantities?: Quantity[];
+  category?: string;
 }
 
 /** 任务 */
@@ -374,6 +380,84 @@ export function validateDataJson(data: unknown): ValidationResult {
 // 数据版本迁移 & 安全解析
 // ============================================================
 
+function normalizeStringOrNull(v: unknown): string | null {
+  return isString(v) ? v : null;
+}
+
+function normalizeStringOptional(v: unknown): string | undefined {
+  return isString(v) ? v : undefined;
+}
+
+function normalizeTask(raw: unknown): Record<string, unknown> {
+  if (!isObject(raw)) return raw as Record<string, unknown>;
+  const t = raw as Record<string, unknown>;
+  const today = new Date().toISOString().slice(0, 10);
+  const validPriority = (isString(t.priority) && VALID_PRIORITIES.includes(t.priority as Priority))
+    ? t.priority
+    : 'normal';
+  const validStatus = (isString(t.status) && VALID_TASK_STATUSES.includes(t.status as TaskStatus))
+    ? t.status
+    : 'todo';
+  return {
+    ...t,
+    projectId: normalizeStringOrNull(t.projectId),
+    deadline: normalizeStringOrNull(t.deadline),
+    completedDate: normalizeStringOrNull(t.completedDate),
+    title: isString(t.title) ? t.title : '',
+    category: isString(t.category) ? t.category : '',
+    priority: validPriority,
+    status: validStatus,
+    createdDate: isString(t.createdDate) ? t.createdDate : today,
+    updatedDate: isString(t.updatedDate) ? t.updatedDate : today,
+    notes: isString(t.notes) ? t.notes : '',
+    quantities: isArray(t.quantities) ? t.quantities : [],
+    subtasks: isArray(t.subtasks) ? t.subtasks : [],
+    isLeaderAssigned: isBoolean(t.isLeaderAssigned) ? t.isLeaderAssigned : false,
+    isCrossYear: isBoolean(t.isCrossYear) ? t.isCrossYear : false,
+    isBlocked: isBoolean(t.isBlocked) ? t.isBlocked : false,
+    leaderSource: normalizeStringOptional(t.leaderSource),
+    leaderAssignedDate: normalizeStringOptional(t.leaderAssignedDate),
+    leaderDeadline: normalizeStringOptional(t.leaderDeadline),
+    hibernateUntil: normalizeStringOptional(t.hibernateUntil),
+  };
+}
+
+function normalizeProject(raw: unknown): Record<string, unknown> {
+  if (!isObject(raw)) return raw as Record<string, unknown>;
+  const p = raw as Record<string, unknown>;
+  const subtaskCount = isObject(p.subtaskCount) ? p.subtaskCount : {};
+  return {
+    ...p,
+    notes: isString(p.notes) ? p.notes : '',
+    subtaskCount: {
+      total: isNumber((subtaskCount as Record<string, unknown>).total)
+        ? (subtaskCount as Record<string, unknown>).total
+        : 0,
+      done: isNumber((subtaskCount as Record<string, unknown>).done)
+        ? (subtaskCount as Record<string, unknown>).done
+        : 0,
+    },
+  };
+}
+
+function normalizeSettings(raw: unknown): Record<string, unknown> {
+  if (!isObject(raw)) {
+    return {
+      weeklySummaryDay: 5,
+      monthlySummaryDay: 28,
+      aiPolishFlag: false,
+      categories: [...DEFAULT_CATEGORIES],
+    };
+  }
+  const s = raw as Record<string, unknown>;
+  return {
+    weeklySummaryDay: isNumber(s.weeklySummaryDay) ? s.weeklySummaryDay : 5,
+    monthlySummaryDay: isNumber(s.monthlySummaryDay) ? s.monthlySummaryDay : 28,
+    aiPolishFlag: isBoolean(s.aiPolishFlag) ? s.aiPolishFlag : false,
+    categories: isArray(s.categories) ? s.categories : [...DEFAULT_CATEGORIES],
+  };
+}
+
 /**
  * 将任意来源的 data.json 内容迁移到当前数据版本。
  *
@@ -382,7 +466,8 @@ export function validateDataJson(data: unknown): ValidationResult {
  * - version 高于当前 → 抛错（数据由更新版本的应用写出，需先升级应用）
  * - version 低于当前 → 依次执行各版本迁移（当前无迁移，预留钩子）
  *
- * 迁移只负责版本号相关的结构升级；字段级完整性由 validateDataJson 校验。
+ * 迁移同时会做字段级补齐：缺失/类型错误的可选字段会被删除或设成默认值，
+ * 缺失的必填字段会被补成安全的默认值，从而兼容由旧版本或手动编辑产生的 data.json。
  */
 export function migrateDataJson(raw: unknown): DataJson {
   if (!isObject(raw)) {
@@ -401,14 +486,22 @@ export function migrateDataJson(raw: unknown): DataJson {
     );
   }
 
-  // 预留版本迁移钩子：当 DATA_VERSION 递增时，在此处按版本号逐级补结构。
-  // 例：if (version < 2) { data = migrateV1ToV2(data); }
   const rawRecord = raw as Record<string, unknown>;
+  const rawTasks = rawRecord.tasks;
+  const rawProjects = rawRecord.projects;
+
   const data: Record<string, unknown> = {
     ...rawRecord,
     version: DATA_VERSION,
     // revision 缺失视为 0（老数据），后续保存时递增
     revision: typeof rawRecord.revision === 'number' ? rawRecord.revision : 0,
+    settings: isObject(rawRecord.settings)
+      ? normalizeSettings(rawRecord.settings)
+      : rawRecord.settings,
+    tasks: isArray(rawTasks) ? rawTasks.map(normalizeTask) : rawTasks,
+    projects: isArray(rawProjects)
+      ? rawProjects.map(normalizeProject)
+      : rawProjects,
   };
 
   return data as unknown as DataJson;

@@ -1,7 +1,15 @@
 import { useState, useCallback } from 'react';
 import type { Task, TaskStatus, Priority } from './types';
 import type { UpdateTaskPatch } from './taskUtils';
-import { calcSubtaskProgress, getProgressColor } from './taskUtils';
+import {
+  calcSubtaskProgress,
+  getProgressColor,
+  addSubtask,
+  toggleSubtask,
+  deleteSubtask,
+  updateSubtask,
+} from './taskUtils';
+import { SubtaskEditor } from './SubtaskEditor';
 import { Tag } from './Tag';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu';
@@ -519,6 +527,32 @@ export function TaskCard({
               <Icon name="plus" size={14} /> 添加产出
             </button>
           </div>
+
+            {/* 子任务 */}
+            <SubtaskEditor
+              subtasks={task.subtasks}
+              categories={categories}
+              onAdd={(title) =>
+                handleFieldChange({
+                  subtasks: addSubtask(task.subtasks, title),
+                })
+              }
+              onToggle={(id) =>
+                handleFieldChange({
+                  subtasks: toggleSubtask(task.subtasks, id),
+                })
+              }
+              onDelete={(id) =>
+                handleFieldChange({
+                  subtasks: deleteSubtask(task.subtasks, id),
+                })
+              }
+              onUpdate={(id, patch) =>
+                handleFieldChange({
+                  subtasks: updateSubtask(task.subtasks, id, patch),
+                })
+              }
+            />
         </div>
       )}
 

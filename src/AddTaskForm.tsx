@@ -58,6 +58,8 @@ export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
   const [openDropdown, setOpenDropdown] = useState<'dueDate' | 'reminder' | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDateTimePicker, setShowDateTimePicker] = useState(false);
+  /** 空间不足时让下拉/原生选择器向上弹出，避免被底部导航遮挡。 */
+  const [openUp, setOpenUp] = useState(false);
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const activeInputRef = useRef<HTMLInputElement>(null);
@@ -186,6 +188,7 @@ export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
   const handleChooseDate = () => {
     setOpenDropdown(null);
     setShowDatePicker(true);
+    updateOpenDirection();
   };
 
   // Reminder handlers
@@ -198,6 +201,20 @@ export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
   const handleChooseDateTime = () => {
     setOpenDropdown(null);
     setShowDateTimePicker(true);
+    updateOpenDirection();
+  };
+
+  const updateOpenDirection = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    // 下拉菜单/原生选择器大约 180-220px；空间不足时向上弹。
+    setOpenUp(window.innerHeight - rect.bottom < 220);
+  };
+
+  const toggleDropdown = (which: 'dueDate' | 'reminder') => {
+    setOpenDropdown((prev) => (prev === which ? null : which));
+    if (openDropdown !== which) updateOpenDirection();
   };
 
   // ============================================================
@@ -225,7 +242,7 @@ export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
   // ============================================================
   if (!expanded && active) {
     return (
-      <div className={styles.activeCollapsed} ref={containerRef}>
+      <div className={`${styles.activeCollapsed}${openUp ? ' ' + styles.openUp : ''}`} ref={containerRef}>
         <div className={styles.inputWrapper}>
           <input
             ref={activeInputRef}
@@ -241,7 +258,7 @@ export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
               type="button"
               aria-label="设置截止日期"
               className={`${styles.suffixBtn} ${openDropdown === 'dueDate' ? styles.suffixBtnActive : ''}`}
-              onClick={() => setOpenDropdown(openDropdown === 'dueDate' ? null : 'dueDate')}
+              onClick={() => toggleDropdown('dueDate')}
             >
               <Icon name="calendar" size={18} />
             </button>
@@ -249,7 +266,7 @@ export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
               type="button"
               aria-label="设置提醒时间"
               className={`${styles.suffixBtn} ${openDropdown === 'reminder' ? styles.suffixBtnActive : ''}`}
-              onClick={() => setOpenDropdown(openDropdown === 'reminder' ? null : 'reminder')}
+              onClick={() => toggleDropdown('reminder')}
             >
               <Icon name="clock" size={18} />
             </button>

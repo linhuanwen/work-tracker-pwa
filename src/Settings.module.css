@@ -216,3 +216,81 @@
   color: var(--color-text-muted);
   line-height: 1.6;
 }
+
+/* ================================================ */
+/* 数据迁移 */
+/* ================================================ */
+
+.migrationHint {
+  font-size: var(--fs-caption);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.migrationRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.migrationBtn,
+.migrationBtnDanger,
+.migrationBtnGhost {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-ui);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.migrationBtn {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: 1px solid transparent;
+}
+.migrationBtn:hover {
+  background: var(--color-primary-hover);
+}
+
+.migrationBtnDanger {
+  background: transparent;
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+}
+.migrationBtnDanger:hover {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.migrationBtnGhost {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--glass-border-subtle);
+}
+.migrationBtnGhost:hover {
+  background: var(--glass-bg-input);
+}
+
+.importPreview {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  background: var(--glass-bg-nested);
+  font-size: var(--fs-ui);
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.importPreview p {
+  margin: 0;
+  line-height: 1.6;
+}
+.importPreview strong {
+  color: var(--color-text-heading);
+}
