@@ -1,9 +1,9 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useData } from './DataContext';
 import { useToast } from './Toast';
 import { useHashRoute } from './useHashRoute';
 import { Icon } from './Icon';
-import type { WeekEntry } from './types';
+import type { DataJson, WeekEntry } from './types';
 import {
   getWeekKey,
   getWeekDateRange,
@@ -18,11 +18,17 @@ import { aiConfigPayload } from './aiConfig';
 import styles from './WeeklySummary.module.css';
 
 export function WeeklySummary() {
-  const { data, dispatch } = useData();
+  const { data } = useData();
+  if (!data) return null;
+  return <WeeklySummaryInner data={data} />;
+}
+
+function WeeklySummaryInner({ data }: { data: DataJson }) {
+  const { dispatch } = useData();
   const { showToast } = useToast();
   const { navigate } = useHashRoute();
 
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
   const [weekKey, setWeekKey] = useState<string>(() => getWeekKey(today));
   const [planInput, setPlanInput] = useState('');
 
@@ -31,8 +37,6 @@ export function WeeklySummary() {
   const projectRef = useRef<HTMLDivElement>(null);
   const planRef = useRef<HTMLDivElement>(null);
   const blockersRef = useRef<HTMLDivElement>(null);
-
-  if (!data) return null;
 
   const range = getWeekDateRange(weekKey);
   const existingEntry = data.archives.weeks[weekKey];

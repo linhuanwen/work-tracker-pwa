@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useData } from './DataContext';
 import { useToast } from './Toast';
 import { Icon } from './Icon';
-import type { YearEntry } from './types';
+import type { DataJson, YearEntry } from './types';
 import {
   YEARLY_DIMENSIONS,
   getYearlyTasksByDimension,
@@ -35,7 +35,13 @@ function dimToField(dim: string): keyof YearEntry['summary'] {
 }
 
 export function YearlyReport() {
-  const { data, dispatch } = useData();
+  const { data } = useData();
+  if (!data) return null;
+  return <YearlyReportInner data={data} />;
+}
+
+function YearlyReportInner({ data }: { data: DataJson }) {
+  const { dispatch } = useData();
   const { showToast } = useToast();
   const { navigate } = useHashRoute();
 
@@ -45,8 +51,6 @@ export function YearlyReport() {
   // Refs for keypoint textareas (one per dimension)
   const keypointRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const oneLinerRef = useRef<HTMLTextAreaElement>(null);
-
-  if (!data) return null;
 
   const yearKey = String(year);
   const existingEntry = data.archives.years[yearKey];

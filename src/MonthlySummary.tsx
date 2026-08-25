@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useData } from './DataContext';
 import { useToast } from './Toast';
 import { Icon } from './Icon';
-import type { MonthEntry } from './types';
+import type { DataJson, MonthEntry } from './types';
 import { createTask } from './taskUtils';
 import { useHashRoute } from './useHashRoute';
 import { aiConfigPayload } from './aiConfig';
@@ -17,7 +17,13 @@ import {
 import styles from './MonthlySummary.module.css';
 
 export function MonthlySummary() {
-  const { data, dispatch } = useData();
+  const { data } = useData();
+  if (!data) return null;
+  return <MonthlySummaryInner data={data} />;
+}
+
+function MonthlySummaryInner({ data }: { data: DataJson }) {
+  const { dispatch } = useData();
   const { showToast } = useToast();
   const { navigate } = useHashRoute();
 
@@ -31,8 +37,6 @@ export function MonthlySummary() {
   const projectRef = useRef<HTMLDivElement>(null);
   const reflectionRef = useRef<HTMLTextAreaElement>(null);
   const focusRef = useRef<HTMLDivElement>(null);
-
-  if (!data) return null;
 
   const monthKey = getMonthKey(year, month);
   const monthLabel = getMonthLabel(year, month);
@@ -129,7 +133,7 @@ export function MonthlySummary() {
 
     dispatch({ type: 'UPDATE_ARCHIVE_MONTH', payload: { monthKey, entry } });
     showToast('已生成本月小结');
-  }, [data, year, month, dispatch, showToast, existingEntry]);
+  }, [data, year, month, monthKey, dispatch, showToast, existingEntry]);
 
   // ---- Save section edits ----
   const saveSection = useCallback(

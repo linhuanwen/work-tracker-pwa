@@ -76,3 +76,5 @@ Spec: [docs/DESKTOP-SHORTCUT-SPEC.md](docs/DESKTOP-SHORTCUT-SPEC.md)
 
 | C3 | [#20](https://github.com/linhuanwen/work-tracker-pwa/issues/20) | 边界测试补强（数据迁移/快捷方式） | ✅ 已实现 |
 | C4 | [#21](https://github.com/linhuanwen/work-tracker-pwa/issues/21) | 子任务行内展示截止/优先级标签 | ✅ 已实现 |
+
+| C5 | [#22](https://github.com/linhuanwen/work-tracker-pwa/issues/22) | React Hooks 顺序清理 | ✅ 已实现 |

@@ -35,12 +35,11 @@
 - [x] P1 本地质量门禁 check_all.py
 - [x] P2 测试补强：数据迁移合并冲突、快捷方式转义等边界用例
 - [x] P2 子任务行内展示截止/优先级标签
+- [x] 清理 React Hooks 顺序技术债，`npm run lint:strict` 通过
 
 ## 后续优化候选
 
-- **React Hooks 顺序技术债**：将当前 32 条 `react-hooks/rules-of-hooks` warnings 修复到 0，启用 `lint:strict`
-- ~~P2 移动端响应式 / PWA 离线冲突提示~~：用户确认不需要
-- ~~P3 后端导入导出接口~~：已由设置页“数据迁移”功能覆盖，无需单独后端接口
+- ~~React Hooks 顺序技术债~~：已清理，`lint:strict` 已启用
 
 ## Ticket 映射
 

@@ -14,6 +14,7 @@ export function Reports() {
   const { data } = useData();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<ReportTab>('weekly');
+  const [generating, setGenerating] = useState(false);
 
   if (!data) return null;
 
@@ -73,9 +74,6 @@ export function Reports() {
       showToast('复制失败，请手动选择复制');
     }
   };
-
-  // ---- 生成总结 Word 文档 ----
-  const [generating, setGenerating] = useState(false);
 
   /** 优先取归档小结内容；没有归档时退回当前 Tab 的预览内容。 */
   const getSummaryPayload = (): {
