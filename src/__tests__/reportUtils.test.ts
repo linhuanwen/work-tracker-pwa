@@ -128,8 +128,8 @@ describe('generateTaskCSV', () => {
 describe('generateReportText', () => {
   it('generates text from a map of section titles to content', () => {
     const sections: Record<string, string> = {
-      '本周完成任务': '- 任务A\n- 任务B',
-      '下周计划': '- 任务C',
+      本周完成任务: '- 任务A\n- 任务B',
+      下周计划: '- 任务C',
     };
     const text = generateReportText(sections);
     expect(text).toContain('本周完成任务');
@@ -140,8 +140,8 @@ describe('generateReportText', () => {
 
   it('separates sections with blank lines', () => {
     const sections: Record<string, string> = {
-      'A': 'Content A',
-      'B': 'Content B',
+      A: 'Content A',
+      B: 'Content B',
     };
     const text = generateReportText(sections);
     expect(text).toMatch(/Content A\n\n【B】/);

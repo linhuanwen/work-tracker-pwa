@@ -225,9 +225,7 @@ export interface SubtaskProgress {
   percent: number;
 }
 
-export function calcSubtaskProgress(
-  subtasks: SubTask[],
-): SubtaskProgress {
+export function calcSubtaskProgress(subtasks: SubTask[]): SubtaskProgress {
   const total = subtasks.length;
   if (total === 0) return { total: 0, done: 0, percent: 0 };
   const done = subtasks.filter((s) => s.status === 'done').length;
@@ -237,10 +235,10 @@ export function calcSubtaskProgress(
 
 /** 根据进度百分比返回颜色 */
 export function getProgressColor(percent: number): string {
-  if (percent === 100) return '#4caf50';  // 绿色
-  if (percent >= 67) return '#2196f3';    // 蓝色
-  if (percent >= 34) return '#fb8c00';    // 黄色
-  return '#e53935';                        // 红色 (0-33)
+  if (percent === 100) return '#4caf50'; // 绿色
+  if (percent >= 67) return '#2196f3'; // 蓝色
+  if (percent >= 34) return '#fb8c00'; // 黄色
+  return '#e53935'; // 红色 (0-33)
 }
 
 // ============================================================
@@ -255,10 +253,7 @@ function generateSubId(): string {
 }
 
 /** 添加子任务（返回新数组） */
-export function addSubtask(
-  subtasks: SubTask[],
-  title: string,
-): SubTask[] {
+export function addSubtask(subtasks: SubTask[], title: string): SubTask[] {
   const newSub: SubTask = {
     id: generateSubId(),
     title: title.trim(),
@@ -285,10 +280,7 @@ export function updateSubtask(
 }
 
 /** 切换子任务勾选状态（返回新数组），id 不存在则返回原数组 */
-export function toggleSubtask(
-  subtasks: SubTask[],
-  id: string,
-): SubTask[] {
+export function toggleSubtask(subtasks: SubTask[], id: string): SubTask[] {
   const idx = subtasks.findIndex((s) => s.id === id);
   if (idx === -1) return subtasks;
   const updated = [...subtasks];
@@ -300,10 +292,7 @@ export function toggleSubtask(
 }
 
 /** 删除子任务（返回新数组），id 不存在则返回原数组 */
-export function deleteSubtask(
-  subtasks: SubTask[],
-  id: string,
-): SubTask[] {
+export function deleteSubtask(subtasks: SubTask[], id: string): SubTask[] {
   const idx = subtasks.findIndex((s) => s.id === id);
   if (idx === -1) return subtasks;
   return subtasks.filter((s) => s.id !== id);
@@ -348,7 +337,9 @@ export function confirmTaskDone(task: Task): Task {
   };
 }
 
-export function calcDefaultHibernateUntil(deadline: string | null): string | null {
+export function calcDefaultHibernateUntil(
+  deadline: string | null,
+): string | null {
   if (!deadline) return null;
   const d = new Date(deadline);
   d.setDate(d.getDate() - 60);

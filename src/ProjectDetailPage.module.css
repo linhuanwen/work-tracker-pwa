@@ -154,7 +154,9 @@
   border: 1px solid var(--glass-border-subtle);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: box-shadow 0.15s, background 0.15s;
+  transition:
+    box-shadow 0.15s,
+    background 0.15s;
   gap: 10px;
   box-shadow: var(--glass-shadow);
 }

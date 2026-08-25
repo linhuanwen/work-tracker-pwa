@@ -69,19 +69,25 @@ describe('SummaryCommon — shared style extraction', () => {
 
   it('WeeklySummary.module.css composes from SummaryCommon', () => {
     const content = readCssModule('WeeklySummary');
-    const composeCount = (content.match(/composes:.*from '\.\/SummaryCommon\.module\.css'/g) || []).length;
+    const composeCount = (
+      content.match(/composes:.*from '\.\/SummaryCommon\.module\.css'/g) || []
+    ).length;
     expect(composeCount).toBeGreaterThanOrEqual(SHARED_CLASSES.length);
   });
 
   it('MonthlySummary.module.css composes from SummaryCommon', () => {
     const content = readCssModule('MonthlySummary');
-    const composeCount = (content.match(/composes:.*from '\.\/SummaryCommon\.module\.css'/g) || []).length;
+    const composeCount = (
+      content.match(/composes:.*from '\.\/SummaryCommon\.module\.css'/g) || []
+    ).length;
     expect(composeCount).toBeGreaterThanOrEqual(SHARED_CLASSES.length);
   });
 
   it('YearlyReport.module.css composes from SummaryCommon', () => {
     const content = readCssModule('YearlyReport');
-    const composeCount = (content.match(/composes:.*from '\.\/SummaryCommon\.module\.css'/g) || []).length;
+    const composeCount = (
+      content.match(/composes:.*from '\.\/SummaryCommon\.module\.css'/g) || []
+    ).length;
     // YearlyReport doesn't use addPlanRow/planInput, so fewer composes
     expect(composeCount).toBeGreaterThanOrEqual(SHARED_CLASSES.length - 2);
   });
@@ -150,7 +156,12 @@ describe('focus-visible — no :focus on non-form elements', () => {
   // Allowed :focus — form elements and contentEditable
   // oneLinerEditor, reflectionTextarea, keypointTextarea are textarea elements
   const FORM_CLASS_PATTERNS = [
-    /input/i, /select/i, /textarea/i, /editable/i, /editor/i, /daySelect/i,
+    /input/i,
+    /select/i,
+    /textarea/i,
+    /editable/i,
+    /editor/i,
+    /daySelect/i,
   ];
 
   it('no :focus pseudo-class on non-form element classes', () => {
@@ -239,12 +250,18 @@ describe('Inline style → CSS Module migration', () => {
   });
 
   it('WeeklySummary TSX has no inline style={{}}', () => {
-    const content = readFileSync(resolve(SRC_DIR, 'WeeklySummary.tsx'), 'utf-8');
+    const content = readFileSync(
+      resolve(SRC_DIR, 'WeeklySummary.tsx'),
+      'utf-8',
+    );
     expect(content).not.toMatch(/style=\{\{/);
   });
 
   it('MonthlySummary TSX has no inline style={{}}', () => {
-    const content = readFileSync(resolve(SRC_DIR, 'MonthlySummary.tsx'), 'utf-8');
+    const content = readFileSync(
+      resolve(SRC_DIR, 'MonthlySummary.tsx'),
+      'utf-8',
+    );
     expect(content).not.toMatch(/style=\{\{/);
   });
 
@@ -260,7 +277,10 @@ describe('Inline style → CSS Module migration', () => {
   });
 
   it('TaskEditPanel TSX priority buttons use CSS classes', () => {
-    const content = readFileSync(resolve(SRC_DIR, 'TaskEditPanel.tsx'), 'utf-8');
+    const content = readFileSync(
+      resolve(SRC_DIR, 'TaskEditPanel.tsx'),
+      'utf-8',
+    );
     expect(content).toMatch(/priorityGroup/);
     expect(content).toMatch(/priorityBtn\b/);
     expect(content).toMatch(/priorityBtnActiveUrgent/);
@@ -311,7 +331,12 @@ describe('Cancel button style unification', () => {
   });
 
   it('no cancel button uses bare hex colors (uses design tokens)', () => {
-    const modules = ['ConfirmDialog', 'TaskEditPanel', 'AddTaskForm', 'ProjectsPage'];
+    const modules = [
+      'ConfirmDialog',
+      'TaskEditPanel',
+      'AddTaskForm',
+      'ProjectsPage',
+    ];
     for (const mod of modules) {
       if (!fileExists(`${mod}.module.css`)) continue;
       const content = readCssModule(mod);

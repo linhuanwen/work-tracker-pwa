@@ -7,10 +7,7 @@ import type { Task, Quantity } from './types';
 /**
  * Check if a date string falls within a given year.
  */
-export function isDateInYear(
-  dateStr: string | null,
-  year: number,
-): boolean {
+export function isDateInYear(dateStr: string | null, year: number): boolean {
   if (!dateStr) return false;
   const dateYear = parseInt(dateStr.slice(0, 4), 10);
   return dateYear === year;
@@ -157,7 +154,8 @@ export function buildMonthlyTrendTable(
       const taskYear = parseInt(parts[0], 10);
       const taskMonth = parseInt(parts[1], 10);
       if (taskYear === year && taskMonth === month) {
-        categoryCounts[task.category] = (categoryCounts[task.category] || 0) + 1;
+        categoryCounts[task.category] =
+          (categoryCounts[task.category] || 0) + 1;
       }
     }
 

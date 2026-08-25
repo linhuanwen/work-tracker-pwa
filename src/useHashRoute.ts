@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 
 /** Simple hash-based router. Returns current path and a navigate function. */
-export function useHashRoute(): { path: string; navigate: (to: string) => void } {
+export function useHashRoute(): {
+  path: string;
+  navigate: (to: string) => void;
+} {
   const getPath = useCallback(() => {
     const hash = window.location.hash.replace(/^#/, '') || '/';
     // Split off query-like parts: /project/p-123

@@ -177,12 +177,8 @@ export function mergeForImport(
 
   // ---- 设置分类并集 ----
   const catSet = new Set<string>(local.settings.categories);
-  let addedCategories = 0;
   for (const c of incoming.settings.categories) {
-    if (!catSet.has(c)) {
-      catSet.add(c);
-      addedCategories += 1;
-    }
+    if (!catSet.has(c)) catSet.add(c);
   }
   const categories = [...catSet];
 
@@ -220,7 +216,10 @@ export function mergeForImport(
 }
 
 /** 计算合并后 categories 增加数（供提示用）。 */
-export function countMergedCategories(local: DataJson, incoming: DataJson): number {
+export function countMergedCategories(
+  local: DataJson,
+  incoming: DataJson,
+): number {
   const catSet = new Set(local.settings.categories);
   let added = 0;
   for (const c of incoming.settings.categories) {
@@ -228,4 +227,3 @@ export function countMergedCategories(local: DataJson, incoming: DataJson): numb
   }
   return added;
 }
-

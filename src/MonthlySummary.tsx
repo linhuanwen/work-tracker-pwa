@@ -46,7 +46,9 @@ export function MonthlySummary() {
       .filter((t) => {
         if (!t.completedDate) return false;
         const parts = t.completedDate.split('-');
-        return parseInt(parts[0], 10) === year && parseInt(parts[1], 10) === month;
+        return (
+          parseInt(parts[0], 10) === year && parseInt(parts[1], 10) === month
+        );
       });
 
     // Section 1: Quantitative summary table
@@ -96,7 +98,11 @@ export function MonthlySummary() {
     const reflectionText = existingEntry?.summary.reflection ?? '';
 
     // Section 4: Next month focus
-    const focusCandidates = getNextMonthFocusCandidates(data.tasks, year, month);
+    const focusCandidates = getNextMonthFocusCandidates(
+      data.tasks,
+      year,
+      month,
+    );
     let focusText = '';
     if (focusCandidates.length === 0) {
       focusText = '（暂无下月到期任务）';
@@ -171,15 +177,20 @@ export function MonthlySummary() {
     setGeneratingDoc(true);
     try {
       const sections = {
-        '量化汇总表': existingEntry.summary.quantitativeSummary,
-        '项目进度回顾': existingEntry.summary.projectReview,
-        '月度反思': existingEntry.summary.reflection,
-        '下月重点': existingEntry.summary.nextMonthFocus,
+        量化汇总表: existingEntry.summary.quantitativeSummary,
+        项目进度回顾: existingEntry.summary.projectReview,
+        月度反思: existingEntry.summary.reflection,
+        下月重点: existingEntry.summary.nextMonthFocus,
       };
       const resp = await fetch('/api/summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'month', key: monthKey, sections, config: aiConfigPayload() }),
+        body: JSON.stringify({
+          type: 'month',
+          key: monthKey,
+          sections,
+          config: aiConfigPayload(),
+        }),
       });
       const result = await resp.json();
       if (result.ok) {
@@ -194,46 +205,60 @@ export function MonthlySummary() {
     }
   }, [existingEntry, monthKey, showToast]);
 
-  const requestAiPolish = useCallback(async (sectionKey: string, text: string) => {
-    if (!existingEntry) return;
-    setPolishingSection(sectionKey);
-    try {
-      const resp = await fetch('/api/polish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, type: 'month', config: aiConfigPayload() }),
-      });
-      const result = await resp.json();
-      if (result.ok && result.polished) {
-        dispatch({
-          type: 'UPDATE_ARCHIVE_MONTH',
-          payload: {
-            monthKey,
-            entry: {
-              ...existingEntry,
-              summary: { ...existingEntry.summary, [sectionKey]: result.polished },
-              aiPolished: true,
-            },
-          },
+  const requestAiPolish = useCallback(
+    async (sectionKey: string, text: string) => {
+      if (!existingEntry) return;
+      setPolishingSection(sectionKey);
+      try {
+        const resp = await fetch('/api/polish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            type: 'month',
+            config: aiConfigPayload(),
+          }),
         });
-        showToast('AI 润色完成');
-      } else {
-        showToast(result.error || '润色失败，请检查 API 配置');
+        const result = await resp.json();
+        if (result.ok && result.polished) {
+          dispatch({
+            type: 'UPDATE_ARCHIVE_MONTH',
+            payload: {
+              monthKey,
+              entry: {
+                ...existingEntry,
+                summary: {
+                  ...existingEntry.summary,
+                  [sectionKey]: result.polished,
+                },
+                aiPolished: true,
+              },
+            },
+          });
+          showToast('AI 润色完成');
+        } else {
+          showToast(result.error || '润色失败，请检查 API 配置');
+        }
+      } catch {
+        showToast('润色请求失败，请确认桌面应用已启动');
+      } finally {
+        setPolishingSection(null);
       }
-    } catch {
-      showToast('润色请求失败，请确认桌面应用已启动');
-    } finally {
-      setPolishingSection(null);
-    }
-  }, [existingEntry, monthKey, dispatch, showToast]);
+    },
+    [existingEntry, monthKey, dispatch, showToast],
+  );
 
   // ---- Add plan task ----
   const handleAddPlanTask = useCallback(() => {
     const title = planInput.trim();
     if (!title) return;
-    const lastCat = data.settings.categories[data.settings.categories.length - 1] || '其他';
+    const lastCat =
+      data.settings.categories[data.settings.categories.length - 1] || '其他';
     const task = createTask({ title, category: lastCat, priority: 'normal' });
-    dispatch({ type: 'SET_DATA', payload: { ...data, tasks: [...data.tasks, task] } });
+    dispatch({
+      type: 'SET_DATA',
+      payload: { ...data, tasks: [...data.tasks, task] },
+    });
     setPlanInput('');
     showToast(`已添加任务：${title}`);
   }, [planInput, data, dispatch, showToast]);
@@ -263,10 +288,15 @@ export function MonthlySummary() {
   // ---- Sync contentEditable refs when entry changes ----
   useEffect(() => {
     if (existingEntry) {
-      if (quantRef.current) quantRef.current.textContent = existingEntry.summary.quantitativeSummary;
-      if (projectRef.current) projectRef.current.textContent = existingEntry.summary.projectReview;
-      if (reflectionRef.current) reflectionRef.current.value = existingEntry.summary.reflection;
-      if (focusRef.current) focusRef.current.textContent = existingEntry.summary.nextMonthFocus;
+      if (quantRef.current)
+        quantRef.current.textContent =
+          existingEntry.summary.quantitativeSummary;
+      if (projectRef.current)
+        projectRef.current.textContent = existingEntry.summary.projectReview;
+      if (reflectionRef.current)
+        reflectionRef.current.value = existingEntry.summary.reflection;
+      if (focusRef.current)
+        focusRef.current.textContent = existingEntry.summary.nextMonthFocus;
     }
   }, [existingEntry]);
 
@@ -289,11 +319,19 @@ export function MonthlySummary() {
 
       {/* Month selector */}
       <div className={styles.monthSelector}>
-        <button className={styles.monthBtn} onClick={goPrevMonth} aria-label="上一月">
+        <button
+          className={styles.monthBtn}
+          onClick={goPrevMonth}
+          aria-label="上一月"
+        >
           <Icon name="chevron-left" size={18} />
         </button>
         <span className={styles.monthLabel}>{monthLabel}</span>
-        <button className={styles.monthBtn} onClick={goNextMonth} aria-label="下一月">
+        <button
+          className={styles.monthBtn}
+          onClick={goNextMonth}
+          aria-label="下一月"
+        >
           <Icon name="chevron-right" size={18} />
         </button>
       </div>
@@ -320,7 +358,8 @@ export function MonthlySummary() {
           onClick={handleGenerateDoc}
           disabled={generatingDoc}
         >
-          <Icon name="download" size={16} /> {generatingDoc ? '生成中…' : '生成总结文档'}
+          <Icon name="download" size={16} />{' '}
+          {generatingDoc ? '生成中…' : '生成总结文档'}
         </button>
       )}
 
@@ -332,11 +371,19 @@ export function MonthlySummary() {
               <h3 className={styles.sectionTitle}>一、量化汇总表</h3>
               <button
                 className={styles.aiBtn}
-                onClick={() => requestAiPolish('quantitativeSummary', existingEntry.summary.quantitativeSummary)}
+                onClick={() =>
+                  requestAiPolish(
+                    'quantitativeSummary',
+                    existingEntry.summary.quantitativeSummary,
+                  )
+                }
                 disabled={polishingSection === 'quantitativeSummary'}
                 title="请求 AI 润色"
               >
-                <Icon name="bot" size={14} /> {polishingSection === 'quantitativeSummary' ? '润色中…' : '请求润色'}
+                <Icon name="bot" size={14} />{' '}
+                {polishingSection === 'quantitativeSummary'
+                  ? '润色中…'
+                  : '请求润色'}
               </button>
             </div>
             <div
@@ -344,7 +391,12 @@ export function MonthlySummary() {
               className={styles.editable}
               contentEditable
               suppressContentEditableWarning
-              onBlur={(e) => saveContentEditable('quantitativeSummary', e.currentTarget.innerHTML)}
+              onBlur={(e) =>
+                saveContentEditable(
+                  'quantitativeSummary',
+                  e.currentTarget.innerHTML,
+                )
+              }
               data-testid="section-quant"
             />
           </div>
@@ -355,11 +407,17 @@ export function MonthlySummary() {
               <h3 className={styles.sectionTitle}>二、项目进度回顾</h3>
               <button
                 className={styles.aiBtn}
-                onClick={() => requestAiPolish('projectReview', existingEntry.summary.projectReview)}
+                onClick={() =>
+                  requestAiPolish(
+                    'projectReview',
+                    existingEntry.summary.projectReview,
+                  )
+                }
                 disabled={polishingSection === 'projectReview'}
                 title="请求 AI 润色"
               >
-                <Icon name="bot" size={14} /> {polishingSection === 'projectReview' ? '润色中…' : '请求润色'}
+                <Icon name="bot" size={14} />{' '}
+                {polishingSection === 'projectReview' ? '润色中…' : '请求润色'}
               </button>
             </div>
             <div
@@ -367,7 +425,9 @@ export function MonthlySummary() {
               className={styles.editable}
               contentEditable
               suppressContentEditableWarning
-              onBlur={(e) => saveContentEditable('projectReview', e.currentTarget.innerHTML)}
+              onBlur={(e) =>
+                saveContentEditable('projectReview', e.currentTarget.innerHTML)
+              }
               data-testid="section-project"
             />
           </div>
@@ -378,11 +438,17 @@ export function MonthlySummary() {
               <h3 className={styles.sectionTitle}>三、月度反思</h3>
               <button
                 className={styles.aiBtn}
-                onClick={() => requestAiPolish('reflection', existingEntry.summary.reflection)}
+                onClick={() =>
+                  requestAiPolish(
+                    'reflection',
+                    existingEntry.summary.reflection,
+                  )
+                }
                 disabled={polishingSection === 'reflection'}
                 title="请求 AI 润色"
               >
-                <Icon name="bot" size={14} /> {polishingSection === 'reflection' ? '润色中…' : '请求润色'}
+                <Icon name="bot" size={14} />{' '}
+                {polishingSection === 'reflection' ? '润色中…' : '请求润色'}
               </button>
             </div>
             <textarea
@@ -400,11 +466,17 @@ export function MonthlySummary() {
               <h3 className={styles.sectionTitle}>四、下月重点</h3>
               <button
                 className={styles.aiBtn}
-                onClick={() => requestAiPolish('nextMonthFocus', existingEntry.summary.nextMonthFocus)}
+                onClick={() =>
+                  requestAiPolish(
+                    'nextMonthFocus',
+                    existingEntry.summary.nextMonthFocus,
+                  )
+                }
                 disabled={polishingSection === 'nextMonthFocus'}
                 title="请求 AI 润色"
               >
-                <Icon name="bot" size={14} /> {polishingSection === 'nextMonthFocus' ? '润色中…' : '请求润色'}
+                <Icon name="bot" size={14} />{' '}
+                {polishingSection === 'nextMonthFocus' ? '润色中…' : '请求润色'}
               </button>
             </div>
             <div
@@ -412,7 +484,9 @@ export function MonthlySummary() {
               className={styles.editable}
               contentEditable
               suppressContentEditableWarning
-              onBlur={(e) => saveContentEditable('nextMonthFocus', e.currentTarget.innerHTML)}
+              onBlur={(e) =>
+                saveContentEditable('nextMonthFocus', e.currentTarget.innerHTML)
+              }
               data-testid="section-focus"
             />
             <div className={styles.addPlanRow}>
@@ -431,9 +505,13 @@ export function MonthlySummary() {
           {/* Status indicator */}
           <div className={styles.statusBar}>
             {existingEntry.aiPolished ? (
-              <span className={styles.statusOk}><Icon name="check-circle" size={14} /> 已润色</span>
+              <span className={styles.statusOk}>
+                <Icon name="check-circle" size={14} /> 已润色
+              </span>
             ) : (
-              <span className={styles.statusPending}><Icon name="clock" size={14} /> 待 AI 润色</span>
+              <span className={styles.statusPending}>
+                <Icon name="clock" size={14} /> 待 AI 润色
+              </span>
             )}
           </div>
         </div>

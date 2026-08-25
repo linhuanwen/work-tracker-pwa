@@ -91,7 +91,7 @@ describe('getWeekDateRange', () => {
     const startDay = new Date(range.start).getDay();
     const endDay = new Date(range.end).getDay();
     expect(startDay).toBe(1); // Monday
-    expect(endDay).toBe(5);   // Friday
+    expect(endDay).toBe(5); // Friday
   });
 
   it('returns formatted label like "7月20日 - 7月24日"', () => {
@@ -183,9 +183,27 @@ describe('getCompletedTasksByCategory', () => {
 
   it('filters tasks completed within the week', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '任务A', category: '绩效管理', status: 'done', completedDate: '2026-07-21' }),
-      makeTask({ id: '2', title: '任务B', category: '其他', status: 'done', completedDate: '2026-07-22' }),
-      makeTask({ id: '3', title: '任务C', category: '绩效管理', status: 'done', completedDate: '2026-07-13' }), // last week
+      makeTask({
+        id: '1',
+        title: '任务A',
+        category: '绩效管理',
+        status: 'done',
+        completedDate: '2026-07-21',
+      }),
+      makeTask({
+        id: '2',
+        title: '任务B',
+        category: '其他',
+        status: 'done',
+        completedDate: '2026-07-22',
+      }),
+      makeTask({
+        id: '3',
+        title: '任务C',
+        category: '绩效管理',
+        status: 'done',
+        completedDate: '2026-07-13',
+      }), // last week
     ];
     const result = getCompletedTasksByCategory(tasks, '2026-W30', categories);
     expect(result).toHaveLength(2); // 绩效管理 + 其他
@@ -197,8 +215,20 @@ describe('getCompletedTasksByCategory', () => {
 
   it('groups tasks by category ordered by settings.categories', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '其他任务', category: '其他', status: 'done', completedDate: '2026-07-21' }),
-      makeTask({ id: '2', title: '绩效任务', category: '绩效管理', status: 'done', completedDate: '2026-07-22' }),
+      makeTask({
+        id: '1',
+        title: '其他任务',
+        category: '其他',
+        status: 'done',
+        completedDate: '2026-07-21',
+      }),
+      makeTask({
+        id: '2',
+        title: '绩效任务',
+        category: '绩效管理',
+        status: 'done',
+        completedDate: '2026-07-22',
+      }),
     ];
     const result = getCompletedTasksByCategory(tasks, '2026-W30', categories);
     // 绩效管理 comes before 其他 in categories order
@@ -208,7 +238,13 @@ describe('getCompletedTasksByCategory', () => {
 
   it('excludes categories with no completed tasks', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '绩效任务', category: '绩效管理', status: 'done', completedDate: '2026-07-21' }),
+      makeTask({
+        id: '1',
+        title: '绩效任务',
+        category: '绩效管理',
+        status: 'done',
+        completedDate: '2026-07-21',
+      }),
     ];
     const result = getCompletedTasksByCategory(tasks, '2026-W30', categories);
     expect(result).toHaveLength(1);
@@ -256,8 +292,20 @@ describe('getCompletedTasksByCategory', () => {
 
   it('excludes tasks with status done but completedDate outside the week', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '旧任务', category: '绩效管理', status: 'done', completedDate: '2026-07-13' }),
-      makeTask({ id: '2', title: '本周任务', category: '绩效管理', status: 'done', completedDate: '2026-07-21' }),
+      makeTask({
+        id: '1',
+        title: '旧任务',
+        category: '绩效管理',
+        status: 'done',
+        completedDate: '2026-07-13',
+      }),
+      makeTask({
+        id: '2',
+        title: '本周任务',
+        category: '绩效管理',
+        status: 'done',
+        completedDate: '2026-07-21',
+      }),
     ];
     const result = getCompletedTasksByCategory(tasks, '2026-W30', categories);
     expect(result[0].tasks).toHaveLength(1);
@@ -266,7 +314,13 @@ describe('getCompletedTasksByCategory', () => {
 
   it('returns empty array when no tasks were completed this week', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '旧任务', category: '绩效管理', status: 'done', completedDate: '2026-07-13' }),
+      makeTask({
+        id: '1',
+        title: '旧任务',
+        category: '绩效管理',
+        status: 'done',
+        completedDate: '2026-07-13',
+      }),
     ];
     const result = getCompletedTasksByCategory(tasks, '2026-W30', categories);
     expect(result).toEqual([]);
@@ -301,7 +355,11 @@ describe('getProjectProgressChanges', () => {
       }),
     ];
     const projects: Project[] = [
-      makeProject({ id: 'p-1', title: '2026年度晋升支持专项', category: '绩效管理' }),
+      makeProject({
+        id: 'p-1',
+        title: '2026年度晋升支持专项',
+        category: '绩效管理',
+      }),
     ];
     const result = getProjectProgressChanges(tasks, projects, '2026-W30');
     expect(result).toHaveLength(1);
@@ -368,9 +426,7 @@ describe('getProjectProgressChanges', () => {
         category: '绩效管理',
         status: 'done',
         completedDate: '2026-07-10', // last week
-        subtasks: [
-          { id: 's1', title: '旧步骤', status: 'done' },
-        ],
+        subtasks: [{ id: 's1', title: '旧步骤', status: 'done' }],
       }),
     ];
     const projects: Project[] = [
@@ -420,7 +476,12 @@ describe('getNextWeekPlanCandidates', () => {
 
   it('includes todo tasks with no deadline', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '无截止日期任务', status: 'todo', deadline: null }),
+      makeTask({
+        id: '1',
+        title: '无截止日期任务',
+        status: 'todo',
+        deadline: null,
+      }),
     ];
     const result = getNextWeekPlanCandidates(tasks, referenceDate);
     expect(result).toHaveLength(1);
@@ -429,7 +490,12 @@ describe('getNextWeekPlanCandidates', () => {
 
   it('includes todo tasks with deadline within 14 days', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '近期截止', status: 'todo', deadline: '2026-08-01' }),
+      makeTask({
+        id: '1',
+        title: '近期截止',
+        status: 'todo',
+        deadline: '2026-08-01',
+      }),
     ];
     const result = getNextWeekPlanCandidates(tasks, referenceDate);
     expect(result).toHaveLength(1);
@@ -437,7 +503,12 @@ describe('getNextWeekPlanCandidates', () => {
 
   it('excludes todo tasks with deadline beyond 14 days', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '远期任务', status: 'todo', deadline: '2026-12-31' }),
+      makeTask({
+        id: '1',
+        title: '远期任务',
+        status: 'todo',
+        deadline: '2026-12-31',
+      }),
     ];
     const result = getNextWeekPlanCandidates(tasks, referenceDate);
     expect(result).toHaveLength(0);
@@ -445,7 +516,12 @@ describe('getNextWeekPlanCandidates', () => {
 
   it('includes todo tasks with deadline exactly 14 days out', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '边界任务', status: 'todo', deadline: '2026-08-04' }),
+      makeTask({
+        id: '1',
+        title: '边界任务',
+        status: 'todo',
+        deadline: '2026-08-04',
+      }),
     ];
     const result = getNextWeekPlanCandidates(tasks, referenceDate);
     expect(result).toHaveLength(1);
@@ -453,7 +529,12 @@ describe('getNextWeekPlanCandidates', () => {
 
   it('excludes tasks with deadline in the past', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '过期任务', status: 'todo', deadline: '2026-07-01' }),
+      makeTask({
+        id: '1',
+        title: '过期任务',
+        status: 'todo',
+        deadline: '2026-07-01',
+      }),
     ];
     const result = getNextWeekPlanCandidates(tasks, referenceDate);
     expect(result).toHaveLength(0);
@@ -461,9 +542,19 @@ describe('getNextWeekPlanCandidates', () => {
 
   it('excludes non-todo tasks', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '进行中', status: 'in-progress', deadline: null }),
+      makeTask({
+        id: '1',
+        title: '进行中',
+        status: 'in-progress',
+        deadline: null,
+      }),
       makeTask({ id: '2', title: '已完成', status: 'done', deadline: null }),
-      makeTask({ id: '3', title: '已取消', status: 'cancelled', deadline: null }),
+      makeTask({
+        id: '3',
+        title: '已取消',
+        status: 'cancelled',
+        deadline: null,
+      }),
     ];
     const result = getNextWeekPlanCandidates(tasks, referenceDate);
     expect(result).toHaveLength(0);
@@ -555,9 +646,25 @@ describe('getCoordinationItems', () => {
 
   it('excludes non-in-progress tasks', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '待办', status: 'todo', updatedDate: '2026-07-01', isBlocked: true }),
-      makeTask({ id: '2', title: '已完成', status: 'done', updatedDate: '2026-07-01' }),
-      makeTask({ id: '3', title: '已取消', status: 'cancelled', updatedDate: '2026-07-01' }),
+      makeTask({
+        id: '1',
+        title: '待办',
+        status: 'todo',
+        updatedDate: '2026-07-01',
+        isBlocked: true,
+      }),
+      makeTask({
+        id: '2',
+        title: '已完成',
+        status: 'done',
+        updatedDate: '2026-07-01',
+      }),
+      makeTask({
+        id: '3',
+        title: '已取消',
+        status: 'cancelled',
+        updatedDate: '2026-07-01',
+      }),
     ];
     const result = getCoordinationItems(tasks, referenceDate);
     expect(result).toHaveLength(0);

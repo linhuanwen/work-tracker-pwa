@@ -43,11 +43,7 @@ function mockMatchMedia(matchesMap: Record<string, boolean>) {
 /**
  * Fire a complete drag sequence: mousedown → mousemove → mouseup.
  */
-function simulateDrag(
-  element: HTMLElement,
-  startX: number,
-  endX: number,
-) {
+function simulateDrag(element: HTMLElement, startX: number, endX: number) {
   fireEvent.mouseDown(element, { clientX: startX, button: 0 });
   fireEvent.mouseMove(document, { clientX: endX });
   fireEvent.mouseUp(document);
@@ -87,7 +83,9 @@ describe('Sidebar — responsive rendering (Seam 1)', () => {
     });
 
     it('renders with data-mode="hidden"', () => {
-      const { container } = render(<Sidebar currentPath="/" onNavigate={() => {}} />);
+      const { container } = render(
+        <Sidebar currentPath="/" onNavigate={() => {}} />,
+      );
       const aside = container.querySelector('aside');
       expect(aside).not.toBeNull();
       expect(aside!.getAttribute('data-mode')).toBe('hidden');
@@ -137,7 +135,9 @@ describe('Sidebar — responsive rendering (Seam 1)', () => {
 
     it('hides text labels visually in icon mode', () => {
       render(<Sidebar currentPath="/" onNavigate={() => {}} />);
-      const labels = screen.getAllByText(/任务清单|周报|月报|年报|项目管理|设置/);
+      const labels = screen.getAllByText(
+        /任务清单|周报|月报|年报|项目管理|设置/,
+      );
       for (const label of labels) {
         expect(label.classList.contains('label')).toBe(true);
       }

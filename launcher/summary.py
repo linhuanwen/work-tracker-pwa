@@ -34,10 +34,11 @@ def _summary_prompt(period_type: str, period_label: str, sections: dict) -> str:
 
 def _markdown_to_docx(markdown_text: str, output_path: str) -> None:
     """Convert simple Markdown to a .docx file (Chinese-friendly)."""
-    from docx import Document
-    from docx.shared import Pt, Inches
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
     import re
+
+    from docx import Document
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.shared import Inches, Pt
 
     doc = Document()
     # Set default font for the document
@@ -63,7 +64,7 @@ def _markdown_to_docx(markdown_text: str, output_path: str) -> None:
             doc.add_heading(stripped[3:], level=2)
         elif stripped.startswith('### '):
             doc.add_heading(stripped[4:], level=3)
-        elif stripped.startswith('- ') or stripped.startswith('* '):
+        elif stripped.startswith(('- ', '* ')):
             doc.add_paragraph(stripped[2:], style='List Bullet')
         elif re.match(r'^\d+\.\s', stripped):
             text = re.sub(r'^\d+\.\s', '', stripped)
@@ -116,7 +117,7 @@ def generate_summary_doc(data_folder_path: str, period_type: str, key: str, sect
 
     config = _resolve_ai_config()
 
-    _, period_word, _ = _type_label_map()[period_type]
+    _, _, _ = _type_label_map()[period_type]
     if period_type == 'week':
         year, week = key.split('-W')
         full_label = f"{year}年第{int(week)}周"

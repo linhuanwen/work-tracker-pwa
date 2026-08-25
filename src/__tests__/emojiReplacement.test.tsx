@@ -3,19 +3,315 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import type { Task } from '../types';
 
 // Mock CSS modules (same pattern as responsive.test.tsx)
-vi.mock('../App.module.css', () => ({ default: { app: 'app', header: 'header', title: 'title', subtitle: 'subtitle', nav: 'nav', navBtn: 'navBtn', folderBar: 'folderBar', folderBtn: 'folderBtn', folderPath: 'folderPath', error: 'error', bottomFolderBar: 'bottomFolderBar', bottomFolderLabel: 'bottomFolderLabel', changeFolderBtn: 'changeFolderBtn', dragBar: 'dragBar', dragHandle: 'dragHandle', resizeEdge: 'resizeEdge', resizeN: 'resizeN', resizeS: 'resizeS', resizeE: 'resizeE', resizeW: 'resizeW', resizeNE: 'resizeNE', resizeNW: 'resizeNW', resizeSE: 'resizeSE', resizeSW: 'resizeSW' } }));
-vi.mock('../BottomNav.module.css', () => ({ default: { nav: 'nav', tab: 'tab', active: 'active', icon: 'icon', label: 'label', hibernateBtn: 'hibernateBtn' } }));
-vi.mock('../UrgentZone.module.css', () => ({ default: { zone: 'zone', header: 'header', headerIcon: 'headerIcon', headerTitle: 'headerTitle', headerCount: 'headerCount', cards: 'cards', urgentCard: 'urgentCard', cardBody: 'cardBody', cardTitle: 'cardTitle', cardTitleDone: 'cardTitleDone', cardMeta: 'cardMeta', categoryTag: 'categoryTag', leaderBadge: 'leaderBadge', quantityTag: 'quantityTag', arrows: 'arrows', arrowBtn: 'arrowBtn' } }));
-vi.mock('../HibernateDrawer.module.css', () => ({ default: { overlay: 'overlay', drawer: 'drawer', handle: 'handle', header: 'header', title: 'title', count: 'count', closeBtn: 'closeBtn', empty: 'empty', list: 'list', item: 'item', itemBody: 'itemBody', itemTitle: 'itemTitle', itemMeta: 'itemMeta', itemCategory: 'itemCategory', itemDate: 'itemDate', activateBtn: 'activateBtn' } }));
-vi.mock('../InstallBanner.module.css', () => ({ default: { banner: 'banner', message: 'message', actions: 'actions', installBtn: 'installBtn', dismissBtn: 'dismissBtn' } }));
-vi.mock('../Reports.module.css', () => ({ default: { container: 'container', heading: 'heading', tabs: 'tabs', tab: 'tab', tabActive: 'tabActive', actions: 'actions', actionBtn: 'actionBtn', preview: 'preview', section: 'section', sectionTitle: 'sectionTitle', sectionContent: 'sectionContent' } }));
-vi.mock('../AddTaskForm.module.css', () => ({ default: { form: 'form', row: 'row', field: 'field', label: 'label', input: 'input', select: 'select', priorityGroup: 'priorityGroup', priorityBtn: 'priorityBtn', priorityBtnActive: 'priorityBtnActive', submitBtn: 'submitBtn', collapsedCard: 'collapsedCard', collapsedIcon: 'collapsedIcon', collapsedText: 'collapsedText', actions: 'actions', cancelBtn: 'cancelBtn' } }));
-vi.mock('../TaskCard.module.css', () => ({ default: { card: 'card', cardHeader: 'cardHeader', cardHeaderExpanded: 'cardHeaderExpanded', priorityIcon: 'priorityIcon', statusDot: 'statusDot', statusTodo: 'statusTodo', statusInProgress: 'statusInProgress', statusDone: 'statusDone', statusCancelled: 'statusCancelled', body: 'body', title: 'title', titleDone: 'titleDone', titleCancelled: 'titleCancelled', meta: 'meta', categoryTag: 'categoryTag', priorityTag: 'priorityTag', priorityUrgent: 'priorityUrgent', priorityImportant: 'priorityImportant', priorityNormal: 'priorityNormal', deadlineTag: 'deadlineTag', dateFooter: 'dateFooter', dateText: 'dateText', statusSelect: 'statusSelect', expandArrow: 'expandArrow', expandArrowOpen: 'expandArrowOpen', editPanel: 'editPanel', editLabel: 'editLabel', editRow: 'editRow', editInput: 'editInput', editSelect: 'editSelect', editTextarea: 'editTextarea', editHint: 'editHint', priorityBtnGroup: 'priorityBtnGroup', priorityBtnActive: 'priorityBtnActive', toggleRow: 'toggleRow', toggleLabel: 'toggleLabel', toggle: 'toggle', toggleSlider: 'toggleSlider', leaderFields: 'leaderFields', leaderBadge: 'leaderBadge', quantityEditList: 'quantityEditList', quantityEditRow: 'quantityEditRow', quantityNumberInput: 'quantityNumberInput', quantityUnitInput: 'quantityUnitInput', removeBtn: 'removeBtn', addQuantityBtn: 'addQuantityBtn', quantityTag: 'quantityTag' } }));
-vi.mock('../WeeklySummary.module.css', () => ({ default: { container: 'container', heading: 'heading', weekSelector: 'weekSelector', weekBtn: 'weekBtn', weekLabel: 'weekLabel', generateBtn: 'generateBtn', sections: 'sections', section: 'section', sectionHeader: 'sectionHeader', sectionTitle: 'sectionTitle', aiBtn: 'aiBtn', editable: 'editable', addPlanRow: 'addPlanRow', planInput: 'planInput', statusBar: 'statusBar', statusOk: 'statusOk', statusPending: 'statusPending', backBtn: 'backBtn' } }));
-vi.mock('../MonthlySummary.module.css', () => ({ default: { container: 'container', heading: 'heading', monthSelector: 'monthSelector', monthBtn: 'monthBtn', monthLabel: 'monthLabel', generateBtn: 'generateBtn', sections: 'sections', section: 'section', sectionHeader: 'sectionHeader', sectionTitle: 'sectionTitle', aiBtn: 'aiBtn', editable: 'editable', addPlanRow: 'addPlanRow', planInput: 'planInput', statusBar: 'statusBar', statusOk: 'statusOk', statusPending: 'statusPending', backBtn: 'backBtn', reflectionTextarea: 'reflectionTextarea' } }));
-vi.mock('../YearlyReport.module.css', () => ({ default: { container: 'container', heading: 'heading', yearSelector: 'yearSelector', yearBtn: 'yearBtn', yearLabel: 'yearLabel', generateBtn: 'generateBtn', sections: 'sections', section: 'section', sectionHeader: 'sectionHeader', sectionTitle: 'sectionTitle', aiBtn: 'aiBtn', autoPreview: 'autoPreview', keypointLabel: 'keypointLabel', keypointTextarea: 'keypointTextarea', statusBar: 'statusBar', statusOk: 'statusOk', statusPending: 'statusPending', backBtn: 'backBtn', dimSection: 'dimSection', dimSectionEmpty: 'dimSectionEmpty', oneLinerEditor: 'oneLinerEditor', auxTable: 'auxTable' } }));
-vi.mock('../ProjectDetailPage.module.css', () => ({ default: { container: 'container', backBtn: 'backBtn', empty: 'empty', summary: 'summary', projectTitle: 'projectTitle', summaryMeta: 'summaryMeta', categoryTag: 'categoryTag', dateTag: 'dateTag', statTag: 'statTag', progressRow: 'progressRow', progressBar: 'progressBar', progressFill: 'progressFill', progressText: 'progressText', notes: 'notes', statusGroup: 'statusGroup', statusHeader: 'statusHeader', statusLabel: 'statusLabel', statusCount: 'statusCount', taskList: 'taskList', taskCard: 'taskCard', taskTitle: 'taskTitle', taskPriority: 'taskPriority' } }));
-vi.mock('../ProjectsPage.module.css', () => ({ default: { container: 'container', header: 'header', backBtn: 'backBtn', title: 'title', addBtn: 'addBtn', form: 'form', formTitle: 'formTitle', field: 'field', label: 'label', input: 'input', select: 'select', dateRow: 'dateRow', textarea: 'textarea', formActions: 'formActions', cancelBtn: 'cancelBtn', submitBtn: 'submitBtn', list: 'list', empty: 'empty', card: 'card', cardArchived: 'cardArchived', cardBody: 'cardBody', cardTitle: 'cardTitle', cardMeta: 'cardMeta', categoryTag: 'categoryTag', dateTag: 'dateTag', taskCount: 'taskCount', progressRow: 'progressRow', progressBar: 'progressBar', progressFill: 'progressFill', progressText: 'progressText', cardActions: 'cardActions', editBtn: 'editBtn', archiveBtn: 'archiveBtn', archivedSection: 'archivedSection', archivedTitle: 'archivedTitle', archivedBadge: 'archivedBadge' } }));
+vi.mock('../App.module.css', () => ({
+  default: {
+    app: 'app',
+    header: 'header',
+    title: 'title',
+    subtitle: 'subtitle',
+    nav: 'nav',
+    navBtn: 'navBtn',
+    folderBar: 'folderBar',
+    folderBtn: 'folderBtn',
+    folderPath: 'folderPath',
+    error: 'error',
+    bottomFolderBar: 'bottomFolderBar',
+    bottomFolderLabel: 'bottomFolderLabel',
+    changeFolderBtn: 'changeFolderBtn',
+    dragBar: 'dragBar',
+    dragHandle: 'dragHandle',
+    resizeEdge: 'resizeEdge',
+    resizeN: 'resizeN',
+    resizeS: 'resizeS',
+    resizeE: 'resizeE',
+    resizeW: 'resizeW',
+    resizeNE: 'resizeNE',
+    resizeNW: 'resizeNW',
+    resizeSE: 'resizeSE',
+    resizeSW: 'resizeSW',
+  },
+}));
+vi.mock('../BottomNav.module.css', () => ({
+  default: {
+    nav: 'nav',
+    tab: 'tab',
+    active: 'active',
+    icon: 'icon',
+    label: 'label',
+    hibernateBtn: 'hibernateBtn',
+  },
+}));
+vi.mock('../UrgentZone.module.css', () => ({
+  default: {
+    zone: 'zone',
+    header: 'header',
+    headerIcon: 'headerIcon',
+    headerTitle: 'headerTitle',
+    headerCount: 'headerCount',
+    cards: 'cards',
+    urgentCard: 'urgentCard',
+    cardBody: 'cardBody',
+    cardTitle: 'cardTitle',
+    cardTitleDone: 'cardTitleDone',
+    cardMeta: 'cardMeta',
+    categoryTag: 'categoryTag',
+    leaderBadge: 'leaderBadge',
+    quantityTag: 'quantityTag',
+    arrows: 'arrows',
+    arrowBtn: 'arrowBtn',
+  },
+}));
+vi.mock('../HibernateDrawer.module.css', () => ({
+  default: {
+    overlay: 'overlay',
+    drawer: 'drawer',
+    handle: 'handle',
+    header: 'header',
+    title: 'title',
+    count: 'count',
+    closeBtn: 'closeBtn',
+    empty: 'empty',
+    list: 'list',
+    item: 'item',
+    itemBody: 'itemBody',
+    itemTitle: 'itemTitle',
+    itemMeta: 'itemMeta',
+    itemCategory: 'itemCategory',
+    itemDate: 'itemDate',
+    activateBtn: 'activateBtn',
+  },
+}));
+vi.mock('../InstallBanner.module.css', () => ({
+  default: {
+    banner: 'banner',
+    message: 'message',
+    actions: 'actions',
+    installBtn: 'installBtn',
+    dismissBtn: 'dismissBtn',
+  },
+}));
+vi.mock('../Reports.module.css', () => ({
+  default: {
+    container: 'container',
+    heading: 'heading',
+    tabs: 'tabs',
+    tab: 'tab',
+    tabActive: 'tabActive',
+    actions: 'actions',
+    actionBtn: 'actionBtn',
+    preview: 'preview',
+    section: 'section',
+    sectionTitle: 'sectionTitle',
+    sectionContent: 'sectionContent',
+  },
+}));
+vi.mock('../AddTaskForm.module.css', () => ({
+  default: {
+    form: 'form',
+    row: 'row',
+    field: 'field',
+    label: 'label',
+    input: 'input',
+    select: 'select',
+    priorityGroup: 'priorityGroup',
+    priorityBtn: 'priorityBtn',
+    priorityBtnActive: 'priorityBtnActive',
+    submitBtn: 'submitBtn',
+    collapsedCard: 'collapsedCard',
+    collapsedIcon: 'collapsedIcon',
+    collapsedText: 'collapsedText',
+    actions: 'actions',
+    cancelBtn: 'cancelBtn',
+  },
+}));
+vi.mock('../TaskCard.module.css', () => ({
+  default: {
+    card: 'card',
+    cardHeader: 'cardHeader',
+    cardHeaderExpanded: 'cardHeaderExpanded',
+    priorityIcon: 'priorityIcon',
+    statusDot: 'statusDot',
+    statusTodo: 'statusTodo',
+    statusInProgress: 'statusInProgress',
+    statusDone: 'statusDone',
+    statusCancelled: 'statusCancelled',
+    body: 'body',
+    title: 'title',
+    titleDone: 'titleDone',
+    titleCancelled: 'titleCancelled',
+    meta: 'meta',
+    categoryTag: 'categoryTag',
+    priorityTag: 'priorityTag',
+    priorityUrgent: 'priorityUrgent',
+    priorityImportant: 'priorityImportant',
+    priorityNormal: 'priorityNormal',
+    deadlineTag: 'deadlineTag',
+    dateFooter: 'dateFooter',
+    dateText: 'dateText',
+    statusSelect: 'statusSelect',
+    expandArrow: 'expandArrow',
+    expandArrowOpen: 'expandArrowOpen',
+    editPanel: 'editPanel',
+    editLabel: 'editLabel',
+    editRow: 'editRow',
+    editInput: 'editInput',
+    editSelect: 'editSelect',
+    editTextarea: 'editTextarea',
+    editHint: 'editHint',
+    priorityBtnGroup: 'priorityBtnGroup',
+    priorityBtnActive: 'priorityBtnActive',
+    toggleRow: 'toggleRow',
+    toggleLabel: 'toggleLabel',
+    toggle: 'toggle',
+    toggleSlider: 'toggleSlider',
+    leaderFields: 'leaderFields',
+    leaderBadge: 'leaderBadge',
+    quantityEditList: 'quantityEditList',
+    quantityEditRow: 'quantityEditRow',
+    quantityNumberInput: 'quantityNumberInput',
+    quantityUnitInput: 'quantityUnitInput',
+    removeBtn: 'removeBtn',
+    addQuantityBtn: 'addQuantityBtn',
+    quantityTag: 'quantityTag',
+  },
+}));
+vi.mock('../WeeklySummary.module.css', () => ({
+  default: {
+    container: 'container',
+    heading: 'heading',
+    weekSelector: 'weekSelector',
+    weekBtn: 'weekBtn',
+    weekLabel: 'weekLabel',
+    generateBtn: 'generateBtn',
+    sections: 'sections',
+    section: 'section',
+    sectionHeader: 'sectionHeader',
+    sectionTitle: 'sectionTitle',
+    aiBtn: 'aiBtn',
+    editable: 'editable',
+    addPlanRow: 'addPlanRow',
+    planInput: 'planInput',
+    statusBar: 'statusBar',
+    statusOk: 'statusOk',
+    statusPending: 'statusPending',
+    backBtn: 'backBtn',
+  },
+}));
+vi.mock('../MonthlySummary.module.css', () => ({
+  default: {
+    container: 'container',
+    heading: 'heading',
+    monthSelector: 'monthSelector',
+    monthBtn: 'monthBtn',
+    monthLabel: 'monthLabel',
+    generateBtn: 'generateBtn',
+    sections: 'sections',
+    section: 'section',
+    sectionHeader: 'sectionHeader',
+    sectionTitle: 'sectionTitle',
+    aiBtn: 'aiBtn',
+    editable: 'editable',
+    addPlanRow: 'addPlanRow',
+    planInput: 'planInput',
+    statusBar: 'statusBar',
+    statusOk: 'statusOk',
+    statusPending: 'statusPending',
+    backBtn: 'backBtn',
+    reflectionTextarea: 'reflectionTextarea',
+  },
+}));
+vi.mock('../YearlyReport.module.css', () => ({
+  default: {
+    container: 'container',
+    heading: 'heading',
+    yearSelector: 'yearSelector',
+    yearBtn: 'yearBtn',
+    yearLabel: 'yearLabel',
+    generateBtn: 'generateBtn',
+    sections: 'sections',
+    section: 'section',
+    sectionHeader: 'sectionHeader',
+    sectionTitle: 'sectionTitle',
+    aiBtn: 'aiBtn',
+    autoPreview: 'autoPreview',
+    keypointLabel: 'keypointLabel',
+    keypointTextarea: 'keypointTextarea',
+    statusBar: 'statusBar',
+    statusOk: 'statusOk',
+    statusPending: 'statusPending',
+    backBtn: 'backBtn',
+    dimSection: 'dimSection',
+    dimSectionEmpty: 'dimSectionEmpty',
+    oneLinerEditor: 'oneLinerEditor',
+    auxTable: 'auxTable',
+  },
+}));
+vi.mock('../ProjectDetailPage.module.css', () => ({
+  default: {
+    container: 'container',
+    backBtn: 'backBtn',
+    empty: 'empty',
+    summary: 'summary',
+    projectTitle: 'projectTitle',
+    summaryMeta: 'summaryMeta',
+    categoryTag: 'categoryTag',
+    dateTag: 'dateTag',
+    statTag: 'statTag',
+    progressRow: 'progressRow',
+    progressBar: 'progressBar',
+    progressFill: 'progressFill',
+    progressText: 'progressText',
+    notes: 'notes',
+    statusGroup: 'statusGroup',
+    statusHeader: 'statusHeader',
+    statusLabel: 'statusLabel',
+    statusCount: 'statusCount',
+    taskList: 'taskList',
+    taskCard: 'taskCard',
+    taskTitle: 'taskTitle',
+    taskPriority: 'taskPriority',
+  },
+}));
+vi.mock('../ProjectsPage.module.css', () => ({
+  default: {
+    container: 'container',
+    header: 'header',
+    backBtn: 'backBtn',
+    title: 'title',
+    addBtn: 'addBtn',
+    form: 'form',
+    formTitle: 'formTitle',
+    field: 'field',
+    label: 'label',
+    input: 'input',
+    select: 'select',
+    dateRow: 'dateRow',
+    textarea: 'textarea',
+    formActions: 'formActions',
+    cancelBtn: 'cancelBtn',
+    submitBtn: 'submitBtn',
+    list: 'list',
+    empty: 'empty',
+    card: 'card',
+    cardArchived: 'cardArchived',
+    cardBody: 'cardBody',
+    cardTitle: 'cardTitle',
+    cardMeta: 'cardMeta',
+    categoryTag: 'categoryTag',
+    dateTag: 'dateTag',
+    taskCount: 'taskCount',
+    progressRow: 'progressRow',
+    progressBar: 'progressBar',
+    progressFill: 'progressFill',
+    progressText: 'progressText',
+    cardActions: 'cardActions',
+    editBtn: 'editBtn',
+    archiveBtn: 'archiveBtn',
+    archivedSection: 'archivedSection',
+    archivedTitle: 'archivedTitle',
+    archivedBadge: 'archivedBadge',
+  },
+}));
 
 // Mock matchMedia
 function mockMatchMedia(matches: boolean) {
@@ -232,7 +528,9 @@ describe('HibernateDrawer — lucide X icon replaces ✕', () => {
 
   it('renders SVG X icon instead of ✕ for close button', async () => {
     const { HibernateDrawer } = await import('../HibernateDrawer');
-    const tasks = [makeTask({ id: 'h1', isCrossYear: true, hibernateUntil: '2027-01-01' })];
+    const tasks = [
+      makeTask({ id: 'h1', isCrossYear: true, hibernateUntil: '2027-01-01' }),
+    ];
     const { container } = render(
       <HibernateDrawer tasks={tasks} onClose={() => {}} />,
     );
@@ -343,7 +641,9 @@ describe('TaskCard — lucide icons replace symbols', () => {
   });
 
   it('renders SVG X icon for remove quantity button when expanded', () => {
-    const task = makeTask({ quantities: [{ label: 'test', value: 1, unit: '个' }] });
+    const task = makeTask({
+      quantities: [{ label: 'test', value: 1, unit: '个' }],
+    });
     const { container } = render(
       <TaskCard
         task={task}

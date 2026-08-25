@@ -263,7 +263,6 @@ describe('ThemeToggle', () => {
 // ============================================================
 
 describe('CSS variable usage — no hardcoded colors in module CSS', () => {
-
   // Hex color values that MUST be replaced by var() references
   // (case-insensitive matching)
   const FORBIDDEN_PATTERNS = [
@@ -321,7 +320,9 @@ describe('CSS variable usage — no hardcoded colors in module CSS', () => {
             if (line.includes(token)) continue;
             // Also skip comments
             if (line.trim().startsWith('/*')) continue;
-            violations.push(`  Line ${i + 1}: "${line.trim()}" — has ${hex}, should use ${token}`);
+            violations.push(
+              `  Line ${i + 1}: "${line.trim()}" — has ${hex}, should use ${token}`,
+            );
           }
         }
       }
@@ -353,13 +354,18 @@ describe('CSS variable usage — no hardcoded colors in module CSS', () => {
     const missingTokens: string[] = [];
     for (const token of requiredDarkTokens) {
       // Look for the token inside [data-theme="dark"]
-      const darkSection = content.match(/\[data-theme="dark"\][\s\S]*?(?=\[data-theme|$)/i);
+      const darkSection = content.match(
+        /\[data-theme=['"]dark['"\][\s\S]*?(?=\[data-theme|$)/i,
+      );
       if (!darkSection || !darkSection[0].includes(token)) {
         missingTokens.push(token);
       }
     }
 
-    expect(missingTokens, `Missing dark-mode tokens: ${missingTokens.join(', ')}`).toHaveLength(0);
+    expect(
+      missingTokens,
+      `Missing dark-mode tokens: ${missingTokens.join(', ')}`,
+    ).toHaveLength(0);
   });
 
   // Validate that index.css defines the extended color tokens in :root
@@ -394,6 +400,9 @@ describe('CSS variable usage — no hardcoded colors in module CSS', () => {
       }
     }
 
-    expect(missingTokens, `Missing :root tokens: ${missingTokens.join(', ')}`).toHaveLength(0);
+    expect(
+      missingTokens,
+      `Missing :root tokens: ${missingTokens.join(', ')}`,
+    ).toHaveLength(0);
   });
 });

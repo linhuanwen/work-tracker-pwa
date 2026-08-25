@@ -252,10 +252,7 @@ function validateTask(task: unknown, idx: number, errors: string[]): void {
     );
   if (!VALID_TASK_STATUSES.includes(task.status as string))
     errors.push(
-      fail(
-        p + '.status',
-        `must be one of ${VALID_TASK_STATUSES.join(', ')}`,
-      ),
+      fail(p + '.status', `must be one of ${VALID_TASK_STATUSES.join(', ')}`),
     );
   if (!isString(task.createdDate))
     errors.push(fail(p + '.createdDate', 'must be a string'));
@@ -269,7 +266,8 @@ function validateTask(task: unknown, idx: number, errors: string[]): void {
     errors.push(fail(p + '.quantities', 'must be an array'));
   if (!isArray(task.subtasks))
     errors.push(fail(p + '.subtasks', 'must be an array'));
-  if (!isString(task.notes)) errors.push(fail(p + '.notes', 'must be a string'));
+  if (!isString(task.notes))
+    errors.push(fail(p + '.notes', 'must be a string'));
   if (!isBoolean(task.isLeaderAssigned))
     errors.push(fail(p + '.isLeaderAssigned', 'must be a boolean'));
   if (!isBoolean(task.isCrossYear))
@@ -279,7 +277,10 @@ function validateTask(task: unknown, idx: number, errors: string[]): void {
   // optional fields
   if (task.leaderSource !== undefined && !isString(task.leaderSource))
     errors.push(fail(p + '.leaderSource', 'must be a string if present'));
-  if (task.leaderAssignedDate !== undefined && !isString(task.leaderAssignedDate))
+  if (
+    task.leaderAssignedDate !== undefined &&
+    !isString(task.leaderAssignedDate)
+  )
     errors.push(fail(p + '.leaderAssignedDate', 'must be a string if present'));
   if (task.leaderDeadline !== undefined && !isString(task.leaderDeadline))
     errors.push(fail(p + '.leaderDeadline', 'must be a string if present'));
@@ -349,29 +350,23 @@ export function validateDataJson(data: unknown): ValidationResult {
     return { valid: false, errors };
   }
 
-  if (!isNumber(data.version))
-    errors.push('version: must be a number');
-  if (!isNumber(data.revision))
-    errors.push('revision: must be a number');
+  if (!isNumber(data.version)) errors.push('version: must be a number');
+  if (!isNumber(data.revision)) errors.push('revision: must be a number');
   if (!isString(data.lastModified))
     errors.push('lastModified: must be a string');
 
   validateSettings(data.settings, errors);
 
-  if (!isArray(data.tasks))
-    errors.push('tasks: must be an array');
-  else
-    (data.tasks as unknown[]).forEach((t, i) => validateTask(t, i, errors));
+  if (!isArray(data.tasks)) errors.push('tasks: must be an array');
+  else (data.tasks as unknown[]).forEach((t, i) => validateTask(t, i, errors));
 
-  if (!isArray(data.projects))
-    errors.push('projects: must be an array');
+  if (!isArray(data.projects)) errors.push('projects: must be an array');
   else
     (data.projects as unknown[]).forEach((p, i) =>
       validateProject(p, i, errors),
     );
 
-  if (!isObject(data.archives))
-    errors.push('archives: must be an object');
+  if (!isObject(data.archives)) errors.push('archives: must be an object');
 
   return { valid: errors.length === 0, errors };
 }
@@ -392,12 +387,14 @@ function normalizeTask(raw: unknown): Record<string, unknown> {
   if (!isObject(raw)) return raw as Record<string, unknown>;
   const t = raw as Record<string, unknown>;
   const today = new Date().toISOString().slice(0, 10);
-  const validPriority = (isString(t.priority) && VALID_PRIORITIES.includes(t.priority as Priority))
-    ? t.priority
-    : 'normal';
-  const validStatus = (isString(t.status) && VALID_TASK_STATUSES.includes(t.status as TaskStatus))
-    ? t.status
-    : 'todo';
+  const validPriority =
+    isString(t.priority) && VALID_PRIORITIES.includes(t.priority as Priority)
+      ? t.priority
+      : 'normal';
+  const validStatus =
+    isString(t.status) && VALID_TASK_STATUSES.includes(t.status as TaskStatus)
+      ? t.status
+      : 'todo';
   return {
     ...t,
     projectId: normalizeStringOrNull(t.projectId),
@@ -412,7 +409,9 @@ function normalizeTask(raw: unknown): Record<string, unknown> {
     notes: isString(t.notes) ? t.notes : '',
     quantities: isArray(t.quantities) ? t.quantities : [],
     subtasks: isArray(t.subtasks) ? t.subtasks : [],
-    isLeaderAssigned: isBoolean(t.isLeaderAssigned) ? t.isLeaderAssigned : false,
+    isLeaderAssigned: isBoolean(t.isLeaderAssigned)
+      ? t.isLeaderAssigned
+      : false,
     isCrossYear: isBoolean(t.isCrossYear) ? t.isCrossYear : false,
     isBlocked: isBoolean(t.isBlocked) ? t.isBlocked : false,
     leaderSource: normalizeStringOptional(t.leaderSource),

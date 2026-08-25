@@ -9,7 +9,9 @@ export const BACKUP_BASENAME = 'data.json.bak';
  * 每条 step：把 `from` 文件的内容写到 `to`；`from === null` 表示写入当前 data.json 内容。
  * 最旧的一份（`{basename}.{count-1}`）由调用方先删除。
  */
-export function backupRotationSteps(count = BACKUP_COUNT): { from: string | null; to: string }[] {
+export function backupRotationSteps(
+  count = BACKUP_COUNT,
+): { from: string | null; to: string }[] {
   const steps: { from: string | null; to: string }[] = [];
   for (let i = count - 1; i >= 1; i--) {
     const from = i === 1 ? BACKUP_BASENAME : `${BACKUP_BASENAME}.${i - 1}`;

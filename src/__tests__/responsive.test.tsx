@@ -4,12 +4,120 @@ import type { Task } from '../types';
 import type { UpdateTaskPatch } from '../taskUtils';
 
 // Mock CSS modules (vitest + jsdom doesn't process CSS)
-vi.mock('../App.module.css', () => ({ default: { app: 'app', header: 'header', title: 'title', subtitle: 'subtitle', folderBar: 'folderBar', folderBtn: 'folderBtn', folderPath: 'folderPath', error: 'error' } }));
-vi.mock('../AddTaskForm.module.css', () => ({ default: { form: 'form', row: 'row', field: 'field', label: 'label', input: 'input', select: 'select', priorityGroup: 'priorityGroup', priorityBtn: 'priorityBtn', priorityBtnActive: 'priorityBtnActive', submitBtn: 'submitBtn' } }));
-vi.mock('../TaskCard.module.css', () => ({ default: { card: 'card', cardHeader: 'cardHeader', cardHeaderExpanded: 'cardHeaderExpanded', statusDot: 'statusDot', statusTodo: 'statusTodo', statusInProgress: 'statusInProgress', statusDone: 'statusDone', statusCancelled: 'statusCancelled', body: 'body', title: 'title', titleDone: 'titleDone', titleCancelled: 'titleCancelled', meta: 'meta', categoryTag: 'categoryTag', priorityTag: 'priorityTag', priorityUrgent: 'priorityUrgent', priorityImportant: 'priorityImportant', priorityNormal: 'priorityNormal', deadlineTag: 'deadlineTag', dateFooter: 'dateFooter', dateText: 'dateText', statusSelect: 'statusSelect', expandArrow: 'expandArrow', expandArrowOpen: 'expandArrowOpen', editPanel: 'editPanel', editLabel: 'editLabel', editRow: 'editRow', editInput: 'editInput', editSelect: 'editSelect', editTextarea: 'editTextarea', editHint: 'editHint', priorityBtnGroup: 'priorityBtnGroup', priorityBtnActive: 'priorityBtnActive' } }));
-vi.mock('../TaskList.module.css', () => ({ default: { container: 'container', group: 'group', groupHeader: 'groupHeader', groupDot: 'groupDot', groupDotUrgent: 'groupDotUrgent', groupDotImportant: 'groupDotImportant', groupDotNormal: 'groupDotNormal', groupTitle: 'groupTitle', groupCount: 'groupCount', empty: 'empty', cards: 'cards', urgentGroup: 'urgentGroup', archiveSection: 'archiveSection', archiveToggle: 'archiveToggle', archiveArrow: 'archiveArrow', archiveArrowOpen: 'archiveArrowOpen', archiveCount: 'archiveCount', archiveCards: 'archiveCards' } }));
-vi.mock('../UrgentZone.module.css', () => ({ default: { zone: 'zone', header: 'header', headerIcon: 'headerIcon', headerTitle: 'headerTitle', headerCount: 'headerCount', cards: 'cards', urgentCard: 'urgentCard', cardBody: 'cardBody', cardTitle: 'cardTitle', cardTitleDone: 'cardTitleDone', cardMeta: 'cardMeta', categoryTag: 'categoryTag', leaderBadge: 'leaderBadge', quantityTag: 'quantityTag', arrows: 'arrows', arrowBtn: 'arrowBtn' } }));
-vi.mock('../InstallBanner.module.css', () => ({ default: { banner: 'banner', message: 'message', actions: 'actions', installBtn: 'installBtn', dismissBtn: 'dismissBtn' } }));
+vi.mock('../App.module.css', () => ({
+  default: {
+    app: 'app',
+    header: 'header',
+    title: 'title',
+    subtitle: 'subtitle',
+    folderBar: 'folderBar',
+    folderBtn: 'folderBtn',
+    folderPath: 'folderPath',
+    error: 'error',
+  },
+}));
+vi.mock('../AddTaskForm.module.css', () => ({
+  default: {
+    form: 'form',
+    row: 'row',
+    field: 'field',
+    label: 'label',
+    input: 'input',
+    select: 'select',
+    priorityGroup: 'priorityGroup',
+    priorityBtn: 'priorityBtn',
+    priorityBtnActive: 'priorityBtnActive',
+    submitBtn: 'submitBtn',
+  },
+}));
+vi.mock('../TaskCard.module.css', () => ({
+  default: {
+    card: 'card',
+    cardHeader: 'cardHeader',
+    cardHeaderExpanded: 'cardHeaderExpanded',
+    statusDot: 'statusDot',
+    statusTodo: 'statusTodo',
+    statusInProgress: 'statusInProgress',
+    statusDone: 'statusDone',
+    statusCancelled: 'statusCancelled',
+    body: 'body',
+    title: 'title',
+    titleDone: 'titleDone',
+    titleCancelled: 'titleCancelled',
+    meta: 'meta',
+    categoryTag: 'categoryTag',
+    priorityTag: 'priorityTag',
+    priorityUrgent: 'priorityUrgent',
+    priorityImportant: 'priorityImportant',
+    priorityNormal: 'priorityNormal',
+    deadlineTag: 'deadlineTag',
+    dateFooter: 'dateFooter',
+    dateText: 'dateText',
+    statusSelect: 'statusSelect',
+    expandArrow: 'expandArrow',
+    expandArrowOpen: 'expandArrowOpen',
+    editPanel: 'editPanel',
+    editLabel: 'editLabel',
+    editRow: 'editRow',
+    editInput: 'editInput',
+    editSelect: 'editSelect',
+    editTextarea: 'editTextarea',
+    editHint: 'editHint',
+    priorityBtnGroup: 'priorityBtnGroup',
+    priorityBtnActive: 'priorityBtnActive',
+  },
+}));
+vi.mock('../TaskList.module.css', () => ({
+  default: {
+    container: 'container',
+    group: 'group',
+    groupHeader: 'groupHeader',
+    groupDot: 'groupDot',
+    groupDotUrgent: 'groupDotUrgent',
+    groupDotImportant: 'groupDotImportant',
+    groupDotNormal: 'groupDotNormal',
+    groupTitle: 'groupTitle',
+    groupCount: 'groupCount',
+    empty: 'empty',
+    cards: 'cards',
+    urgentGroup: 'urgentGroup',
+    archiveSection: 'archiveSection',
+    archiveToggle: 'archiveToggle',
+    archiveArrow: 'archiveArrow',
+    archiveArrowOpen: 'archiveArrowOpen',
+    archiveCount: 'archiveCount',
+    archiveCards: 'archiveCards',
+  },
+}));
+vi.mock('../UrgentZone.module.css', () => ({
+  default: {
+    zone: 'zone',
+    header: 'header',
+    headerIcon: 'headerIcon',
+    headerTitle: 'headerTitle',
+    headerCount: 'headerCount',
+    cards: 'cards',
+    urgentCard: 'urgentCard',
+    cardBody: 'cardBody',
+    cardTitle: 'cardTitle',
+    cardTitleDone: 'cardTitleDone',
+    cardMeta: 'cardMeta',
+    categoryTag: 'categoryTag',
+    leaderBadge: 'leaderBadge',
+    quantityTag: 'quantityTag',
+    arrows: 'arrows',
+    arrowBtn: 'arrowBtn',
+  },
+}));
+vi.mock('../InstallBanner.module.css', () => ({
+  default: {
+    banner: 'banner',
+    message: 'message',
+    actions: 'actions',
+    installBtn: 'installBtn',
+    dismissBtn: 'dismissBtn',
+  },
+}));
 
 /**
  * Seam 4: Responsive layout & touch-friendly rendering
@@ -351,7 +459,9 @@ describe('UrgentZone — touch-friendly rendering', () => {
   });
 
   it('disables up arrow for first task', () => {
-    const tasks = [makeTask({ id: 'u1', title: '唯一任务', priority: 'urgent' })];
+    const tasks = [
+      makeTask({ id: 'u1', title: '唯一任务', priority: 'urgent' }),
+    ];
     render(
       <UrgentZone
         tasks={tasks}
@@ -375,12 +485,23 @@ import { WeeklySummary } from '../WeeklySummary';
 
 vi.mock('../WeeklySummary.module.css', () => ({
   default: {
-    container: 'container', heading: 'heading', weekSelector: 'weekSelector',
-    weekBtn: 'weekBtn', weekLabel: 'weekLabel', generateBtn: 'generateBtn',
-    sections: 'sections', section: 'section', sectionHeader: 'sectionHeader',
-    sectionTitle: 'sectionTitle', aiBtn: 'aiBtn', editable: 'editable',
-    addPlanRow: 'addPlanRow', planInput: 'planInput', statusBar: 'statusBar',
-    statusOk: 'statusOk', statusPending: 'statusPending',
+    container: 'container',
+    heading: 'heading',
+    weekSelector: 'weekSelector',
+    weekBtn: 'weekBtn',
+    weekLabel: 'weekLabel',
+    generateBtn: 'generateBtn',
+    sections: 'sections',
+    section: 'section',
+    sectionHeader: 'sectionHeader',
+    sectionTitle: 'sectionTitle',
+    aiBtn: 'aiBtn',
+    editable: 'editable',
+    addPlanRow: 'addPlanRow',
+    planInput: 'planInput',
+    statusBar: 'statusBar',
+    statusOk: 'statusOk',
+    statusPending: 'statusPending',
   },
 }));
 

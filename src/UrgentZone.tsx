@@ -23,7 +23,9 @@ export function UrgentZone({
 
   if (tasks.length === 0) return null;
 
-  const targetTask = deleteTargetId ? tasks.find(t => t.id === deleteTargetId) : null;
+  const targetTask = deleteTargetId
+    ? tasks.find((t) => t.id === deleteTargetId)
+    : null;
 
   return (
     <div className={styles.zone}>

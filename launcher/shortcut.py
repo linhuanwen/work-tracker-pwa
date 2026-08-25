@@ -73,7 +73,7 @@ def desktop_dir(debug: bool = False) -> str | None:
 
             if debug:
                 print(f"[*] SHGetKnownFolderPath 失败 (hr={hr})，回退 Desktop 环境变量")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             if debug:
                 print(f"[*] 获取桌面路径异常: {e}")
 
@@ -109,16 +109,16 @@ def create_shortcut(target: str, lnk_path: str, debug: bool = False) -> bool:
     # 脚本内用单引号转义路径中的引号风险（路径含单引号场景极罕见，此处做基本转义）。
     esc = lambda s: s.replace("'", "''")
     script = (
-        "$s=(New-Object -ComObject WScript.Shell).CreateShortcut('{lnk}');"
-        "$s.TargetPath='{target}';"
-        "$s.WorkingDirectory='{work}';"
-        "$s.IconLocation='{target},0';"
+        f"$s=(New-Object -ComObject WScript.Shell).CreateShortcut('{esc(lnk_path)}');"
+        f"$s.TargetPath='{esc(target)}';"
+        f"$s.WorkingDirectory='{esc(work_dir)}';"
+        f"$s.IconLocation='{esc(target)},0';"
         "$s.Save()"
-    ).format(lnk=esc(lnk_path), target=esc(target), work=esc(work_dir))
+    )
     try:
         invoke_ps(script)
         return True
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         if debug:
             print(f"[*] 创建桌面快捷方式失败: {e}")
         return False
@@ -154,7 +154,7 @@ def ensure_desktop_shortcut(debug: bool = False) -> bool:
         if debug:
             print(f"[*] 桌面快捷方式{'创建成功' if ok else '创建失败或不创建'}: {lnk}")
         return ok
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         if debug:
             print(f"[*] ensure_desktop_shortcut 异常: {e}")
         return False

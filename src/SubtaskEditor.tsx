@@ -77,7 +77,10 @@ export function SubtaskEditor({
     const sub = subtasks.find((s) => s.id === subId);
     if (!sub) return;
     onUpdate(subId, {
-      quantities: [...(sub.quantities ?? []), { label: '', value: 0, unit: '' }],
+      quantities: [
+        ...(sub.quantities ?? []),
+        { label: '', value: 0, unit: '' },
+      ],
     });
   };
 
@@ -133,7 +136,11 @@ export function SubtaskEditor({
                     type="button"
                     className={styles.expandBtn}
                     onClick={() => setExpandedId(expanded ? null : sub.id)}
-                    aria-label={expanded ? `收起子任务：${sub.title}` : `展开子任务：${sub.title}`}
+                    aria-label={
+                      expanded
+                        ? `收起子任务：${sub.title}`
+                        : `展开子任务：${sub.title}`
+                    }
                     title={expanded ? '收起' : '展开'}
                   >
                     <Icon name="chevron-right" size={14} />
@@ -240,7 +247,12 @@ export function SubtaskEditor({
                               type="text"
                               value={q.label}
                               onChange={(e) =>
-                                handleQuantityChange(sub.id, index, 'label', e.target.value)
+                                handleQuantityChange(
+                                  sub.id,
+                                  index,
+                                  'label',
+                                  e.target.value,
+                                )
                               }
                               placeholder="产出名称"
                             />
@@ -249,7 +261,12 @@ export function SubtaskEditor({
                               type="number"
                               value={q.value || ''}
                               onChange={(e) =>
-                                handleQuantityChange(sub.id, index, 'value', e.target.value)
+                                handleQuantityChange(
+                                  sub.id,
+                                  index,
+                                  'value',
+                                  e.target.value,
+                                )
                               }
                               placeholder="数值"
                             />
@@ -258,14 +275,21 @@ export function SubtaskEditor({
                               type="text"
                               value={q.unit}
                               onChange={(e) =>
-                                handleQuantityChange(sub.id, index, 'unit', e.target.value)
+                                handleQuantityChange(
+                                  sub.id,
+                                  index,
+                                  'unit',
+                                  e.target.value,
+                                )
                               }
                               placeholder="单位"
                             />
                             <button
                               type="button"
                               className={styles.removeBtn}
-                              onClick={() => handleRemoveQuantity(sub.id, index)}
+                              onClick={() =>
+                                handleRemoveQuantity(sub.id, index)
+                              }
                               aria-label={`删除产出：${q.label || '未命名'}`}
                               title="删除"
                             >
@@ -299,11 +323,7 @@ export function SubtaskEditor({
           onKeyDown={handleKeyDown}
           placeholder="添加子任务步骤…"
         />
-        <button
-          type="button"
-          className={styles.addBtn}
-          onClick={handleAdd}
-        >
+        <button type="button" className={styles.addBtn} onClick={handleAdd}>
           <Icon name="plus" size={14} /> 添加子任务
         </button>
       </div>

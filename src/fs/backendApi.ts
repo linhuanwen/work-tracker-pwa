@@ -42,7 +42,9 @@ export async function fetchLastFolderInfo(): Promise<StoredFolderInfo | null> {
   }
 }
 
-export async function saveLastFolderInfo(info: StoredFolderInfo): Promise<void> {
+export async function saveLastFolderInfo(
+  info: StoredFolderInfo,
+): Promise<void> {
   try {
     await fetch('/api/state', {
       method: 'POST',
@@ -67,7 +69,9 @@ export async function loadBackendData(): Promise<DataJson | null> {
   }
 }
 
-export async function saveBackendData(data: DataJson): Promise<SaveBackendResult> {
+export async function saveBackendData(
+  data: DataJson,
+): Promise<SaveBackendResult> {
   const expectedRevision = data.revision ?? 0;
   const body = {
     ...data,
@@ -89,12 +93,21 @@ export async function saveBackendData(data: DataJson): Promise<SaveBackendResult
     } | null;
 
     if (resp.ok) {
-      return { status: 'ok', revision: result?.revision ?? expectedRevision + 1 };
+      return {
+        status: 'ok',
+        revision: result?.revision ?? expectedRevision + 1,
+      };
     }
     if (resp.status === 409 && result?.conflict) {
-      return { status: 'conflict', serverRevision: result.serverRevision ?? -1 };
+      return {
+        status: 'conflict',
+        serverRevision: result.serverRevision ?? -1,
+      };
     }
-    return { status: 'error', message: result?.error ?? `保存失败（HTTP ${resp.status}）` };
+    return {
+      status: 'error',
+      message: result?.error ?? `保存失败（HTTP ${resp.status}）`,
+    };
   } catch {
     return { status: 'error', message: '后端不可达，请确认桌面应用已启动' };
   }

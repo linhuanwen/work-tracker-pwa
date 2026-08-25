@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import type { Task, TaskStatus } from './types';
 import type { UpdateTaskPatch } from './taskUtils';
-import { filterActiveTasks, filterCancelledTasks, groupTasksByPriority } from './taskUtils';
+import {
+  filterActiveTasks,
+  filterCancelledTasks,
+  groupTasksByPriority,
+} from './taskUtils';
 import { TaskCard } from './TaskCard';
 import { UrgentZone } from './UrgentZone';
 import { Icon } from './Icon';
@@ -104,9 +108,7 @@ export function TaskList({
                 aria-hidden="true"
               />
               <span className={styles.groupTitle}>{cfg.label}</span>
-              <span className={styles.groupCount}>
-                {groupTasks.length}
-              </span>
+              <span className={styles.groupCount}>{groupTasks.length}</span>
             </div>
             <div className={styles.cards}>
               {groupTasks.map((task) => (
@@ -153,9 +155,7 @@ export function TaskList({
               transition: 'grid-template-rows 200ms',
             }}
           >
-            <div
-              className={styles.archiveCardsInner}
-            >
+            <div className={styles.archiveCardsInner}>
               {cancelled.map((task) => (
                 <TaskCard
                   key={task.id}

@@ -1,5 +1,4 @@
 import socket
-import threading
 
 from launcher.single_instance import is_server_running, notify_existing_instance
 

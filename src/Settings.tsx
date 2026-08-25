@@ -57,7 +57,12 @@ export function Settings() {
       showSaveFilePicker?: (opts: {
         suggestedName?: string;
         types?: { description?: string; accept: Record<string, string[]> }[];
-      }) => Promise<{ createWritable: () => Promise<{ write: (d: unknown) => Promise<void>; close: () => Promise<void> }> }>;
+      }) => Promise<{
+        createWritable: () => Promise<{
+          write: (d: unknown) => Promise<void>;
+          close: () => Promise<void>;
+        }>;
+      }>;
     };
 
     if (typeof w.showSaveFilePicker === 'function') {
@@ -113,7 +118,9 @@ export function Settings() {
     if (!importPending || !data) return;
     dispatch({ type: 'SET_DATA', payload: importPending.data });
     setImportPending(null);
-    showToast(`已覆盖导入（含 ${importPending.data.tasks.length} 个任务、${importPending.data.projects.length} 个项目）`);
+    showToast(
+      `已覆盖导入（含 ${importPending.data.tasks.length} 个任务、${importPending.data.projects.length} 个项目）`,
+    );
   };
 
   const handleConfirmMerge = () => {
@@ -125,8 +132,10 @@ export function Settings() {
       `合并结果：${merged.tasks.length} 个任务`,
       `${merged.projects.length} 个项目`,
     ];
-    if (summary.remappedTaskIds > 0) parts.push(`${summary.remappedTaskIds} 个任务 id 冲突已重命名`);
-    if (summary.remappedProjectIds > 0) parts.push(`${summary.remappedProjectIds} 个项目 id 冲突已重命名`);
+    if (summary.remappedTaskIds > 0)
+      parts.push(`${summary.remappedTaskIds} 个任务 id 冲突已重命名`);
+    if (summary.remappedProjectIds > 0)
+      parts.push(`${summary.remappedProjectIds} 个项目 id 冲突已重命名`);
     showToast(parts.join('、'));
   };
 
@@ -160,7 +169,10 @@ export function Settings() {
     );
     dispatch({
       type: 'UPDATE_SETTINGS',
-      payload: { patch: { categories: newCategories }, oldCategory: editingCat ?? undefined },
+      payload: {
+        patch: { categories: newCategories },
+        oldCategory: editingCat ?? undefined,
+      },
     });
     setEditingCat(null);
     showToast('分类已更新');
@@ -169,7 +181,11 @@ export function Settings() {
   const handleDelete = (cat: string) => {
     const count = taskCountByCat[cat] || 0;
     if (count > 0) {
-      if (!confirm(`该分类下有 ${count} 个任务，删除后这些任务将变为"其他"分类。确定删除吗？`)) {
+      if (
+        !confirm(
+          `该分类下有 ${count} 个任务，删除后这些任务将变为"其他"分类。确定删除吗？`,
+        )
+      ) {
         return;
       }
     }
@@ -207,7 +223,10 @@ export function Settings() {
     showToast('分类已添加');
   };
 
-  const handleDayChange = (field: 'weeklySummaryDay' | 'monthlySummaryDay', value: number) => {
+  const handleDayChange = (
+    field: 'weeklySummaryDay' | 'monthlySummaryDay',
+    value: number,
+  ) => {
     dispatch({
       type: 'UPDATE_SETTINGS',
       payload: { patch: { [field]: value } },
@@ -296,7 +315,10 @@ export function Settings() {
               placeholder="新分类名称"
               autoFocus
             />
-            <button className={styles.addConfirmBtn} onClick={handleAddCategory}>
+            <button
+              className={styles.addConfirmBtn}
+              onClick={handleAddCategory}
+            >
               确认
             </button>
           </div>
@@ -356,7 +378,9 @@ export function Settings() {
             className={styles.aiInput}
             type="password"
             value={aiConfig.apiKey}
-            onChange={(e) => setAiConfig({ ...aiConfig, apiKey: e.target.value })}
+            onChange={(e) =>
+              setAiConfig({ ...aiConfig, apiKey: e.target.value })
+            }
             placeholder="sk-…"
             autoComplete="off"
           />
@@ -367,7 +391,9 @@ export function Settings() {
             className={styles.aiInput}
             type="text"
             value={aiConfig.endpoint}
-            onChange={(e) => setAiConfig({ ...aiConfig, endpoint: e.target.value })}
+            onChange={(e) =>
+              setAiConfig({ ...aiConfig, endpoint: e.target.value })
+            }
             placeholder={DEFAULT_AI_CONFIG.endpoint}
           />
         </div>
@@ -377,7 +403,9 @@ export function Settings() {
             className={styles.aiInput}
             type="text"
             value={aiConfig.model}
-            onChange={(e) => setAiConfig({ ...aiConfig, model: e.target.value })}
+            onChange={(e) =>
+              setAiConfig({ ...aiConfig, model: e.target.value })
+            }
             placeholder={DEFAULT_AI_CONFIG.model}
           />
         </div>
@@ -386,7 +414,8 @@ export function Settings() {
         </button>
         <p className={styles.aiHint}>
           配置仅保存在本机浏览器存储中，不会写入共享的 data.json。
-          桌面端启动器固定读取 scripts/.env 中的 AI 配置；浏览器端（PWA）使用此处配置。
+          桌面端启动器固定读取 scripts/.env 中的 AI
+          配置；浏览器端（PWA）使用此处配置。
         </p>
       </section>
 
@@ -423,7 +452,10 @@ export function Settings() {
               {importPending.data.projects.length} 个项目。请选择导入方式：
             </p>
             <div className={styles.migrationRow}>
-              <button className={styles.migrationBtn} onClick={handleConfirmMerge}>
+              <button
+                className={styles.migrationBtn}
+                onClick={handleConfirmMerge}
+              >
                 合并导入
               </button>
               <button

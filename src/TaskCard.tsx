@@ -34,10 +34,10 @@ const PRIORITY_OPTIONS: { value: Priority; label: string }[] = [
 ];
 
 const STATUS_CLASS: Record<TaskStatus, string> = {
-  'todo': styles.statusTodo,
+  todo: styles.statusTodo,
   'in-progress': styles.statusInProgress,
-  'done': styles.statusDone,
-  'cancelled': styles.statusCancelled,
+  done: styles.statusDone,
+  cancelled: styles.statusCancelled,
 };
 
 // ============================================================
@@ -96,13 +96,10 @@ export function TaskCard({
   );
 
   // Context menu
-  const handleContextMenu = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      setCtxMenu({ open: true, x: e.clientX, y: e.clientY });
-    },
-    [],
-  );
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setCtxMenu({ open: true, x: e.clientX, y: e.clientY });
+  }, []);
 
   const closeContextMenu = useCallback(() => {
     setCtxMenu((prev) => ({ ...prev, open: false }));
@@ -154,7 +151,8 @@ export function TaskCard({
   // Subtask progress
   const subtaskProgress = calcSubtaskProgress(task.subtasks);
   const hasSubtasks = subtaskProgress.total > 0;
-  const allSubtasksDone = hasSubtasks && subtaskProgress.done === subtaskProgress.total;
+  const allSubtasksDone =
+    hasSubtasks && subtaskProgress.done === subtaskProgress.total;
   const progressColor = getProgressColor(subtaskProgress.percent);
 
   return (
@@ -198,9 +196,7 @@ export function TaskCard({
               {PRIORITY_OPTIONS.find((p) => p.value === task.priority)?.label}
             </Tag>
 
-            {task.deadline && (
-              <Tag variant="date">{task.deadline}</Tag>
-            )}
+            {task.deadline && <Tag variant="date">{task.deadline}</Tag>}
 
             {task.isLeaderAssigned && (
               <span className={styles.leaderBadge}>交办</span>
@@ -248,7 +244,6 @@ export function TaskCard({
               )}
             </div>
           )}
-
         </div>
 
         {/* 状态切换下拉 */}
@@ -295,10 +290,7 @@ export function TaskCard({
       {/* 行内编辑面板（展开时可见） */}
       {/* ================================================ */}
       {expanded && (
-        <div
-          className={styles.editPanel}
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className={styles.editPanel} onClick={(e) => e.stopPropagation()}>
           {/* 标题 */}
           <label className={styles.editLabel}>
             标题
@@ -337,9 +329,7 @@ export function TaskCard({
                     key={p.value}
                     type="button"
                     className={`${styles.priorityBtn} ${
-                      task.priority === p.value
-                        ? styles.priorityBtnActive
-                        : ''
+                      task.priority === p.value ? styles.priorityBtnActive : ''
                     }`}
                     onClick={() => handleFieldChange({ priority: p.value })}
                   >
@@ -388,7 +378,9 @@ export function TaskCard({
                   const checked = e.target.checked;
                   handleFieldChange({
                     isLeaderAssigned: checked,
-                    leaderSource: checked ? (task.leaderSource ?? '') : undefined,
+                    leaderSource: checked
+                      ? (task.leaderSource ?? '')
+                      : undefined,
                     leaderAssignedDate: checked
                       ? (task.leaderAssignedDate ?? '')
                       : undefined,
@@ -528,31 +520,31 @@ export function TaskCard({
             </button>
           </div>
 
-            {/* 子任务 */}
-            <SubtaskEditor
-              subtasks={task.subtasks}
-              categories={categories}
-              onAdd={(title) =>
-                handleFieldChange({
-                  subtasks: addSubtask(task.subtasks, title),
-                })
-              }
-              onToggle={(id) =>
-                handleFieldChange({
-                  subtasks: toggleSubtask(task.subtasks, id),
-                })
-              }
-              onDelete={(id) =>
-                handleFieldChange({
-                  subtasks: deleteSubtask(task.subtasks, id),
-                })
-              }
-              onUpdate={(id, patch) =>
-                handleFieldChange({
-                  subtasks: updateSubtask(task.subtasks, id, patch),
-                })
-              }
-            />
+          {/* 子任务 */}
+          <SubtaskEditor
+            subtasks={task.subtasks}
+            categories={categories}
+            onAdd={(title) =>
+              handleFieldChange({
+                subtasks: addSubtask(task.subtasks, title),
+              })
+            }
+            onToggle={(id) =>
+              handleFieldChange({
+                subtasks: toggleSubtask(task.subtasks, id),
+              })
+            }
+            onDelete={(id) =>
+              handleFieldChange({
+                subtasks: deleteSubtask(task.subtasks, id),
+              })
+            }
+            onUpdate={(id, patch) =>
+              handleFieldChange({
+                subtasks: updateSubtask(task.subtasks, id, patch),
+              })
+            }
+          />
         </div>
       )}
 

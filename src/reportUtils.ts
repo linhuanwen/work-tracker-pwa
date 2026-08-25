@@ -19,9 +19,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 /** 将量化产出数组转为合并文本 */
 function formatQuantities(quantities: Task['quantities']): string {
-  return quantities
-    .map((q) => `${q.label}: ${q.value}${q.unit}`)
-    .join('; ');
+  return quantities.map((q) => `${q.label}: ${q.value}${q.unit}`).join('; ');
 }
 
 /** 对含逗号、引号或换行的字段做 CSV 转义 */

@@ -43,7 +43,12 @@ describe('dataReducer — UPDATE_ARCHIVE_WEEK', () => {
   it('overwrites existing week entry for the same key', () => {
     const oldEntry: WeekEntry = {
       tasks: ['t-old'],
-      summary: { doneTasks: 'old', projectProgress: '', nextWeekPlan: '', blockers: '' },
+      summary: {
+        doneTasks: 'old',
+        projectProgress: '',
+        nextWeekPlan: '',
+        blockers: '',
+      },
       aiPolished: true,
     };
     const state = makeData();
@@ -51,7 +56,12 @@ describe('dataReducer — UPDATE_ARCHIVE_WEEK', () => {
 
     const newEntry: WeekEntry = {
       tasks: ['t-new'],
-      summary: { doneTasks: 'new', projectProgress: '', nextWeekPlan: '', blockers: '' },
+      summary: {
+        doneTasks: 'new',
+        projectProgress: '',
+        nextWeekPlan: '',
+        blockers: '',
+      },
       aiPolished: false,
     };
 
@@ -67,14 +77,24 @@ describe('dataReducer — UPDATE_ARCHIVE_WEEK', () => {
     const state = makeData();
     const existingEntry: WeekEntry = {
       tasks: ['t-existing'],
-      summary: { doneTasks: 'old week', projectProgress: '', nextWeekPlan: '', blockers: '' },
+      summary: {
+        doneTasks: 'old week',
+        projectProgress: '',
+        nextWeekPlan: '',
+        blockers: '',
+      },
       aiPolished: false,
     };
     state.archives.weeks['2026-W29'] = existingEntry;
 
     const newEntry: WeekEntry = {
       tasks: ['t-new'],
-      summary: { doneTasks: 'new week', projectProgress: '', nextWeekPlan: '', blockers: '' },
+      summary: {
+        doneTasks: 'new week',
+        projectProgress: '',
+        nextWeekPlan: '',
+        blockers: '',
+      },
       aiPolished: false,
     };
 
@@ -91,7 +111,12 @@ describe('dataReducer — UPDATE_ARCHIVE_WEEK', () => {
     const state = makeData();
     const entry: WeekEntry = {
       tasks: ['t-1'],
-      summary: { doneTasks: 'test', projectProgress: '', nextWeekPlan: '', blockers: '' },
+      summary: {
+        doneTasks: 'test',
+        projectProgress: '',
+        nextWeekPlan: '',
+        blockers: '',
+      },
       aiPolished: false,
     };
 
@@ -109,7 +134,12 @@ describe('dataReducer — UPDATE_ARCHIVE_WEEK', () => {
     const state = makeData();
     const entry: WeekEntry = {
       tasks: ['t-1'],
-      summary: { doneTasks: 'test', projectProgress: '', nextWeekPlan: '', blockers: '' },
+      summary: {
+        doneTasks: 'test',
+        projectProgress: '',
+        nextWeekPlan: '',
+        blockers: '',
+      },
       aiPolished: false,
     };
 

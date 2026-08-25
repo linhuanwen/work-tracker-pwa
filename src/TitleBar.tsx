@@ -86,7 +86,10 @@ export function TitleBar({
               aria-label={collapsed ? '放下' : '收起'}
               title={collapsed ? '放下' : '收起'}
             >
-              <Icon name={collapsed ? 'chevron-down' : 'chevron-up'} size={14} />
+              <Icon
+                name={collapsed ? 'chevron-down' : 'chevron-up'}
+                size={14}
+              />
             </button>
           )}
           <button

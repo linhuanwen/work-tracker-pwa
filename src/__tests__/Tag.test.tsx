@@ -65,9 +65,7 @@ describe('Tag component', () => {
 
   describe('variant="category"', () => {
     it('renders with semi-transparent background', () => {
-      const { container } = render(
-        <Tag variant="category">人员调配</Tag>,
-      );
+      const { container } = render(<Tag variant="category">人员调配</Tag>);
       const el = container.firstElementChild!;
       expect(el.getAttribute('data-variant')).toBe('category');
       expect(el.textContent).toBe('人员调配');
@@ -88,9 +86,7 @@ describe('Tag component', () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2026-07-23T12:00:00'));
 
-      const { container } = render(
-        <Tag variant="date">2026-07-23</Tag>,
-      );
+      const { container } = render(<Tag variant="date">2026-07-23</Tag>);
       const el = container.firstElementChild!;
       expect(el.getAttribute('data-variant')).toBe('date');
       expect(el.textContent).toBe('今天');
@@ -100,27 +96,21 @@ describe('Tag component', () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2026-07-23T12:00:00'));
 
-      const { container } = render(
-        <Tag variant="date">2026-07-24</Tag>,
-      );
+      const { container } = render(<Tag variant="date">2026-07-24</Tag>);
       const el = container.firstElementChild!;
       expect(el.getAttribute('data-variant')).toBe('date');
       expect(el.textContent).toBe('明天');
     });
 
     it('renders "X月X日" format for other dates', () => {
-      const { container } = render(
-        <Tag variant="date">2026-03-15</Tag>,
-      );
+      const { container } = render(<Tag variant="date">2026-03-15</Tag>);
       const el = container.firstElementChild!;
       expect(el.getAttribute('data-variant')).toBe('date');
       expect(el.textContent).toBe('3月15日');
     });
 
     it('renders empty when value is null or empty', () => {
-      const { container } = render(
-        <Tag variant="date">{''}</Tag>,
-      );
+      const { container } = render(<Tag variant="date">{''}</Tag>);
       const el = container.firstElementChild!;
       expect(el.textContent).toBe('');
     });

@@ -8,7 +8,6 @@
 - 非 Windows 平台 → 返回 False 不创建
 """
 
-import sys
 
 import pytest
 

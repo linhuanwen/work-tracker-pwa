@@ -3,7 +3,12 @@ import type { DataJson } from '../types';
 import { createDefaultDataJson } from '../types';
 
 import { DATA_FILE_NAME } from './constants';
-import type { StoredFolderInfo, UseFileSystemReturn, DataSource, SaveResult } from './types';
+import type {
+  StoredFolderInfo,
+  UseFileSystemReturn,
+  DataSource,
+  SaveResult,
+} from './types';
 import {
   fetchBackendInfo,
   fetchLastFolderInfo,
@@ -25,9 +30,13 @@ export function useFileSystem(): UseFileSystemReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasHandle, setHasHandle] = useState(false);
-  const [lastFolderInfo, setLastFolderInfo] = useState<StoredFolderInfo | null>(null);
+  const [lastFolderInfo, setLastFolderInfo] = useState<StoredFolderInfo | null>(
+    null,
+  );
   const [backendMode, setBackendMode] = useState(false);
-  const [backendFolderPath, setBackendFolderPath] = useState<string | null>(null);
+  const [backendFolderPath, setBackendFolderPath] = useState<string | null>(
+    null,
+  );
   const dirHandleRef = useRef<FileSystemDirectoryHandle | null>(null);
   const dataSourceRef = useRef<DataSource>(null);
 
@@ -149,55 +158,61 @@ export function useFileSystem(): UseFileSystemReturn {
     }
   }, [backendMode]);
 
-  const saveData = useCallback(async (newData: DataJson): Promise<SaveResult | null> => {
-    if (dataSourceRef.current === 'backend') {
-      const result = await saveBackendData(newData);
-      if (result.status === 'ok') {
-        // 不回写 setData：保存只是持久化，内存状态由 reducer 维护。
-        // 仅把新 revision 交回调用方，由调用方在 reducer 中原地更新。
-        return { revision: result.revision, lastModified: new Date().toISOString() };
-      }
-      if (result.status === 'conflict') {
-        setError(
-          '检测到数据已被其他设备修改，已暂停自动保存以避免覆盖。请重新打开文件夹加载最新数据。',
-        );
-        return null;
-      }
-      setError(result.message);
-      return null;
-    }
-
-    const dirHandle = dirHandleRef.current;
-    if (!dirHandle) {
-      setError('尚未打开文件夹');
-      return null;
-    }
-    try {
-      const remote = await readJsonFile(dirHandle, DATA_FILE_NAME);
-      const localRev = newData.revision ?? 0;
-      const remoteRev = remote ? (remote.revision ?? 0) : localRev;
-      const { conflict, next } = computeNextRevision(localRev, remoteRev);
-      if (conflict) {
-        setError(
-          '检测到数据已被其他设备修改，已暂停自动保存以避免覆盖。请重新打开文件夹加载最新数据。',
-        );
+  const saveData = useCallback(
+    async (newData: DataJson): Promise<SaveResult | null> => {
+      if (dataSourceRef.current === 'backend') {
+        const result = await saveBackendData(newData);
+        if (result.status === 'ok') {
+          // 不回写 setData：保存只是持久化，内存状态由 reducer 维护。
+          // 仅把新 revision 交回调用方，由调用方在 reducer 中原地更新。
+          return {
+            revision: result.revision,
+            lastModified: new Date().toISOString(),
+          };
+        }
+        if (result.status === 'conflict') {
+          setError(
+            '检测到数据已被其他设备修改，已暂停自动保存以避免覆盖。请重新打开文件夹加载最新数据。',
+          );
+          return null;
+        }
+        setError(result.message);
         return null;
       }
 
-      const toSave: DataJson = {
-        ...newData,
-        revision: next,
-        lastModified: new Date().toISOString(),
-      };
-      await writeJsonFile(dirHandle, DATA_FILE_NAME, toSave);
-      // 不回写 setData，避免与进行中的编辑产生竞态导致输入被覆盖。
-      return { revision: next, lastModified: toSave.lastModified };
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : '保存失败';
-      setError(msg);
-      return null;
-    }
-  }, []);
+      const dirHandle = dirHandleRef.current;
+      if (!dirHandle) {
+        setError('尚未打开文件夹');
+        return null;
+      }
+      try {
+        const remote = await readJsonFile(dirHandle, DATA_FILE_NAME);
+        const localRev = newData.revision ?? 0;
+        const remoteRev = remote ? (remote.revision ?? 0) : localRev;
+        const { conflict, next } = computeNextRevision(localRev, remoteRev);
+        if (conflict) {
+          setError(
+            '检测到数据已被其他设备修改，已暂停自动保存以避免覆盖。请重新打开文件夹加载最新数据。',
+          );
+          return null;
+        }
+
+        const toSave: DataJson = {
+          ...newData,
+          revision: next,
+          lastModified: new Date().toISOString(),
+        };
+        await writeJsonFile(dirHandle, DATA_FILE_NAME, toSave);
+        // 不回写 setData，避免与进行中的编辑产生竞态导致输入被覆盖。
+        return { revision: next, lastModified: toSave.lastModified };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '保存失败';
+        setError(msg);
+        return null;
+      }
+    },
+    [],
+  );
 
   return {
     data,

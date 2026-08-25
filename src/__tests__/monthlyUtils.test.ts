@@ -139,14 +139,36 @@ describe('getAdjacentMonth', () => {
 describe('aggregateMonthlyQuantities', () => {
   it('filters only done tasks completed in the target month', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '本月完成', category: '内部招聘', status: 'done', completedDate: '2026-07-10',
-        quantities: [{ label: '审查', value: 5, unit: '人次' }] }),
-      makeTask({ id: '2', title: '上月完成', category: '内部招聘', status: 'done', completedDate: '2026-06-28',
-        quantities: [{ label: '审查', value: 3, unit: '人次' }] }),
-      makeTask({ id: '3', title: '未完成', category: '内部招聘', status: 'todo',
-        quantities: [{ label: '审查', value: 1, unit: '人次' }] }),
-      makeTask({ id: '4', title: '进行中', category: '内部招聘', status: 'in-progress',
-        quantities: [{ label: '审查', value: 1, unit: '人次' }] }),
+      makeTask({
+        id: '1',
+        title: '本月完成',
+        category: '内部招聘',
+        status: 'done',
+        completedDate: '2026-07-10',
+        quantities: [{ label: '审查', value: 5, unit: '人次' }],
+      }),
+      makeTask({
+        id: '2',
+        title: '上月完成',
+        category: '内部招聘',
+        status: 'done',
+        completedDate: '2026-06-28',
+        quantities: [{ label: '审查', value: 3, unit: '人次' }],
+      }),
+      makeTask({
+        id: '3',
+        title: '未完成',
+        category: '内部招聘',
+        status: 'todo',
+        quantities: [{ label: '审查', value: 1, unit: '人次' }],
+      }),
+      makeTask({
+        id: '4',
+        title: '进行中',
+        category: '内部招聘',
+        status: 'in-progress',
+        quantities: [{ label: '审查', value: 1, unit: '人次' }],
+      }),
     ];
     const result = aggregateMonthlyQuantities(tasks, 2026, 7);
     expect(result).toHaveLength(1);
@@ -157,12 +179,18 @@ describe('aggregateMonthlyQuantities', () => {
   it('aggregates quantities by category, merging same label values', () => {
     const tasks: Task[] = [
       makeTask({
-        id: '1', title: '资格审查A', category: '内部招聘', status: 'done',
+        id: '1',
+        title: '资格审查A',
+        category: '内部招聘',
+        status: 'done',
         completedDate: '2026-07-05',
         quantities: [{ label: '资格审查', value: 30, unit: '人次' }],
       }),
       makeTask({
-        id: '2', title: '资格审查B', category: '内部招聘', status: 'done',
+        id: '2',
+        title: '资格审查B',
+        category: '内部招聘',
+        status: 'done',
         completedDate: '2026-07-15',
         quantities: [{ label: '资格审查', value: 15, unit: '人次' }],
       }),
@@ -177,12 +205,18 @@ describe('aggregateMonthlyQuantities', () => {
   it('keeps different labels separate within same category', () => {
     const tasks: Task[] = [
       makeTask({
-        id: '1', title: '审查任务', category: '内部招聘', status: 'done',
+        id: '1',
+        title: '审查任务',
+        category: '内部招聘',
+        status: 'done',
         completedDate: '2026-07-05',
         quantities: [{ label: '资格审查', value: 30, unit: '人次' }],
       }),
       makeTask({
-        id: '2', title: '晋升任务', category: '内部招聘', status: 'done',
+        id: '2',
+        title: '晋升任务',
+        category: '内部招聘',
+        status: 'done',
         completedDate: '2026-07-10',
         quantities: [{ label: '助力晋升', value: 3, unit: '人' }],
       }),
@@ -197,12 +231,18 @@ describe('aggregateMonthlyQuantities', () => {
   it('isolates quantities across different categories (same label, separate groups)', () => {
     const tasks: Task[] = [
       makeTask({
-        id: '1', title: '招聘审查', category: '内部招聘', status: 'done',
+        id: '1',
+        title: '招聘审查',
+        category: '内部招聘',
+        status: 'done',
         completedDate: '2026-07-05',
         quantities: [{ label: '审查', value: 20, unit: '人次' }],
       }),
       makeTask({
-        id: '2', title: '绩效审查', category: '绩效管理', status: 'done',
+        id: '2',
+        title: '绩效审查',
+        category: '绩效管理',
+        status: 'done',
         completedDate: '2026-07-10',
         quantities: [{ label: '审查', value: 10, unit: '人次' }],
       }),
@@ -217,7 +257,10 @@ describe('aggregateMonthlyQuantities', () => {
   it('handles tasks with multiple quantities', () => {
     const tasks: Task[] = [
       makeTask({
-        id: '1', title: '综合任务', category: '内部招聘', status: 'done',
+        id: '1',
+        title: '综合任务',
+        category: '内部招聘',
+        status: 'done',
         completedDate: '2026-07-05',
         quantities: [
           { label: '资格审查', value: 30, unit: '人次' },
@@ -232,7 +275,10 @@ describe('aggregateMonthlyQuantities', () => {
   it('handles cross-task quantity merging with multiple quantities per task', () => {
     const tasks: Task[] = [
       makeTask({
-        id: '1', title: '任务A', category: '内部招聘', status: 'done',
+        id: '1',
+        title: '任务A',
+        category: '内部招聘',
+        status: 'done',
         completedDate: '2026-07-05',
         quantities: [
           { label: '资格审查', value: 30, unit: '人次' },
@@ -240,7 +286,10 @@ describe('aggregateMonthlyQuantities', () => {
         ],
       }),
       makeTask({
-        id: '2', title: '任务B', category: '内部招聘', status: 'done',
+        id: '2',
+        title: '任务B',
+        category: '内部招聘',
+        status: 'done',
         completedDate: '2026-07-15',
         quantities: [
           { label: '资格审查', value: 15, unit: '人次' },
@@ -257,7 +306,13 @@ describe('aggregateMonthlyQuantities', () => {
 
   it('returns empty array for month with no completed tasks', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '任务', category: '内部招聘', status: 'done', completedDate: '2026-06-15' }),
+      makeTask({
+        id: '1',
+        title: '任务',
+        category: '内部招聘',
+        status: 'done',
+        completedDate: '2026-06-15',
+      }),
     ];
     const result = aggregateMonthlyQuantities(tasks, 2026, 7);
     expect(result).toEqual([]);
@@ -270,9 +325,22 @@ describe('aggregateMonthlyQuantities', () => {
 
   it('skips tasks with empty quantities array', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '无量化', category: '内部招聘', status: 'done', completedDate: '2026-07-10', quantities: [] }),
-      makeTask({ id: '2', title: '有量化', category: '内部招聘', status: 'done', completedDate: '2026-07-15',
-        quantities: [{ label: '审查', value: 5, unit: '人次' }] }),
+      makeTask({
+        id: '1',
+        title: '无量化',
+        category: '内部招聘',
+        status: 'done',
+        completedDate: '2026-07-10',
+        quantities: [],
+      }),
+      makeTask({
+        id: '2',
+        title: '有量化',
+        category: '内部招聘',
+        status: 'done',
+        completedDate: '2026-07-15',
+        quantities: [{ label: '审查', value: 5, unit: '人次' }],
+      }),
     ];
     const result = aggregateMonthlyQuantities(tasks, 2026, 7);
     expect(result).toHaveLength(1);
@@ -282,7 +350,10 @@ describe('aggregateMonthlyQuantities', () => {
   it('excludes cancelled tasks even if they have completedDate', () => {
     const tasks: Task[] = [
       makeTask({
-        id: '1', title: '已取消', category: '内部招聘', status: 'cancelled',
+        id: '1',
+        title: '已取消',
+        category: '内部招聘',
+        status: 'cancelled',
         completedDate: '2026-07-10',
         quantities: [{ label: '审查', value: 10, unit: '人次' }],
       }),
@@ -300,8 +371,11 @@ describe('getMonthlyProjectProgress', () => {
   it('finds projects that had subtasks completed in the target month', () => {
     const tasks: Task[] = [
       makeTask({
-        id: 't1', projectId: 'p-1', title: '项目任务',
-        category: '绩效管理', status: 'done',
+        id: 't1',
+        projectId: 'p-1',
+        title: '项目任务',
+        category: '绩效管理',
+        status: 'done',
         completedDate: '2026-07-15',
         subtasks: [
           { id: 's1', title: '起草方案', status: 'done' },
@@ -320,8 +394,11 @@ describe('getMonthlyProjectProgress', () => {
   it('calculates before/after progress percentages', () => {
     const tasks: Task[] = [
       makeTask({
-        id: 't1', projectId: 'p-1', title: '任务',
-        category: '绩效管理', status: 'done',
+        id: 't1',
+        projectId: 'p-1',
+        title: '任务',
+        category: '绩效管理',
+        status: 'done',
         completedDate: '2026-07-15',
         subtasks: [
           { id: 's1', title: '步骤一', status: 'done' },
@@ -343,8 +420,11 @@ describe('getMonthlyProjectProgress', () => {
   it('aggregates progress across multiple tasks in same project for the month', () => {
     const tasks: Task[] = [
       makeTask({
-        id: 't1', projectId: 'p-1', title: '任务A',
-        category: '绩效管理', status: 'done',
+        id: 't1',
+        projectId: 'p-1',
+        title: '任务A',
+        category: '绩效管理',
+        status: 'done',
         completedDate: '2026-07-10',
         subtasks: [
           { id: 's1', title: '阶段一-1', status: 'done' },
@@ -352,8 +432,11 @@ describe('getMonthlyProjectProgress', () => {
         ],
       }),
       makeTask({
-        id: 't2', projectId: 'p-1', title: '任务B',
-        category: '绩效管理', status: 'done',
+        id: 't2',
+        projectId: 'p-1',
+        title: '任务B',
+        category: '绩效管理',
+        status: 'done',
         completedDate: '2026-07-20',
         subtasks: [
           { id: 's3', title: '阶段二-1', status: 'done' },
@@ -374,12 +457,13 @@ describe('getMonthlyProjectProgress', () => {
   it('excludes projects with no task completions this month', () => {
     const tasks: Task[] = [
       makeTask({
-        id: 't1', projectId: 'p-1', title: '旧任务',
-        category: '绩效管理', status: 'done',
+        id: 't1',
+        projectId: 'p-1',
+        title: '旧任务',
+        category: '绩效管理',
+        status: 'done',
         completedDate: '2026-06-15',
-        subtasks: [
-          { id: 's1', title: '旧步骤', status: 'done' },
-        ],
+        subtasks: [{ id: 's1', title: '旧步骤', status: 'done' }],
       }),
     ];
     const projects: Project[] = [
@@ -406,8 +490,11 @@ describe('getMonthlyProjectProgress', () => {
   it('lists completed subtask titles from this month', () => {
     const tasks: Task[] = [
       makeTask({
-        id: 't1', projectId: 'p-1', title: '任务',
-        category: '绩效管理', status: 'done',
+        id: 't1',
+        projectId: 'p-1',
+        title: '任务',
+        category: '绩效管理',
+        status: 'done',
         completedDate: '2026-07-15',
         subtasks: [
           { id: 's1', title: '起草方案', status: 'done' },
@@ -427,8 +514,11 @@ describe('getMonthlyProjectProgress', () => {
     // All done this month → before = 0
     const tasks: Task[] = [
       makeTask({
-        id: 't1', projectId: 'p-1', title: '任务',
-        category: '绩效管理', status: 'done',
+        id: 't1',
+        projectId: 'p-1',
+        title: '任务',
+        category: '绩效管理',
+        status: 'done',
         completedDate: '2026-07-15',
         subtasks: [
           { id: 's1', title: '新步骤', status: 'done' },
@@ -452,7 +542,13 @@ describe('getMonthlyProjectProgress', () => {
 describe('getNextMonthFocusCandidates', () => {
   it('returns todo tasks with deadline in the next month', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '下月任务', category: '内部招聘', status: 'todo', deadline: '2026-08-15' }),
+      makeTask({
+        id: '1',
+        title: '下月任务',
+        category: '内部招聘',
+        status: 'todo',
+        deadline: '2026-08-15',
+      }),
     ];
     const result = getNextMonthFocusCandidates(tasks, 2026, 7);
     expect(result).toHaveLength(1);
@@ -461,7 +557,13 @@ describe('getNextMonthFocusCandidates', () => {
 
   it('returns todo tasks with no deadline (always relevant)', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '无截止日', category: '内部招聘', status: 'todo', deadline: null }),
+      makeTask({
+        id: '1',
+        title: '无截止日',
+        category: '内部招聘',
+        status: 'todo',
+        deadline: null,
+      }),
     ];
     const result = getNextMonthFocusCandidates(tasks, 2026, 7);
     expect(result).toHaveLength(1);
@@ -469,7 +571,13 @@ describe('getNextMonthFocusCandidates', () => {
 
   it('excludes tasks with deadline beyond next month', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '远期', category: '内部招聘', status: 'todo', deadline: '2026-12-31' }),
+      makeTask({
+        id: '1',
+        title: '远期',
+        category: '内部招聘',
+        status: 'todo',
+        deadline: '2026-12-31',
+      }),
     ];
     const result = getNextMonthFocusCandidates(tasks, 2026, 7);
     expect(result).toHaveLength(0);
@@ -477,7 +585,13 @@ describe('getNextMonthFocusCandidates', () => {
 
   it('excludes tasks with deadline in the past', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '过期', category: '内部招聘', status: 'todo', deadline: '2026-06-01' }),
+      makeTask({
+        id: '1',
+        title: '过期',
+        category: '内部招聘',
+        status: 'todo',
+        deadline: '2026-06-01',
+      }),
     ];
     const result = getNextMonthFocusCandidates(tasks, 2026, 7);
     expect(result).toHaveLength(0);
@@ -485,7 +599,13 @@ describe('getNextMonthFocusCandidates', () => {
 
   it('includes tasks with deadline on the first day of next month', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '月初截止', category: '内部招聘', status: 'todo', deadline: '2026-08-01' }),
+      makeTask({
+        id: '1',
+        title: '月初截止',
+        category: '内部招聘',
+        status: 'todo',
+        deadline: '2026-08-01',
+      }),
     ];
     const result = getNextMonthFocusCandidates(tasks, 2026, 7);
     expect(result).toHaveLength(1);
@@ -493,7 +613,13 @@ describe('getNextMonthFocusCandidates', () => {
 
   it('includes tasks with deadline on the last day of next month', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '月末截止', category: '内部招聘', status: 'todo', deadline: '2026-08-31' }),
+      makeTask({
+        id: '1',
+        title: '月末截止',
+        category: '内部招聘',
+        status: 'todo',
+        deadline: '2026-08-31',
+      }),
     ];
     const result = getNextMonthFocusCandidates(tasks, 2026, 7);
     expect(result).toHaveLength(1);
@@ -501,7 +627,13 @@ describe('getNextMonthFocusCandidates', () => {
 
   it('excludes tasks with deadline in current month', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '本月截止', category: '内部招聘', status: 'todo', deadline: '2026-07-20' }),
+      makeTask({
+        id: '1',
+        title: '本月截止',
+        category: '内部招聘',
+        status: 'todo',
+        deadline: '2026-07-20',
+      }),
     ];
     const result = getNextMonthFocusCandidates(tasks, 2026, 7);
     expect(result).toHaveLength(0);
@@ -509,9 +641,27 @@ describe('getNextMonthFocusCandidates', () => {
 
   it('excludes non-todo tasks', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '进行中', category: '内部招聘', status: 'in-progress', deadline: '2026-08-15' }),
-      makeTask({ id: '2', title: '已完成', category: '内部招聘', status: 'done', deadline: '2026-08-15' }),
-      makeTask({ id: '3', title: '已取消', category: '内部招聘', status: 'cancelled', deadline: '2026-08-15' }),
+      makeTask({
+        id: '1',
+        title: '进行中',
+        category: '内部招聘',
+        status: 'in-progress',
+        deadline: '2026-08-15',
+      }),
+      makeTask({
+        id: '2',
+        title: '已完成',
+        category: '内部招聘',
+        status: 'done',
+        deadline: '2026-08-15',
+      }),
+      makeTask({
+        id: '3',
+        title: '已取消',
+        category: '内部招聘',
+        status: 'cancelled',
+        deadline: '2026-08-15',
+      }),
     ];
     const result = getNextMonthFocusCandidates(tasks, 2026, 7);
     expect(result).toHaveLength(0);
@@ -519,7 +669,13 @@ describe('getNextMonthFocusCandidates', () => {
 
   it('handles year boundary (December → next January)', () => {
     const tasks: Task[] = [
-      makeTask({ id: '1', title: '明年一月', category: '内部招聘', status: 'todo', deadline: '2027-01-10' }),
+      makeTask({
+        id: '1',
+        title: '明年一月',
+        category: '内部招聘',
+        status: 'todo',
+        deadline: '2027-01-10',
+      }),
     ];
     const result = getNextMonthFocusCandidates(tasks, 2026, 12);
     expect(result).toHaveLength(1);
@@ -533,7 +689,13 @@ describe('getNextMonthFocusCandidates', () => {
 
   it('returns taskId, title, and category in each candidate', () => {
     const tasks: Task[] = [
-      makeTask({ id: 'task-abc', title: '测试', category: '绩效管理', status: 'todo', deadline: '2026-08-01' }),
+      makeTask({
+        id: 'task-abc',
+        title: '测试',
+        category: '绩效管理',
+        status: 'todo',
+        deadline: '2026-08-01',
+      }),
     ];
     const result = getNextMonthFocusCandidates(tasks, 2026, 7);
     expect(result[0]).toEqual({

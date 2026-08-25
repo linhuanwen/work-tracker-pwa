@@ -81,22 +81,25 @@ describe('PrimaryColorProvider + usePrimaryColor', () => {
   it('writes --color-primary to document.documentElement.style on mount', () => {
     renderHook(() => usePrimaryColor(), { wrapper: PrimaryColorProvider });
 
-    expect(document.documentElement.style.getPropertyValue('--color-primary'))
-      .toBe('#4a6cf7');
+    expect(
+      document.documentElement.style.getPropertyValue('--color-primary'),
+    ).toBe('#4a6cf7');
   });
 
   it('writes --color-primary-hover (10% lighter) on mount', () => {
     renderHook(() => usePrimaryColor(), { wrapper: PrimaryColorProvider });
 
-    expect(document.documentElement.style.getPropertyValue('--color-primary-hover'))
-      .toBe('#5c7bf8');
+    expect(
+      document.documentElement.style.getPropertyValue('--color-primary-hover'),
+    ).toBe('#5c7bf8');
   });
 
   it('writes --color-primary-active (12% darker) on mount', () => {
     renderHook(() => usePrimaryColor(), { wrapper: PrimaryColorProvider });
 
-    expect(document.documentElement.style.getPropertyValue('--color-primary-active'))
-      .toBe('#415fd9');
+    expect(
+      document.documentElement.style.getPropertyValue('--color-primary-active'),
+    ).toBe('#415fd9');
   });
 
   it('updates all three CSS properties when setPrimaryColor changes', () => {
@@ -108,12 +111,15 @@ describe('PrimaryColorProvider + usePrimaryColor', () => {
       result.current.setPrimaryColor('#f0a020');
     });
 
-    expect(document.documentElement.style.getPropertyValue('--color-primary'))
-      .toBe('#f0a020');
-    expect(document.documentElement.style.getPropertyValue('--color-primary-hover'))
-      .toBe('#f2aa36');
-    expect(document.documentElement.style.getPropertyValue('--color-primary-active'))
-      .toBe('#d38d1c');
+    expect(
+      document.documentElement.style.getPropertyValue('--color-primary'),
+    ).toBe('#f0a020');
+    expect(
+      document.documentElement.style.getPropertyValue('--color-primary-hover'),
+    ).toBe('#f2aa36');
+    expect(
+      document.documentElement.style.getPropertyValue('--color-primary-active'),
+    ).toBe('#d38d1c');
   });
 
   it('updates CSS properties immediately when switching to each preset', () => {
@@ -126,8 +132,9 @@ describe('PrimaryColorProvider + usePrimaryColor', () => {
         result.current.setPrimaryColor(hex);
       });
 
-      expect(document.documentElement.style.getPropertyValue('--color-primary'))
-        .toBe(hex);
+      expect(
+        document.documentElement.style.getPropertyValue('--color-primary'),
+      ).toBe(hex);
     }
   });
 

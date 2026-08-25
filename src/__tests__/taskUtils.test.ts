@@ -218,7 +218,9 @@ describe('updateTask', () => {
     expect(result.priority).toBe('urgent');
     expect(result.deadline).toBe('2026-08-01');
     expect(result.notes).toBe('备注内容');
-    expect(result.quantities).toEqual([{ label: '面试', value: 5, unit: '人' }]);
+    expect(result.quantities).toEqual([
+      { label: '面试', value: 5, unit: '人' },
+    ]);
   });
 
   it('preserves createdDate', () => {
@@ -240,11 +242,17 @@ describe('updateTask', () => {
     expect(result.status).toBe('done');
     expect(result.completedDate).toBe('2026-07-20');
     expect(result.isLeaderAssigned).toBe(true);
-    expect(result.subtasks).toEqual([{ id: 's1', title: '子任务', status: 'done' }]);
+    expect(result.subtasks).toEqual([
+      { id: 's1', title: '子任务', status: 'done' },
+    ]);
   });
 
   it('partial update — only changes specified fields', () => {
-    const task = makeTask({ title: '原标题', category: '其他', priority: 'normal' });
+    const task = makeTask({
+      title: '原标题',
+      category: '其他',
+      priority: 'normal',
+    });
     const result = updateTask(task, { priority: 'urgent' });
     expect(result.title).toBe('原标题');
     expect(result.category).toBe('其他');
@@ -461,7 +469,11 @@ describe('limitUrgentTasks', () => {
     ];
     const result = limitUrgentTasks(tasks);
     expect(result.demotedIds).toHaveLength(0);
-    expect(result.tasks.filter((t) => t.priority === 'urgent' && t.status !== 'cancelled')).toHaveLength(5);
+    expect(
+      result.tasks.filter(
+        (t) => t.priority === 'urgent' && t.status !== 'cancelled',
+      ),
+    ).toHaveLength(5);
   });
 
   it('returns empty demotedIds for empty task list', () => {
@@ -759,8 +771,8 @@ describe('toggleSubtask', () => {
   it('only toggles the matching subtask, leaving others unchanged', () => {
     const result = toggleSubtask(subtasks, 's3');
     expect(result[0].status).toBe('todo'); // unchanged
-    expect(result[1].status).toBe('done');  // unchanged
-    expect(result[2].status).toBe('done');  // toggled
+    expect(result[1].status).toBe('done'); // unchanged
+    expect(result[2].status).toBe('done'); // toggled
   });
 });
 
@@ -940,9 +952,7 @@ describe('confirmTaskDone', () => {
     const task = makeTask({
       status: 'done',
       completedDate: '2026-07-15',
-      subtasks: [
-        { id: 's1', title: 'a', status: 'done' },
-      ],
+      subtasks: [{ id: 's1', title: 'a', status: 'done' }],
     });
     const result = confirmTaskDone(task);
     expect(result).toBe(task); // same reference, no change
@@ -1011,7 +1021,11 @@ describe('confirmTaskDone', () => {
   });
 
   it('preserves original updatedDate when task is already done', () => {
-    const task = makeTask({ status: 'done', updatedDate: '2026-07-15', completedDate: '2026-07-15' });
+    const task = makeTask({
+      status: 'done',
+      updatedDate: '2026-07-15',
+      completedDate: '2026-07-15',
+    });
     const result = confirmTaskDone(task);
     expect(result.updatedDate).toBe('2026-07-15');
   });

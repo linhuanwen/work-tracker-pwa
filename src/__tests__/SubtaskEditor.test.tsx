@@ -165,7 +165,9 @@ describe('T1 — 子任务详情编辑（与父任务字段对齐）', () => {
     fireEvent.change(screen.getByLabelText('具体内容'), {
       target: { value: '整理所有材料并核对' },
     });
-    expect(onUpdate).toHaveBeenCalledWith('s1', { notes: '整理所有材料并核对' });
+    expect(onUpdate).toHaveBeenCalledWith('s1', {
+      notes: '整理所有材料并核对',
+    });
   });
 
   it('修改截止日期时调用 onUpdate', () => {

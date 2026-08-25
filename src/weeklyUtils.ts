@@ -10,11 +10,15 @@ import type { Task, Project } from './types';
  * ISO week: starts Monday, week 1 contains Jan 4 (first Thursday).
  */
 export function getWeekKey(date: Date): string {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const d = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+  );
   const dayNum = d.getUTCDay() || 7; // Sunday = 7
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  const weekNo = Math.ceil(
+    ((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
+  );
   const year = d.getUTCFullYear();
   return `${year}-W${String(weekNo).padStart(2, '0')}`;
 }
@@ -170,7 +174,9 @@ export function getProjectProgressChanges(
   const results: ProjectProgressChange[] = [];
 
   for (const project of projects) {
-    const projectTasks = tasks.filter((t) => t.projectId === project.id && t.status !== 'cancelled');
+    const projectTasks = tasks.filter(
+      (t) => t.projectId === project.id && t.status !== 'cancelled',
+    );
 
     // Collect all subtasks and identify which were done this week
     const completedThisWeek: string[] = [];
@@ -196,10 +202,12 @@ export function getProjectProgressChanges(
 
     if (completedThisWeek.length === 0) continue;
 
-    const afterPercent = allTotal > 0 ? Math.floor((allDone / allTotal) * 100) : 0;
+    const afterPercent =
+      allTotal > 0 ? Math.floor((allDone / allTotal) * 100) : 0;
     // Before: done minus this week's completions
     const beforeDone = allDone - completedThisWeek.length;
-    const beforePercent = allTotal > 0 ? Math.floor((beforeDone / allTotal) * 100) : 0;
+    const beforePercent =
+      allTotal > 0 ? Math.floor((beforeDone / allTotal) * 100) : 0;
 
     results.push({
       projectId: project.id,

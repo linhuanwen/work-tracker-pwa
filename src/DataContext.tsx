@@ -8,7 +8,12 @@ import {
 } from 'react';
 import type { DataJson, Task, Project, Priority, TaskStatus } from './types';
 import { DEFAULT_CATEGORIES } from './types';
-import { createTask, toggleTaskStatus, transitionTaskStatus, updateTask } from './taskUtils';
+import {
+  createTask,
+  toggleTaskStatus,
+  transitionTaskStatus,
+  updateTask,
+} from './taskUtils';
 
 // ============================================================
 // Project helpers
@@ -49,22 +54,69 @@ import { debounce } from './useAutoSave';
 
 export type Action =
   | { type: 'SET_DATA'; payload: DataJson }
-  | { type: 'APPLY_SAVED_REVISION'; payload: { revision: number; lastModified: string } }
-  | { type: 'ADD_TASK'; payload: { title: string; category: string; priority: Priority; projectId?: string | null; deadline?: string | null } }
+  | {
+      type: 'APPLY_SAVED_REVISION';
+      payload: { revision: number; lastModified: string };
+    }
+  | {
+      type: 'ADD_TASK';
+      payload: {
+        title: string;
+        category: string;
+        priority: Priority;
+        projectId?: string | null;
+        deadline?: string | null;
+      };
+    }
   | { type: 'TOGGLE_TASK'; payload: { taskId: string } }
   | { type: 'UPDATE_TASK'; payload: { taskId: string; patch: UpdateTaskPatch } }
-  | { type: 'TRANSITION_STATUS'; payload: { taskId: string; newStatus: TaskStatus } }
+  | {
+      type: 'TRANSITION_STATUS';
+      payload: { taskId: string; newStatus: TaskStatus };
+    }
   | { type: 'DELETE_TASK'; payload: { taskId: string } }
-  | { type: 'UPDATE_SETTINGS'; payload: { patch: Partial<DataJson['settings']>; oldCategory?: string } }
+  | {
+      type: 'UPDATE_SETTINGS';
+      payload: { patch: Partial<DataJson['settings']>; oldCategory?: string };
+    }
   | { type: 'MOVE_URGENT_UP'; payload: { taskId: string } }
   | { type: 'MOVE_URGENT_DOWN'; payload: { taskId: string } }
-  | { type: 'ADD_PROJECT'; payload: { title: string; category: string; startDate: string; targetDate: string; notes: string } }
-  | { type: 'UPDATE_PROJECT'; payload: { projectId: string; patch: Partial<Pick<Project, 'title' | 'category' | 'startDate' | 'targetDate' | 'notes'>> } }
+  | {
+      type: 'ADD_PROJECT';
+      payload: {
+        title: string;
+        category: string;
+        startDate: string;
+        targetDate: string;
+        notes: string;
+      };
+    }
+  | {
+      type: 'UPDATE_PROJECT';
+      payload: {
+        projectId: string;
+        patch: Partial<
+          Pick<
+            Project,
+            'title' | 'category' | 'startDate' | 'targetDate' | 'notes'
+          >
+        >;
+      };
+    }
   | { type: 'ARCHIVE_PROJECT'; payload: { projectId: string } }
   | { type: 'DELETE_PROJECT'; payload: { projectId: string } }
-  | { type: 'UPDATE_ARCHIVE_WEEK'; payload: { weekKey: string; entry: import('./types').WeekEntry } }
-  | { type: 'UPDATE_ARCHIVE_MONTH'; payload: { monthKey: string; entry: import('./types').MonthEntry } }
-  | { type: 'UPDATE_ARCHIVE_YEAR'; payload: { yearKey: string; entry: import('./types').YearEntry } };
+  | {
+      type: 'UPDATE_ARCHIVE_WEEK';
+      payload: { weekKey: string; entry: import('./types').WeekEntry };
+    }
+  | {
+      type: 'UPDATE_ARCHIVE_MONTH';
+      payload: { monthKey: string; entry: import('./types').MonthEntry };
+    }
+  | {
+      type: 'UPDATE_ARCHIVE_YEAR';
+      payload: { yearKey: string; entry: import('./types').YearEntry };
+    };
 
 // ============================================================
 // Reducer
@@ -364,7 +416,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       lastSavedFingerprintRef.current = contentFingerprint(current);
       dispatch({
         type: 'APPLY_SAVED_REVISION',
-        payload: { revision: result.revision, lastModified: result.lastModified },
+        payload: {
+          revision: result.revision,
+          lastModified: result.lastModified,
+        },
       });
     }, 500),
   );

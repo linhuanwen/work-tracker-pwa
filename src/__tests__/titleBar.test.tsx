@@ -22,7 +22,9 @@ vi.mock('../TitleBar.module.css', () => ({
 // Helpers
 // ============================================================
 
-function renderTitleBar(overrides: Partial<Parameters<typeof TitleBar>[0]> = {}) {
+function renderTitleBar(
+  overrides: Partial<Parameters<typeof TitleBar>[0]> = {},
+) {
   const props = {
     isDesktopWindow: true,
     maximized: false,

@@ -13,7 +13,8 @@ const DISMISS_KEY = 'pwa-install-banner-dismissed';
  */
 export function InstallBanner() {
   const [show, setShow] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
 
   const isStandalone = (): boolean => {
     // Check display-mode: standalone (PWA installed)
@@ -21,7 +22,10 @@ export function InstallBanner() {
       return true;
     }
     // Safari / old iOS standalone
-    if ('standalone' in window.navigator && (window.navigator as Record<string, unknown>).standalone === true) {
+    if (
+      'standalone' in window.navigator &&
+      (window.navigator as Record<string, unknown>).standalone === true
+    ) {
       return true;
     }
     return false;
@@ -82,7 +86,9 @@ export function InstallBanner() {
 
   return (
     <div className={styles.banner} role="banner">
-      <span className={styles.message}><Icon name="pin" size={16} /> 添加到桌面，像 App 一样使用</span>
+      <span className={styles.message}>
+        <Icon name="pin" size={16} /> 添加到桌面，像 App 一样使用
+      </span>
       <span className={styles.actions}>
         <button
           className={styles.installBtn}

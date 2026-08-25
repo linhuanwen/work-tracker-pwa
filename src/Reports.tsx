@@ -34,30 +34,32 @@ export function Reports() {
 
     if (activeTab === 'weekly') {
       return {
-        '本周完成任务': doneTasks.length > 0
-          ? doneTasks.map((t) => `- [${t.category}] ${t.title}`).join('\n')
-          : '（暂无）',
-        '下周计划': taskList || '（暂无）',
-        '需协调事项': '（暂无）',
+        本周完成任务:
+          doneTasks.length > 0
+            ? doneTasks.map((t) => `- [${t.category}] ${t.title}`).join('\n')
+            : '（暂无）',
+        下周计划: taskList || '（暂无）',
+        需协调事项: '（暂无）',
       };
     }
     if (activeTab === 'monthly') {
       return {
-        '量化汇总': doneTasks.length > 0
-          ? `本月完成任务 ${doneTasks.length} 项`
-          : '（暂无）',
-        '项目回顾': '（暂无）',
-        '反思与下月重点': '（暂无）',
+        量化汇总:
+          doneTasks.length > 0
+            ? `本月完成任务 ${doneTasks.length} 项`
+            : '（暂无）',
+        项目回顾: '（暂无）',
+        反思与下月重点: '（暂无）',
       };
     }
     return {
-      '人员调配': '（暂无）',
+      人员调配: '（暂无）',
       '内部招聘/晋升晋等': '（暂无）',
-      '奖惩管理': '（暂无）',
-      '绩效管理': '（暂无）',
-      '劳动关系': '（暂无）',
-      '交办事项': '（暂无）',
-      '其他': '（暂无）',
+      奖惩管理: '（暂无）',
+      绩效管理: '（暂无）',
+      劳动关系: '（暂无）',
+      交办事项: '（暂无）',
+      其他: '（暂无）',
     };
   };
 
@@ -76,7 +78,11 @@ export function Reports() {
   const [generating, setGenerating] = useState(false);
 
   /** 优先取归档小结内容；没有归档时退回当前 Tab 的预览内容。 */
-  const getSummaryPayload = (): { type: 'week' | 'month' | 'year'; key: string; sections: Record<string, string> } => {
+  const getSummaryPayload = (): {
+    type: 'week' | 'month' | 'year';
+    key: string;
+    sections: Record<string, string>;
+  } => {
     const now = new Date();
     if (activeTab === 'weekly') {
       const key = getWeekKey(now);
@@ -86,10 +92,10 @@ export function Reports() {
           type: 'week',
           key,
           sections: {
-            '本周完成任务': entry.summary.doneTasks,
-            '长期项目推进': entry.summary.projectProgress,
-            '下周计划': entry.summary.nextWeekPlan,
-            '需协调事项': entry.summary.blockers,
+            本周完成任务: entry.summary.doneTasks,
+            长期项目推进: entry.summary.projectProgress,
+            下周计划: entry.summary.nextWeekPlan,
+            需协调事项: entry.summary.blockers,
           },
         };
       }
@@ -103,10 +109,10 @@ export function Reports() {
           type: 'month',
           key,
           sections: {
-            '量化汇总表': entry.summary.quantitativeSummary,
-            '项目进度回顾': entry.summary.projectReview,
-            '月度反思': entry.summary.reflection,
-            '下月重点': entry.summary.nextMonthFocus,
+            量化汇总表: entry.summary.quantitativeSummary,
+            项目进度回顾: entry.summary.projectReview,
+            月度反思: entry.summary.reflection,
+            下月重点: entry.summary.nextMonthFocus,
           },
         };
       }
@@ -119,13 +125,13 @@ export function Reports() {
         type: 'year',
         key,
         sections: {
-          '人员调配': entry.summary.personnelAllocation,
+          人员调配: entry.summary.personnelAllocation,
           '内部招聘/晋升晋等': entry.summary.internalRecruitment,
-          '奖惩管理': entry.summary.rewardDiscipline,
-          '绩效管理': entry.summary.performance,
-          '劳动关系': entry.summary.laborRelations,
-          '交办事项': entry.summary.leaderAssigned,
-          '一句话总结': entry.summary.other,
+          奖惩管理: entry.summary.rewardDiscipline,
+          绩效管理: entry.summary.performance,
+          劳动关系: entry.summary.laborRelations,
+          交办事项: entry.summary.leaderAssigned,
+          一句话总结: entry.summary.other,
         },
       };
     }
@@ -178,8 +184,13 @@ export function Reports() {
         <button className={styles.actionBtn} onClick={handleCopy}>
           <Icon name="copy" size={16} /> 复制
         </button>
-        <button className={styles.actionBtn} onClick={handleGenerateSummary} disabled={generating}>
-          <Icon name="download" size={16} /> {generating ? '生成中…' : '生成总结'}
+        <button
+          className={styles.actionBtn}
+          onClick={handleGenerateSummary}
+          disabled={generating}
+        >
+          <Icon name="download" size={16} />{' '}
+          {generating ? '生成中…' : '生成总结'}
         </button>
       </div>
 

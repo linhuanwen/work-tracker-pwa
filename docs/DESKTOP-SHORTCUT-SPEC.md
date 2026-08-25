@@ -13,6 +13,7 @@
 ## Solution
 
 在桌面版启动器（非 headless、且是打包后的 exe）启动时，调用一个“确保桌面快捷方式存在”的模块：
+
 - 若桌面已存在同名快捷方式（`工作清单.lnk`），**跳过不覆盖**（尊重用户自定义的图标/参数，不做侵入式修改）。
 - 若不存在，则自动创建指向当前 exe 的快捷方式，并设置工作目录为 exe 所在目录、图标为 exe 自身。
 - 非 Windows、或从源码直接运行（未打包、无 exe 路径）时不创建，静默返回。
@@ -78,10 +79,10 @@
 
 ## Ticket Breakdown
 
-| Ticket | 标题 | 内容 | 验收 |
-|--------|------|------|------|
-| S1 | 新增桌面快捷方式模块 shortcut.py | 计算桌面路径、存在性判断、PS-COM 创建 .lnk、编排 + 异常吞没 | 有单元测试，符合上述 Testing Decisions |
-| S2 | 接入启动器 main() 并更新文档 | 在 main() 后台线程调用 ensure_desktop_shortcut；README/INSTALL/USER-GUIDE/tickets 补说明 | 启动器调用生效，文档更新 |
+| Ticket | 标题                             | 内容                                                                                     | 验收                                   |
+| ------ | -------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------- |
+| S1     | 新增桌面快捷方式模块 shortcut.py | 计算桌面路径、存在性判断、PS-COM 创建 .lnk、编排 + 异常吞没                              | 有单元测试，符合上述 Testing Decisions |
+| S2     | 接入启动器 main() 并更新文档     | 在 main() 后台线程调用 ensure_desktop_shortcut；README/INSTALL/USER-GUIDE/tickets 补说明 | 启动器调用生效，文档更新               |
 
 ## Acceptance Criteria Summary
 

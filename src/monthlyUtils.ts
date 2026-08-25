@@ -79,9 +79,7 @@ export function aggregateMonthlyQuantities(
 ): AggregatedQuantity[] {
   // Filter: done tasks completed in the target month
   const completed = tasks.filter(
-    (t) =>
-      t.status === 'done' &&
-      isDateInMonth(t.completedDate, year, month),
+    (t) => t.status === 'done' && isDateInMonth(t.completedDate, year, month),
   );
 
   // Aggregate: key = category + label

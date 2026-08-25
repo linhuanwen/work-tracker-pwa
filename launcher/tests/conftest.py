@@ -1,9 +1,9 @@
-import pytest
 import sys
-from pathlib import Path
 from unittest.mock import MagicMock
 
-from launcher.state import AppState, get_state, set_state
+import pytest
+
+from launcher.state import AppState, set_state
 
 
 @pytest.fixture(autouse=True)
@@ -20,7 +20,6 @@ def tmp_scripts_dir(tmp_path, monkeypatch):
     Clears any cached ``polish`` module so launcher tests import the fake
     script instead of the real scripts/polish.py loaded by scripts/test_polish.
     """
-    import sys
 
     scripts_dir = tmp_path / "scripts"
     scripts_dir.mkdir()

@@ -6,11 +6,11 @@
 
 ## 系统要求
 
-| 要求 | 说明 |
-|------|------|
-| 操作系统 | Windows 10（版本 1809+）或 Windows 11 |
-| WebView2 Runtime | Windows 11 已内置；Windows 10 若没有请[下载安装](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) |
-| 浏览器（PWA 模式） | Chrome / Edge 较新版本 |
+| 要求               | 说明                                                                                                             |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| 操作系统           | Windows 10（版本 1809+）或 Windows 11                                                                            |
+| WebView2 Runtime   | Windows 11 已内置；Windows 10 若没有请[下载安装](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) |
+| 浏览器（PWA 模式） | Chrome / Edge 较新版本                                                                                           |
 
 ---
 
@@ -158,13 +158,17 @@ python scripts/polish.py path/to/data.json
 ## 常见问题
 
 ### Q: 双击 exe 没反应？
+
 A: 检查系统是否安装了 WebView2 Runtime。Windows 11 已内置；Windows 10 可能需要手动安装：https://developer.microsoft.com/en-us/microsoft-edge/webview2/
 
 ### Q: 如何备份数据？
+
 A: 备份 `data.json` 文件即可，所有数据都在里面。
 
 ### Q: 如何迁移到新电脑？
+
 A: 复制 `工作清单.exe` 和 `data.json` 到新电脑，放在同一文件夹即可。或用云同步自动迁移。
 
 ### Q: 如何卸载？
+
 A: 直接删除 `工作清单.exe` 和 `data.json` 即可。没有注册表写入，没有残留文件。

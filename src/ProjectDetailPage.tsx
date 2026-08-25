@@ -11,15 +11,19 @@ interface ProjectDetailPageProps {
 }
 
 const STATUS_LABELS: Record<TaskStatus, string> = {
-  'todo': '待办',
+  todo: '待办',
   'in-progress': '进行中',
-  'done': '已完成',
-  'cancelled': '已取消',
+  done: '已完成',
+  cancelled: '已取消',
 };
 
 const STATUS_ORDER: TaskStatus[] = ['in-progress', 'todo', 'done', 'cancelled'];
 
-export function ProjectDetailPage({ projectId, onNavigate, onEditTask }: ProjectDetailPageProps) {
+export function ProjectDetailPage({
+  projectId,
+  onNavigate,
+  onEditTask,
+}: ProjectDetailPageProps) {
   const { data } = useData();
   const projects = data?.projects ?? [];
   const tasks = data?.tasks ?? [];
@@ -29,7 +33,10 @@ export function ProjectDetailPage({ projectId, onNavigate, onEditTask }: Project
   if (!project) {
     return (
       <div className={styles.container}>
-        <button className={styles.backBtn} onClick={() => onNavigate('/projects')}>
+        <button
+          className={styles.backBtn}
+          onClick={() => onNavigate('/projects')}
+        >
           <Icon name="arrow-left" size={16} /> 返回
         </button>
         <div className={styles.empty}>项目不存在或已被删除。</div>
@@ -39,9 +46,8 @@ export function ProjectDetailPage({ projectId, onNavigate, onEditTask }: Project
 
   const projectTasks = tasks.filter((t) => t.projectId === projectId);
   const progress = calcProjectProgress(projectTasks);
-  const percent = progress.total > 0
-    ? Math.floor((progress.done / progress.total) * 100)
-    : 0;
+  const percent =
+    progress.total > 0 ? Math.floor((progress.done / progress.total) * 100) : 0;
   const activeCount = projectTasks.filter(
     (t) => t.status !== 'done' && t.status !== 'cancelled',
   ).length;
@@ -49,10 +55,10 @@ export function ProjectDetailPage({ projectId, onNavigate, onEditTask }: Project
 
   // Group tasks by status
   const grouped: Record<TaskStatus, Task[]> = {
-    'todo': [],
+    todo: [],
     'in-progress': [],
-    'done': [],
-    'cancelled': [],
+    done: [],
+    cancelled: [],
   };
   for (const t of projectTasks) {
     grouped[t.status].push(t);
@@ -61,7 +67,10 @@ export function ProjectDetailPage({ projectId, onNavigate, onEditTask }: Project
   return (
     <div className={styles.container}>
       {/* Header */}
-      <button className={styles.backBtn} onClick={() => onNavigate('/projects')}>
+      <button
+        className={styles.backBtn}
+        onClick={() => onNavigate('/projects')}
+      >
         <Icon name="arrow-left" size={16} /> 返回项目列表
       </button>
 
@@ -112,7 +121,9 @@ export function ProjectDetailPage({ projectId, onNavigate, onEditTask }: Project
         return (
           <div key={status} className={styles.statusGroup}>
             <div className={styles.statusHeader}>
-              <span className={styles.statusLabel}>{STATUS_LABELS[status]}</span>
+              <span className={styles.statusLabel}>
+                {STATUS_LABELS[status]}
+              </span>
               <span className={styles.statusCount}>{groupTasks.length}</span>
             </div>
             <div className={styles.taskList}>
@@ -129,7 +140,11 @@ export function ProjectDetailPage({ projectId, onNavigate, onEditTask }: Project
                 >
                   <span className={styles.taskTitle}>{task.title}</span>
                   <span className={styles.taskPriority}>
-                    {task.priority === 'urgent' ? '紧急' : task.priority === 'important' ? '重要' : '日常'}
+                    {task.priority === 'urgent'
+                      ? '紧急'
+                      : task.priority === 'important'
+                        ? '重要'
+                        : '日常'}
                   </span>
                 </div>
               ))}

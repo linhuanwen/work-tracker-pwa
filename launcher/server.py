@@ -11,31 +11,31 @@ import os
 import sys
 import threading
 
+from launcher.ai import run_polish
 from launcher.constants import (
+    ALLOWED_HOSTS,
+    ALLOWED_ORIGINS,
     HOST,
     PORT,
-    ALLOWED_ORIGINS,
-    ALLOWED_HOSTS,
     PROJECT_ROOT,
 )
+from launcher.data import current_revision, read_data_json, write_data_json
 from launcher.state import get_state
-from launcher.data import read_data_json, write_data_json, current_revision
 from launcher.state_persistence import read_state, write_state
+from launcher.summary import generate_summary_doc
 from launcher.win32 import (
     dock_right,
-    resize_window,
-    move_resize_window,
-    start_drag_window,
-    minimize_window,
-    toggle_maximize_window,
-    is_window_maximized,
     get_min_window_size,
     get_window_rect,
     hide_window,
+    is_window_maximized,
+    minimize_window,
+    move_resize_window,
+    resize_window,
     show_window,
+    start_drag_window,
+    toggle_maximize_window,
 )
-from launcher.ai import run_polish
-from launcher.summary import generate_summary_doc
 
 
 def _is_allowed_origin(origin: str | None) -> bool:

@@ -59,7 +59,8 @@ vi.mock('../AddTaskForm.module.css', () => ({
 // ============================================================
 
 vi.mock('../DataContext', async () => {
-  const actual = await vi.importActual<typeof import('../DataContext')>('../DataContext');
+  const actual =
+    await vi.importActual<typeof import('../DataContext')>('../DataContext');
   return {
     ...actual,
     useData: () => ({
@@ -253,7 +254,9 @@ describe('AddTaskForm — collapsed state', () => {
       fireEvent.click(screen.getByLabelText('设置截止日期'));
       fireEvent.click(screen.getByText('选择日期'));
 
-      const dateInput = screen.getByTestId('due-date-picker') as HTMLInputElement;
+      const dateInput = screen.getByTestId(
+        'due-date-picker',
+      ) as HTMLInputElement;
       fireEvent.change(dateInput, { target: { value: '2026-08-15' } });
 
       // Dropdown closes after picker selection
@@ -343,7 +346,9 @@ describe('AddTaskForm — collapsed state', () => {
       fireEvent.click(screen.getByLabelText('设置提醒时间'));
       fireEvent.click(screen.getByText('选择日期时间'));
 
-      const dtInput = screen.getByTestId('reminder-datetime-picker') as HTMLInputElement;
+      const dtInput = screen.getByTestId(
+        'reminder-datetime-picker',
+      ) as HTMLInputElement;
       fireEvent.change(dtInput, { target: { value: '2026-08-15T14:30' } });
 
       const tags = document.querySelectorAll('[data-variant="date"]');
@@ -387,7 +392,7 @@ describe('AddTaskForm — collapsed state', () => {
         payload: {
           title: '测试任务',
           category: '测试分类', // first category is default
-          priority: 'normal',   // default priority
+          priority: 'normal', // default priority
           deadline: null,
         },
       });
@@ -514,7 +519,9 @@ describe('AddTaskForm — collapsed state', () => {
       fireEvent.click(screen.getByLabelText('展开完整表单'));
 
       // The expanded form input should have the same title
-      const expandedInput = screen.getByPlaceholderText('输入新任务…') as HTMLInputElement;
+      const expandedInput = screen.getByPlaceholderText(
+        '输入新任务…',
+      ) as HTMLInputElement;
       expect(expandedInput.value).toBe('预填充标题');
     });
 

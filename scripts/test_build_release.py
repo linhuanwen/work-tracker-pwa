@@ -3,14 +3,11 @@
 不真正执行 npm / pyinstaller / 打包，只验证编排逻辑和参数拼装。
 """
 
-import os
 import sys
 import zipfile
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 import build_release as br
+import pytest
 
 
 @pytest.fixture

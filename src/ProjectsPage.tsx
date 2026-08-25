@@ -28,7 +28,9 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
 
   // Confirm delete state
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
-  const deleteTargetProject = deleteProjectId ? projects.find(p => p.id === deleteProjectId) : null;
+  const deleteTargetProject = deleteProjectId
+    ? projects.find((p) => p.id === deleteProjectId)
+    : null;
 
   // Context menu state
   const [ctxMenu, setCtxMenu] = useState<{
@@ -219,10 +221,18 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
             />
           </div>
           <div className={styles.formActions}>
-            <button type="button" className={styles.cancelBtn} onClick={resetForm}>
+            <button
+              type="button"
+              className={styles.cancelBtn}
+              onClick={resetForm}
+            >
               取消
             </button>
-            <button type="submit" className={styles.submitBtn} disabled={!formTitle.trim()}>
+            <button
+              type="submit"
+              className={styles.submitBtn}
+              disabled={!formTitle.trim()}
+            >
               {editingId ? '保存' : '创建'}
             </button>
           </div>
@@ -232,17 +242,24 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
       {/* Active projects */}
       <div className={styles.list}>
         {activeProjects.length === 0 && archivedProjects.length === 0 && (
-          <div className={styles.empty}>暂无项目，点击右上角"新建"创建第一个项目。</div>
+          <div className={styles.empty}>
+            暂无项目，点击右上角"新建"创建第一个项目。
+          </div>
         )}
 
         {activeProjects.map((project) => {
           const projectTasks = tasks.filter((t) => t.projectId === project.id);
           const progress = calcProjectProgress(projectTasks);
-          const percent = progress.total > 0
-            ? Math.floor((progress.done / progress.total) * 100)
-            : 0;
-          const activeCount = projectTasks.filter((t) => t.status !== 'done' && t.status !== 'cancelled').length;
-          const doneCount = projectTasks.filter((t) => t.status === 'done').length;
+          const percent =
+            progress.total > 0
+              ? Math.floor((progress.done / progress.total) * 100)
+              : 0;
+          const activeCount = projectTasks.filter(
+            (t) => t.status !== 'done' && t.status !== 'cancelled',
+          ).length;
+          const doneCount = projectTasks.filter(
+            (t) => t.status === 'done',
+          ).length;
 
           return (
             <div
@@ -327,7 +344,9 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
       {/* Archived projects */}
       {archivedProjects.length > 0 && (
         <div className={styles.archivedSection}>
-          <h3 className={styles.archivedTitle}>已归档 ({archivedProjects.length})</h3>
+          <h3 className={styles.archivedTitle}>
+            已归档 ({archivedProjects.length})
+          </h3>
           {archivedProjects.map((project) => (
             <div
               key={project.id}
@@ -358,7 +377,10 @@ export function ProjectsPage({ onNavigate }: ProjectsPageProps) {
           title="确认删除"
           message={`确定要删除项目"${deleteTargetProject.title}"吗？该项目下的任务不会被删除，但会解除关联。此操作不可撤销。`}
           onConfirm={() => {
-            dispatch({ type: 'DELETE_PROJECT', payload: { projectId: deleteTargetProject.id } });
+            dispatch({
+              type: 'DELETE_PROJECT',
+              payload: { projectId: deleteTargetProject.id },
+            });
             setDeleteProjectId(null);
           }}
           onCancel={() => setDeleteProjectId(null)}

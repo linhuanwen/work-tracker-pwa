@@ -6,7 +6,9 @@ import { useWindowControls } from '../useWindowControls';
 // Helpers
 // ============================================================
 
-function mockFetchSequence(handlers: Record<string, (body?: string) => unknown>) {
+function mockFetchSequence(
+  handlers: Record<string, (body?: string) => unknown>,
+) {
   const calls: { url: string; body?: string }[] = [];
   const impl = vi.fn((url: string, init?: RequestInit) => {
     const body = init?.body as string | undefined;
@@ -52,7 +54,9 @@ describe('useWindowControls', () => {
 
     await waitFor(() => expect(result.current.isDesktopWindow).toBe(true));
     expect(result.current.maximized).toBe(false);
-    expect(document.documentElement.classList.contains('desktop-window')).toBe(true);
+    expect(document.documentElement.classList.contains('desktop-window')).toBe(
+      true,
+    );
   });
 
   it('reads initial maximized state from the backend', async () => {
@@ -69,7 +73,9 @@ describe('useWindowControls', () => {
     const { result } = renderHook(() => useWindowControls());
 
     await waitFor(() => expect(result.current.isDesktopWindow).toBe(false));
-    expect(document.documentElement.classList.contains('desktop-window')).toBe(false);
+    expect(document.documentElement.classList.contains('desktop-window')).toBe(
+      false,
+    );
   });
 
   it('posts minimize / close with correct payloads', async () => {

@@ -13,7 +13,10 @@
   box-shadow: var(--glass-shadow);
   cursor: pointer;
   user-select: none;
-  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s;
   min-height: 52px;
   -webkit-tap-highlight-color: transparent;
 }
@@ -53,11 +56,14 @@
   margin-bottom: var(--space-5);
   box-shadow: var(--glass-shadow);
   animation: expandIn 0.15s ease;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 .activeCollapsed:focus-within {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--color-primary) 15%, transparent);
 }
 
 @keyframes expandIn {
@@ -113,7 +119,9 @@
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
   -webkit-tap-highlight-color: transparent;
 }
 .suffixBtn:hover {
@@ -145,7 +153,9 @@
   background: transparent;
   color: var(--color-text-faded);
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
   -webkit-tap-highlight-color: transparent;
 }
 .expandBtn:hover {

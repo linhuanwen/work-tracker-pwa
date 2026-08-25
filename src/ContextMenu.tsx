@@ -80,11 +80,7 @@ export function ContextMenu({ items, x, y, open, onClose }: ContextMenuProps) {
   return createPortal(
     <>
       {/* Transparent backdrop — catches clicks outside the menu */}
-      <div
-        className={styles.backdrop}
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <div className={styles.backdrop} onClick={onClose} aria-hidden="true" />
 
       {/* Menu panel */}
       <div

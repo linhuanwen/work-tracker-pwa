@@ -5,14 +5,15 @@ import sys
 import threading
 import time
 
-from launcher.constants import HOST, PORT, URL, WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, TKEY_HEX
-from launcher.state import get_state
+from launcher.constants import TKEY_HEX, URL, WINDOW_HEIGHT, WINDOW_TITLE, WINDOW_WIDTH
 from launcher.data import get_configured_data_folder
-from launcher.single_instance import is_server_running, notify_existing_instance
-from launcher.server import start_server, is_server_running as is_local_server_running
-from launcher.tray import start_tray, on_window_closing
-from launcher.win32 import find_and_store_hwnd, watch_dock_right
+from launcher.server import is_server_running as is_local_server_running
+from launcher.server import start_server
 from launcher.shortcut import ensure_desktop_shortcut
+from launcher.single_instance import is_server_running, notify_existing_instance
+from launcher.state import get_state
+from launcher.tray import on_window_closing, start_tray
+from launcher.win32 import find_and_store_hwnd, watch_dock_right
 
 
 def start_shortcut_creation(debug: bool = False) -> threading.Thread:

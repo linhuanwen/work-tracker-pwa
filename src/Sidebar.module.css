@@ -27,7 +27,7 @@
 }
 
 /* When explicitly hidden */
-.sidebar[data-mode="hidden"] {
+.sidebar[data-mode='hidden'] {
   display: none;
 }
 
@@ -52,7 +52,9 @@
   color: var(--color-text-muted);
   font-size: var(--fs-body);
   font-family: inherit;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
   border-radius: 8px;
   white-space: nowrap;
   text-align: left;
@@ -95,11 +97,11 @@
 }
 
 /* Icon-only mode: hide labels */
-.sidebar[data-mode="icons"] .label {
+.sidebar[data-mode='icons'] .label {
   display: none;
 }
 
-.sidebar[data-mode="icons"] .navItem {
+.sidebar[data-mode='icons'] .navItem {
   justify-content: center;
   padding: 10px;
   gap: 0;

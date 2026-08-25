@@ -129,9 +129,18 @@ function readStoredPrimaryColor(): string {
 
 function applyPrimaryColor(hex: string) {
   const variants = computeColorVariants(hex);
-  document.documentElement.style.setProperty('--color-primary', variants.primary);
-  document.documentElement.style.setProperty('--color-primary-hover', variants.hover);
-  document.documentElement.style.setProperty('--color-primary-active', variants.active);
+  document.documentElement.style.setProperty(
+    '--color-primary',
+    variants.primary,
+  );
+  document.documentElement.style.setProperty(
+    '--color-primary-hover',
+    variants.hover,
+  );
+  document.documentElement.style.setProperty(
+    '--color-primary-active',
+    variants.active,
+  );
 }
 
 interface PrimaryColorContextValue {
@@ -139,10 +148,14 @@ interface PrimaryColorContextValue {
   setPrimaryColor: (hex: string) => void;
 }
 
-const PrimaryColorContext = createContext<PrimaryColorContextValue | null>(null);
+const PrimaryColorContext = createContext<PrimaryColorContextValue | null>(
+  null,
+);
 
 export function PrimaryColorProvider({ children }: { children: ReactNode }) {
-  const [primaryColor, setPrimaryColorState] = useState<string>(readStoredPrimaryColor);
+  const [primaryColor, setPrimaryColorState] = useState<string>(
+    readStoredPrimaryColor,
+  );
 
   useEffect(() => {
     applyPrimaryColor(primaryColor);
@@ -167,7 +180,9 @@ export function PrimaryColorProvider({ children }: { children: ReactNode }) {
 export function usePrimaryColor(): PrimaryColorContextValue {
   const ctx = useContext(PrimaryColorContext);
   if (!ctx) {
-    throw new Error('usePrimaryColor must be used within a PrimaryColorProvider');
+    throw new Error(
+      'usePrimaryColor must be used within a PrimaryColorProvider',
+    );
   }
   return ctx;
 }

@@ -99,7 +99,10 @@ describe('T3 — mergeForImport 合并规则', () => {
     incoming.projects = [makeProject('p-incoming')];
 
     const { data, summary } = mergeForImport(local, incoming);
-    expect(data.tasks.map((t) => t.id).sort()).toEqual(['t-incoming', 't-local']);
+    expect(data.tasks.map((t) => t.id).sort()).toEqual([
+      't-incoming',
+      't-local',
+    ]);
     expect(data.projects).toHaveLength(2);
     expect(summary.remappedTaskIds).toBe(0);
     expect(summary.remappedProjectIds).toBe(0);
@@ -160,14 +163,35 @@ describe('T3 — mergeForImport 合并规则', () => {
   it('归档按 key 合并，已存在保留本地', () => {
     const local = createDefaultDataJson();
     local.archives.weeks['2026-W34'] = {
-      tasks: [], summary: { doneTasks: '本地', projectProgress: '', nextWeekPlan: '', blockers: '' }, aiPolished: false,
+      tasks: [],
+      summary: {
+        doneTasks: '本地',
+        projectProgress: '',
+        nextWeekPlan: '',
+        blockers: '',
+      },
+      aiPolished: false,
     };
     const incoming = createDefaultDataJson();
     incoming.archives.weeks['2026-W34'] = {
-      tasks: [], summary: { doneTasks: '导入', projectProgress: '', nextWeekPlan: '', blockers: '' }, aiPolished: false,
+      tasks: [],
+      summary: {
+        doneTasks: '导入',
+        projectProgress: '',
+        nextWeekPlan: '',
+        blockers: '',
+      },
+      aiPolished: false,
     };
     incoming.archives.weeks['2026-W35'] = {
-      tasks: [], summary: { doneTasks: '新增周', projectProgress: '', nextWeekPlan: '', blockers: '' }, aiPolished: false,
+      tasks: [],
+      summary: {
+        doneTasks: '新增周',
+        projectProgress: '',
+        nextWeekPlan: '',
+        blockers: '',
+      },
+      aiPolished: false,
     };
 
     const { data, summary } = mergeForImport(local, incoming);
@@ -181,8 +205,11 @@ describe('T3 — mergeForImport 合并规则', () => {
 describe('T3 — 额外边界场景', () => {
   it('快照 formatVersion 过高时拒绝导入', () => {
     const text = JSON.stringify({
-      app: 'work-list', kind: 'snapshot', formatVersion: 99,
-      exportedAt: 'x', data: createDefaultDataJson(),
+      app: 'work-list',
+      kind: 'snapshot',
+      formatVersion: 99,
+      exportedAt: 'x',
+      data: createDefaultDataJson(),
     });
     expect(() => parseImportText(text)).toThrow(/格式版本过高/);
   });
@@ -204,7 +231,9 @@ describe('T3 — 额外边界场景', () => {
 
     // 导入任务引用本地项目 id（该 id 在导入文件中不存在）
     const incoming = createDefaultDataJson();
-    incoming.tasks = [makeTask('t-new', { title: '引用本地项目', projectId: 'p-local' })];
+    incoming.tasks = [
+      makeTask('t-new', { title: '引用本地项目', projectId: 'p-local' }),
+    ];
 
     const { data } = mergeForImport(local, incoming);
     const newTask = data.tasks.find((t) => t.id === 't-new')!;

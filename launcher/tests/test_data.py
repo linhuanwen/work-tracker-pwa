@@ -1,13 +1,12 @@
 import json
-from pathlib import Path
 
-from launcher.state import get_state
 from launcher.data import (
+    current_revision,
     get_configured_data_folder,
     read_data_json,
     write_data_json,
-    current_revision,
 )
+from launcher.state import get_state
 
 
 def test_get_configured_data_folder_prefers_wjl_config_txt(tmp_path, monkeypatch):

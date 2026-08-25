@@ -2,8 +2,8 @@ import http.client
 import threading
 import time
 
-from launcher.server import RequestHandler, _is_allowed_origin, _is_allowed_host
 from launcher.constants import HOST, PORT
+from launcher.server import RequestHandler, _is_allowed_host, _is_allowed_origin
 
 
 def test_allowed_origin_accepts_none_and_whitelist():

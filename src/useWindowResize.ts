@@ -94,20 +94,23 @@ export function useWindowResize(options?: UseWindowResizeOptions) {
     };
   }, []);
 
-  const sendResize = useCallback((rect: WindowRect) => {
-    const clamped = clampSize(rect.width, rect.height);
-    fetch('/api/window', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'move_resize',
-        x: Math.round(rect.left),
-        y: Math.round(rect.top),
-        width: Math.round(clamped.width),
-        height: Math.round(clamped.height),
-      }),
-    }).catch(() => {});
-  }, [clampSize]);
+  const sendResize = useCallback(
+    (rect: WindowRect) => {
+      const clamped = clampSize(rect.width, rect.height);
+      fetch('/api/window', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'move_resize',
+          x: Math.round(rect.left),
+          y: Math.round(rect.top),
+          width: Math.round(clamped.width),
+          height: Math.round(clamped.height),
+        }),
+      }).catch(() => {});
+    },
+    [clampSize],
+  );
 
   // Schedule a rAF-throttled resize request for the pending rect
   const scheduleResize = useCallback(
@@ -254,10 +257,10 @@ export function useWindowResize(options?: UseWindowResizeOptions) {
 
   // Return handlers for each edge/corner
   const handlers = {
-    onN:  (e: React.MouseEvent) => onMouseDown('n', e),
-    onS:  (e: React.MouseEvent) => onMouseDown('s', e),
-    onE:  (e: React.MouseEvent) => onMouseDown('e', e),
-    onW:  (e: React.MouseEvent) => onMouseDown('w', e),
+    onN: (e: React.MouseEvent) => onMouseDown('n', e),
+    onS: (e: React.MouseEvent) => onMouseDown('s', e),
+    onE: (e: React.MouseEvent) => onMouseDown('e', e),
+    onW: (e: React.MouseEvent) => onMouseDown('w', e),
     onNE: (e: React.MouseEvent) => onMouseDown('ne', e),
     onNW: (e: React.MouseEvent) => onMouseDown('nw', e),
     onSE: (e: React.MouseEvent) => onMouseDown('se', e),

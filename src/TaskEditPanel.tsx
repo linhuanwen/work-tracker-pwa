@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import type { Task, Quantity, SubTask, Priority } from './types';
 import { useData, DEFAULT_CATEGORIES } from './DataContext';
-import { calcDefaultHibernateUntil, addSubtask, updateSubtask } from './taskUtils';
+import {
+  calcDefaultHibernateUntil,
+  addSubtask,
+  updateSubtask,
+} from './taskUtils';
 import { SubtaskEditor } from './SubtaskEditor';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Icon } from './Icon';
@@ -45,14 +49,18 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
   );
 
   // 量化产出
-  const [quantities, setQuantities] = useState<Quantity[]>(task.quantities ?? []);
+  const [quantities, setQuantities] = useState<Quantity[]>(
+    task.quantities ?? [],
+  );
 
   // 子任务
   const [subtasks, setSubtasks] = useState<SubTask[]>(task.subtasks ?? []);
 
   // 跨年休眠
   const [isCrossYear, setIsCrossYear] = useState(task.isCrossYear);
-  const [hibernateUntil, setHibernateUntil] = useState(task.hibernateUntil ?? '');
+  const [hibernateUntil, setHibernateUntil] = useState(
+    task.hibernateUntil ?? '',
+  );
 
   const handleAddQuantity = () => {
     setQuantities([...quantities, { label: '', value: 0, unit: '' }]);
@@ -93,8 +101,12 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
           projectId: projectId || null,
           isLeaderAssigned,
           leaderSource: isLeaderAssigned ? leaderSource.trim() : undefined,
-          leaderAssignedDate: isLeaderAssigned ? leaderAssignedDate || undefined : undefined,
-          leaderDeadline: isLeaderAssigned ? leaderDeadline || undefined : undefined,
+          leaderAssignedDate: isLeaderAssigned
+            ? leaderAssignedDate || undefined
+            : undefined,
+          leaderDeadline: isLeaderAssigned
+            ? leaderDeadline || undefined
+            : undefined,
           isCrossYear,
           hibernateUntil: isCrossYear && hibernateUntil ? hibernateUntil : null,
         },
@@ -119,7 +131,11 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
         {/* Header */}
         <div className={styles.header}>
           <h2 className={styles.title}>编辑任务</h2>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="关闭">
+          <button
+            className={styles.closeBtn}
+            onClick={onClose}
+            aria-label="关闭"
+          >
             <Icon name="x" size={20} />
           </button>
         </div>
@@ -342,7 +358,9 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
               )
             }
             onDelete={(id) => setSubtasks(subtasks.filter((s) => s.id !== id))}
-            onUpdate={(id, patch) => setSubtasks(updateSubtask(subtasks, id, patch))}
+            onUpdate={(id, patch) =>
+              setSubtasks(updateSubtask(subtasks, id, patch))
+            }
           />
         </div>
 
@@ -356,11 +374,7 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
                 checked={isCrossYear}
                 onChange={(e) => {
                   setIsCrossYear(e.target.checked);
-                  if (
-                    e.target.checked &&
-                    !hibernateUntil &&
-                    deadline
-                  ) {
+                  if (e.target.checked && !hibernateUntil && deadline) {
                     const d = calcDefaultHibernateUntil(deadline);
                     if (d) setHibernateUntil(d);
                   }
@@ -375,9 +389,7 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
               <div className={styles.field}>
                 <label className={styles.label}>
                   休眠至
-                  <span className={styles.hintLabel}>
-                    （默认截止前 60 天）
-                  </span>
+                  <span className={styles.hintLabel}>（默认截止前 60 天）</span>
                 </label>
                 <input
                   className={styles.input}

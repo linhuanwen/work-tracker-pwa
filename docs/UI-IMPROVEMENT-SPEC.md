@@ -25,6 +25,7 @@ This spec defines a phased UI/UX improvement plan for the PWA work journal app. 
 **What:** Install `lucide-react` and replace all emoji usage.
 
 **Files affected:**
+
 - `src/App.tsx` — navigation emoji (📋📅📊📁)
 - `src/TaskCard.tsx` — status/priority indicators
 - `src/UrgentZone.tsx` — arrow buttons (▲▼)
@@ -34,22 +35,22 @@ This spec defines a phased UI/UX improvement plan for the PWA work journal app. 
 
 **Mapping table:**
 
-| Current Emoji | lucide-react Icon | Usage |
-|---|---|---|
-| 📋 | `ClipboardList` | Task list nav |
-| 📅 | `Calendar` | Weekly nav |
-| 📊 | `BarChart3` | Monthly/Yearly nav |
-| 📁 | `FolderOpen` | Projects nav |
-| 🔴 | `Circle` (filled) | Priority indicators |
-| 🤖 | `Sparkles` | AI polish |
-| ✨ | `Wand2` | AI actions |
-| 🔄 | `RefreshCw` | Regenerate |
-| ← → | `ChevronLeft` / `ChevronRight` | Navigation |
-| ▲ ▼ | `ChevronUp` / `ChevronDown` | Reorder |
-| + | `Plus` | Add task |
-| ⚙️ | `Settings` | Settings tab |
-| 💤 | `Moon` | Hibernate drawer |
-| ⚠️ | `AlertTriangle` | Urgent zone |
+| Current Emoji | lucide-react Icon              | Usage               |
+| ------------- | ------------------------------ | ------------------- |
+| 📋            | `ClipboardList`                | Task list nav       |
+| 📅            | `Calendar`                     | Weekly nav          |
+| 📊            | `BarChart3`                    | Monthly/Yearly nav  |
+| 📁            | `FolderOpen`                   | Projects nav        |
+| 🔴            | `Circle` (filled)              | Priority indicators |
+| 🤖            | `Sparkles`                     | AI polish           |
+| ✨            | `Wand2`                        | AI actions          |
+| 🔄            | `RefreshCw`                    | Regenerate          |
+| ← →           | `ChevronLeft` / `ChevronRight` | Navigation          |
+| ▲ ▼           | `ChevronUp` / `ChevronDown`    | Reorder             |
+| +             | `Plus`                         | Add task            |
+| ⚙️            | `Settings`                     | Settings tab        |
+| 💤            | `Moon`                         | Hibernate drawer    |
+| ⚠️            | `AlertTriangle`                | Urgent zone         |
 
 **Acceptance:** Zero emoji in the DOM. All icons render as SVG. No visual difference across OS.
 
@@ -60,6 +61,7 @@ This spec defines a phased UI/UX improvement plan for the PWA work journal app. 
 **What:** Add a confirmation step before any task/project deletion.
 
 **Design:**
+
 ```
 ┌─────────────────────────────────────┐
 │  ⚠️  确认删除                         │
@@ -72,12 +74,14 @@ This spec defines a phased UI/UX improvement plan for the PWA work journal app. 
 ```
 
 **Files:**
+
 - `src/DataContext.tsx` — `deleteTask` should accept `{skipConfirm?: boolean}` option
 - `src/TaskCard.tsx` — before calling `deleteTask`, show a `<dialog>` or custom modal
 - `src/TaskEditPanel.tsx` — same for the delete button in the edit panel
 - `src/ProjectsPage.tsx` — same for project deletion
 
 **Implementation approach:** Create a reusable `<ConfirmDialog>` component with:
+
 - `title`, `message`, `confirmLabel`, `danger?: boolean` props
 - `<dialog>` element with `showModal()` API (native, no dependency)
 - Glass morphism styling matching existing design tokens
@@ -95,20 +99,21 @@ This spec defines a phased UI/UX improvement plan for the PWA work journal app. 
 **Design tokens to add in `index.css`:**
 
 ```css
-[data-theme="dark"] {
+[data-theme='dark'] {
   --color-text: #e0e0e0;
   --color-text-secondary: #aaa;
   --color-text-muted: #777;
   --glass-bg-card: rgba(30, 30, 35, 0.65);
   --glass-bg-card-hover: rgba(40, 40, 48, 0.78);
   --glass-bg-input: rgba(40, 40, 48, 0.72);
-  --glass-border: rgba(255,255,255,0.08);
-  --glass-shadow: 1px 3px 12px rgba(0,0,0,0.25);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 1px 3px 12px rgba(0, 0, 0, 0.25);
   /* ... */
 }
 ```
 
 **Background overlay:** Add a `<div class="theme-backdrop">` as the first child of `<body>`, styled:
+
 - Light: `rgba(255,255,255,0.0)` (transparent, wallpaper shows)
 - Dark: `rgba(0,0,0,0.45)` (dim the wallpaper for contrast)
 
@@ -125,6 +130,7 @@ This spec defines a phased UI/UX improvement plan for the PWA work journal app. 
 **The rule:** Every color in a `.module.css` file MUST use `var(--color-*)` or `var(--glass-*)`. No raw hex values except in `index.css` `:root` / `[data-theme]` blocks.
 
 **Audit command:**
+
 ```bash
 rg '#[0-9a-fA-F]{3,6}' src/*.module.css
 ```
@@ -140,6 +146,7 @@ rg '#[0-9a-fA-F]{3,6}' src/*.module.css
 **What:** Extract priority/date/category meta into styled tag chips (like yuji-todo's `<n-tag>`).
 
 **Design:**
+
 ```
 ┌──────────────────────────────────────────────┐
 │  ● 完成项目报告                          ★   │
@@ -149,6 +156,7 @@ rg '#[0-9a-fA-F]{3,6}' src/*.module.css
 ```
 
 **Implementation:**
+
 - Create `src/Tag.tsx` + `src/Tag.module.css`
 - Props: `variant: 'priority' | 'category' | 'date' | 'default'`, `color?: string`, `icon?: ReactNode`
 - Use existing `--fs-tag` font size
@@ -166,6 +174,7 @@ rg '#[0-9a-fA-F]{3,6}' src/*.module.css
 **What:** Replace the static archived section with an animated collapsible toggle.
 
 **Design:**
+
 ```
 已完成 5 ▸           ← click to expand
 ---
@@ -176,6 +185,7 @@ rg '#[0-9a-fA-F]{3,6}' src/*.module.css
 ```
 
 **Implementation:**
+
 - Use CSS `grid-template-rows: 0fr` → `1fr` transition on a wrapper div
 - Or use a lightweight `<CollapseTransition>` component with `max-height` animation
 - The toggle button shows count badge
@@ -192,13 +202,14 @@ rg '#[0-9a-fA-F]{3,6}' src/*.module.css
 
 **Actions per context:**
 
-| Context | Menu Items |
-|---|---|
-| Task card | 编辑 / 复制标题 / 切换状态 / ── / 删除 |
-| Project card | 编辑 / ── / 删除 |
-| Urgent zone | 移到重要 / 移到普通 |
+| Context      | Menu Items                             |
+| ------------ | -------------------------------------- |
+| Task card    | 编辑 / 复制标题 / 切换状态 / ── / 删除 |
+| Project card | 编辑 / ── / 删除                       |
+| Urgent zone  | 移到重要 / 移到普通                    |
 
 **Implementation:**
+
 - Create `src/ContextMenu.tsx` — portal-based, positioned at `{x, y}` from `onContextMenu` event
 - Use existing glass design tokens
 - `onClickOutside` dismisses
@@ -213,11 +224,13 @@ rg '#[0-9a-fA-F]{3,6}' src/*.module.css
 **What:** Replace hardcoded `#4a6cf7` with a user-configurable primary color.
 
 **Settings UI:**
+
 ```
 主题色:  [🔵] [🟢] [🟠] [🟣] [自定义]
 ```
 
 **Implementation:**
+
 - Store `--color-primary` value in `localStorage`
 - On change, set `document.documentElement.style.setProperty('--color-primary', newColor)`
 - Compute hover/active variants with color manipulation (lighten/darken by 8-12%)
@@ -234,6 +247,7 @@ rg '#[0-9a-fA-F]{3,6}' src/*.module.css
 **What:** On viewports ≥ 900px, show a persistent sidebar instead of the bottom nav.
 
 **Layout:**
+
 ```
 ┌──────────┬──────────────────────────────────┐
 │          │  Header (today's date + greeting)  │
@@ -251,11 +265,13 @@ rg '#[0-9a-fA-F]{3,6}' src/*.module.css
 ```
 
 **Breakpoints:**
+
 - `< 768px`: Bottom tab bar (current), single column
 - `768px – 1024px`: Narrow sidebar (icons only, 56px)
 - `≥ 1024px`: Full sidebar (icons + labels, 200-260px, resizable)
 
 **Implementation:**
+
 - Create `src/Sidebar.tsx` + `src/Sidebar.module.css`
 - Use CSS media queries + a React context for sidebar collapse state
 - Sidebar width stored in `localStorage`, draggable resize handle on right edge
@@ -270,17 +286,20 @@ rg '#[0-9a-fA-F]{3,6}' src/*.module.css
 **What:** Make the AddTaskForm's collapsed state smarter — allow quick actions without expanding the full form.
 
 **Design (collapsed state, focused):**
+
 ```
 ┌──────────────────────────────────────────────┐
 │ +  ________________________  [📅] [⏰] [→]   │
 └──────────────────────────────────────────────┘
 ```
+
 - Type title → press Enter → task created with defaults
 - Click 📅 → dropdown: 今天 / 明天 / 下周一 / 选择日期
 - Click ⏰ → dropdown: 今天 16:00 / 明天 9:00 / 选择时间
 - Click → → expands full form with all fields
 
 **Implementation:** Enhance `src/AddTaskForm.tsx`:
+
 - When input is focused, show suffix action buttons
 - Enter key submits with current defaults
 - Date/time pickers use `<input type="date">` or custom lightweight picker

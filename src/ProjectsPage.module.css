@@ -189,7 +189,9 @@
   border-radius: var(--radius-md);
   padding: 14px 16px;
   cursor: pointer;
-  transition: box-shadow 0.15s, background 0.15s;
+  transition:
+    box-shadow 0.15s,
+    background 0.15s;
   gap: 12px;
   box-shadow: var(--glass-shadow);
 }

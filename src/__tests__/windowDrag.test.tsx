@@ -53,7 +53,10 @@ describe('useWindowDrag', () => {
 
     act(() => {
       window.dispatchEvent(
-        new MouseEvent('mousemove', { screenX: 560, screenY: 340 } as MouseEventInit),
+        new MouseEvent('mousemove', {
+          screenX: 560,
+          screenY: 340,
+        } as MouseEventInit),
       );
     });
     await flushRaf();
@@ -75,7 +78,10 @@ describe('useWindowDrag', () => {
     const countAfterUp = posts.length;
     act(() => {
       window.dispatchEvent(
-        new MouseEvent('mousemove', { screenX: 900, screenY: 900 } as MouseEventInit),
+        new MouseEvent('mousemove', {
+          screenX: 900,
+          screenY: 900,
+        } as MouseEventInit),
       );
     });
     await flushRaf();
@@ -94,7 +100,10 @@ describe('useWindowDrag', () => {
 
     act(() => {
       window.dispatchEvent(
-        new MouseEvent('mousemove', { screenX: 560, screenY: 340 } as MouseEventInit),
+        new MouseEvent('mousemove', {
+          screenX: 560,
+          screenY: 340,
+        } as MouseEventInit),
       );
     });
     await flushRaf();
@@ -119,7 +128,10 @@ describe('useWindowDrag', () => {
     });
     act(() => {
       window.dispatchEvent(
-        new MouseEvent('mousemove', { screenX: 560, screenY: 340 } as MouseEventInit),
+        new MouseEvent('mousemove', {
+          screenX: 560,
+          screenY: 340,
+        } as MouseEventInit),
       );
     });
     await flushRaf();

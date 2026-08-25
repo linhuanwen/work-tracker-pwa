@@ -12,7 +12,10 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--glass-border-subtle);
   box-shadow: var(--glass-shadow);
-  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
 }
@@ -198,7 +201,9 @@
   margin-top: 2px;
   min-height: 44px;
   min-width: 44px;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 .statusSelect:focus {
   border-color: var(--color-primary);

@@ -136,12 +136,15 @@ describe('ThemePicker', () => {
 
     fireEvent.click(screen.getByLabelText('橙色'));
 
-    expect(document.documentElement.style.getPropertyValue('--color-primary'))
-      .toBe('#f0a020');
-    expect(document.documentElement.style.getPropertyValue('--color-primary-hover'))
-      .toBe('#f2aa36');
-    expect(document.documentElement.style.getPropertyValue('--color-primary-active'))
-      .toBe('#d38d1c');
+    expect(
+      document.documentElement.style.getPropertyValue('--color-primary'),
+    ).toBe('#f0a020');
+    expect(
+      document.documentElement.style.getPropertyValue('--color-primary-hover'),
+    ).toBe('#f2aa36');
+    expect(
+      document.documentElement.style.getPropertyValue('--color-primary-active'),
+    ).toBe('#d38d1c');
   });
 
   it('updates aria-pressed across all buttons on selection change', () => {
@@ -154,17 +157,33 @@ describe('ThemePicker', () => {
     // Click green
     fireEvent.click(screen.getByLabelText('绿色'));
 
-    expect(screen.getByLabelText('蓝色').getAttribute('aria-pressed')).toBe('false');
-    expect(screen.getByLabelText('绿色').getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getByLabelText('橙色').getAttribute('aria-pressed')).toBe('false');
-    expect(screen.getByLabelText('紫色').getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByLabelText('蓝色').getAttribute('aria-pressed')).toBe(
+      'false',
+    );
+    expect(screen.getByLabelText('绿色').getAttribute('aria-pressed')).toBe(
+      'true',
+    );
+    expect(screen.getByLabelText('橙色').getAttribute('aria-pressed')).toBe(
+      'false',
+    );
+    expect(screen.getByLabelText('紫色').getAttribute('aria-pressed')).toBe(
+      'false',
+    );
 
     // Then click purple
     fireEvent.click(screen.getByLabelText('紫色'));
 
-    expect(screen.getByLabelText('蓝色').getAttribute('aria-pressed')).toBe('false');
-    expect(screen.getByLabelText('绿色').getAttribute('aria-pressed')).toBe('false');
-    expect(screen.getByLabelText('橙色').getAttribute('aria-pressed')).toBe('false');
-    expect(screen.getByLabelText('紫色').getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByLabelText('蓝色').getAttribute('aria-pressed')).toBe(
+      'false',
+    );
+    expect(screen.getByLabelText('绿色').getAttribute('aria-pressed')).toBe(
+      'false',
+    );
+    expect(screen.getByLabelText('橙色').getAttribute('aria-pressed')).toBe(
+      'false',
+    );
+    expect(screen.getByLabelText('紫色').getAttribute('aria-pressed')).toBe(
+      'true',
+    );
   });
 });

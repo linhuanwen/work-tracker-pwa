@@ -39,7 +39,12 @@ export const NAV_ITEMS: NavItem[] = [
   { label: '周报', icon: 'clipboard-list', route: '/weekly' },
   { label: '月报', icon: 'calendar', route: '/summary/monthly' },
   { label: '年报', icon: 'bar-chart-3', route: '/summary/yearly' },
-  { label: '项目管理', icon: 'folder', route: '/projects', matchPrefix: '/project' },
+  {
+    label: '项目管理',
+    icon: 'folder',
+    route: '/projects',
+    matchPrefix: '/project',
+  },
   { label: '设置', icon: 'settings', route: '/settings' },
 ];
 
@@ -98,19 +103,19 @@ export function Sidebar({ currentPath, onNavigate }: SidebarProps) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const isTablet = useMediaQuery('(min-width: 768px)');
 
-  const mode: 'hidden' | 'icons' | 'full' =
-    !isTablet ? 'hidden' : isDesktop ? 'full' : 'icons';
+  const mode: 'hidden' | 'icons' | 'full' = !isTablet
+    ? 'hidden'
+    : isDesktop
+      ? 'full'
+      : 'icons';
 
   const [width, setWidth] = useState<number>(readStoredWidth);
   const [dragging, setDragging] = useState(false);
 
   // ---- Publish effective sidebar width as CSS custom property ----
   useEffect(() => {
-    const effectiveWidth = mode === 'full'
-      ? Math.round(width)
-      : mode === 'icons'
-        ? 56
-        : 0;
+    const effectiveWidth =
+      mode === 'full' ? Math.round(width) : mode === 'icons' ? 56 : 0;
     document.documentElement.style.setProperty(
       '--sidebar-width',
       `${effectiveWidth}px`,

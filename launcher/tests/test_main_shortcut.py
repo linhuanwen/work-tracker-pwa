@@ -4,11 +4,10 @@
 且失败不向外抛出。
 """
 
-import threading
 
 from unittest.mock import MagicMock, patch
 
-import launcher.main as main  # noqa: F401 — ensure module importable
+from launcher import main
 
 
 def test_start_shortcut_creation_runs_in_daemon_thread_with_debug():

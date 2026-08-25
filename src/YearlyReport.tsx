@@ -17,13 +17,20 @@ import styles from './YearlyReport.module.css';
 /** Map a dimension to the corresponding YearEntry summary field */
 function dimToField(dim: string): keyof YearEntry['summary'] {
   switch (dim) {
-    case '日常工作': return 'personnelAllocation';
-    case '项目推进': return 'internalRecruitment';
-    case '奖惩管理': return 'rewardDiscipline';
-    case '绩效管理': return 'performance';
-    case '劳动关系': return 'laborRelations';
-    case '交办事项': return 'leaderAssigned';
-    default: return 'other';
+    case '日常工作':
+      return 'personnelAllocation';
+    case '项目推进':
+      return 'internalRecruitment';
+    case '奖惩管理':
+      return 'rewardDiscipline';
+    case '绩效管理':
+      return 'performance';
+    case '劳动关系':
+      return 'laborRelations';
+    case '交办事项':
+      return 'leaderAssigned';
+    default:
+      return 'other';
   }
 }
 
@@ -57,7 +64,9 @@ export function YearlyReport() {
 
     let text = `全年共 ${dim.taskCount} 项任务`;
     if (dim.quantities.length > 0) {
-      const parts = dim.quantities.map((q) => `${q.label} ${q.value} ${q.unit}`);
+      const parts = dim.quantities.map(
+        (q) => `${q.label} ${q.value} ${q.unit}`,
+      );
       text += `，量化产出：${parts.join('，')}`;
     }
     text += '\n\n任务列表：\n';
@@ -189,7 +198,12 @@ export function YearlyReport() {
       const resp = await fetch('/api/summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'year', key: yearKey, sections, config: aiConfigPayload() }),
+        body: JSON.stringify({
+          type: 'year',
+          key: yearKey,
+          sections,
+          config: aiConfigPayload(),
+        }),
       });
       const result = await resp.json();
       if (result.ok) {
@@ -215,7 +229,11 @@ export function YearlyReport() {
       const resp = await fetch('/api/polish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: combinedText, type: 'year', config: aiConfigPayload() }),
+        body: JSON.stringify({
+          text: combinedText,
+          type: 'year',
+          config: aiConfigPayload(),
+        }),
       });
       const result = await resp.json();
       if (result.ok) {
@@ -262,11 +280,19 @@ export function YearlyReport() {
 
       {/* Year selector */}
       <div className={styles.yearSelector}>
-        <button className={styles.yearBtn} onClick={() => setYear((y) => y - 1)} aria-label="上一年">
+        <button
+          className={styles.yearBtn}
+          onClick={() => setYear((y) => y - 1)}
+          aria-label="上一年"
+        >
           <Icon name="chevron-left" size={18} />
         </button>
         <span className={styles.yearLabel}>{year}年</span>
-        <button className={styles.yearBtn} onClick={() => setYear((y) => y + 1)} aria-label="下一年">
+        <button
+          className={styles.yearBtn}
+          onClick={() => setYear((y) => y + 1)}
+          aria-label="下一年"
+        >
           <Icon name="chevron-right" size={18} />
         </button>
       </div>
@@ -293,7 +319,8 @@ export function YearlyReport() {
           onClick={handleGenerateDoc}
           disabled={generatingDoc}
         >
-          <Icon name="download" size={16} /> {generatingDoc ? '生成中…' : '生成总结文档'}
+          <Icon name="download" size={16} />{' '}
+          {generatingDoc ? '生成中…' : '生成总结文档'}
         </button>
       )}
 
@@ -301,8 +328,13 @@ export function YearlyReport() {
         <div className={styles.sections}>
           {/* AI polish button at top */}
           <div className={styles.aiBtnRow}>
-            <button className={styles.aiBtn} onClick={requestAiPolish} disabled={polishing}>
-              <Icon name="bot" size={14} /> {polishing ? '润色中…' : '请求 AI 润色'}
+            <button
+              className={styles.aiBtn}
+              onClick={requestAiPolish}
+              disabled={polishing}
+            >
+              <Icon name="bot" size={14} />{' '}
+              {polishing ? '润色中…' : '请求 AI 润色'}
             </button>
           </div>
 
@@ -313,7 +345,10 @@ export function YearlyReport() {
             const isEmpty = dim.taskCount === 0;
 
             return (
-              <div key={dim.dimension} className={isEmpty ? styles.dimSectionEmpty : styles.dimSection}>
+              <div
+                key={dim.dimension}
+                className={isEmpty ? styles.dimSectionEmpty : styles.dimSection}
+              >
                 <div className={styles.sectionHeader}>
                   <h3 className={styles.sectionTitle}>
                     {idx + 1}. {dim.dimension}
@@ -321,18 +356,22 @@ export function YearlyReport() {
                 </div>
 
                 {/* Auto-generated preview */}
-                <div className={styles.autoPreview}>
-                  {buildAutoText(dim)}
-                </div>
+                <div className={styles.autoPreview}>{buildAutoText(dim)}</div>
 
                 {/* Manual keypoint textarea */}
-                <div className={styles.keypointLabel}><Icon name="pen-line" size={14} /> 关键业绩提炼：</div>
+                <div className={styles.keypointLabel}>
+                  <Icon name="pen-line" size={14} /> 关键业绩提炼：
+                </div>
                 <textarea
-                  ref={(el) => { keypointRefs.current[dim.dimension] = el; }}
+                  ref={(el) => {
+                    keypointRefs.current[dim.dimension] = el;
+                  }}
                   className={styles.keypointTextarea}
                   placeholder="手动提炼关键业绩…"
                   defaultValue={keypointText}
-                  onBlur={(e) => saveKeypoint(dim.dimension, e.currentTarget.value)}
+                  onBlur={(e) =>
+                    saveKeypoint(dim.dimension, e.currentTarget.value)
+                  }
                   data-testid={`keypoint-${idx}`}
                 />
               </div>
@@ -376,9 +415,7 @@ export function YearlyReport() {
               <h3 className={styles.sectionTitle}>附表二：全年量化产出总表</h3>
             </div>
             {quantityTable.length === 0 ? (
-              <p className={styles.emptyState}>
-                （本年度无量化产出记录）
-              </p>
+              <p className={styles.emptyState}>（本年度无量化产出记录）</p>
             ) : (
               <div className={styles.tableWrapper}>
                 <table className={styles.auxTable}>
@@ -420,9 +457,13 @@ export function YearlyReport() {
           {/* Status indicator */}
           <div className={styles.statusBar}>
             {existingEntry.aiPolished ? (
-              <span className={styles.statusOk}><Icon name="check-circle" size={14} /> 已润色</span>
+              <span className={styles.statusOk}>
+                <Icon name="check-circle" size={14} /> 已润色
+              </span>
             ) : (
-              <span className={styles.statusPending}><Icon name="clock" size={14} /> 待 AI 润色</span>
+              <span className={styles.statusPending}>
+                <Icon name="clock" size={14} /> 待 AI 润色
+              </span>
             )}
           </div>
         </div>

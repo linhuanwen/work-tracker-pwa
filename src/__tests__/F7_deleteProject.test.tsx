@@ -11,18 +11,27 @@ import { render, screen, fireEvent } from '@testing-library/react';
 // ---- Polyfills ----
 beforeAll(() => {
   if (!HTMLDialogElement.prototype.showModal) {
-    HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
+    HTMLDialogElement.prototype.showModal = function () {
+      this.setAttribute('open', '');
+    };
   }
   if (!HTMLDialogElement.prototype.close) {
-    HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
+    HTMLDialogElement.prototype.close = function () {
+      this.removeAttribute('open');
+    };
   }
   if (typeof window !== 'undefined' && !window.matchMedia) {
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       value: vi.fn(() => ({
-        matches: false, media: '', onchange: null,
-        addListener: vi.fn(), removeListener: vi.fn(),
-        addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
+        matches: false,
+        media: '',
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
       })),
     });
   }
@@ -31,32 +40,64 @@ beforeAll(() => {
 // ---- Mock CSS ----
 vi.mock('../ProjectsPage.module.css', () => ({
   default: {
-    container: 'container', header: 'header', backBtn: 'backBtn',
-    title: 'title', addBtn: 'addBtn',
-    form: 'form', formTitle: 'formTitle', field: 'field',
-    label: 'label', input: 'input', select: 'select',
-    dateRow: 'dateRow', textarea: 'textarea',
-    formActions: 'formActions', cancelBtn: 'cancelBtn', submitBtn: 'submitBtn',
-    list: 'list', empty: 'empty', card: 'card', cardBody: 'cardBody',
-    cardTitle: 'cardTitle', cardMeta: 'cardMeta', categoryTag: 'categoryTag',
-    dateTag: 'dateTag', taskCount: 'taskCount',
-    progressRow: 'progressRow', progressBar: 'progressBar',
-    progressFill: 'progressFill', progressText: 'progressText',
-    cardActions: 'cardActions', editBtn: 'editBtn',
-    archiveBtn: 'archiveBtn', deleteBtn: 'deleteBtn',
-    archivedSection: 'archivedSection', archivedTitle: 'archivedTitle',
-    cardArchived: 'cardArchived', archivedBadge: 'archivedBadge',
+    container: 'container',
+    header: 'header',
+    backBtn: 'backBtn',
+    title: 'title',
+    addBtn: 'addBtn',
+    form: 'form',
+    formTitle: 'formTitle',
+    field: 'field',
+    label: 'label',
+    input: 'input',
+    select: 'select',
+    dateRow: 'dateRow',
+    textarea: 'textarea',
+    formActions: 'formActions',
+    cancelBtn: 'cancelBtn',
+    submitBtn: 'submitBtn',
+    list: 'list',
+    empty: 'empty',
+    card: 'card',
+    cardBody: 'cardBody',
+    cardTitle: 'cardTitle',
+    cardMeta: 'cardMeta',
+    categoryTag: 'categoryTag',
+    dateTag: 'dateTag',
+    taskCount: 'taskCount',
+    progressRow: 'progressRow',
+    progressBar: 'progressBar',
+    progressFill: 'progressFill',
+    progressText: 'progressText',
+    cardActions: 'cardActions',
+    editBtn: 'editBtn',
+    archiveBtn: 'archiveBtn',
+    deleteBtn: 'deleteBtn',
+    archivedSection: 'archivedSection',
+    archivedTitle: 'archivedTitle',
+    cardArchived: 'cardArchived',
+    archivedBadge: 'archivedBadge',
   },
 }));
 vi.mock('../ConfirmDialog.module.css', () => ({
   default: {
-    dialog: 'dialog', content: 'content', header: 'header',
-    title: 'title', message: 'message', footer: 'footer',
-    cancelBtn: 'cancelBtn', confirmBtn: 'confirmBtn',
+    dialog: 'dialog',
+    content: 'content',
+    header: 'header',
+    title: 'title',
+    message: 'message',
+    footer: 'footer',
+    cancelBtn: 'cancelBtn',
+    confirmBtn: 'confirmBtn',
   },
 }));
 vi.mock('../ContextMenu.module.css', () => ({
-  default: { menu: 'menu', item: 'item', separator: 'separator', danger: 'danger' },
+  default: {
+    menu: 'menu',
+    item: 'item',
+    separator: 'separator',
+    danger: 'danger',
+  },
 }));
 vi.mock('../Icon', () => ({
   Icon: () => null,
@@ -67,7 +108,8 @@ const mockDispatch = vi.fn();
 vi.mock('../DataContext', () => ({
   useData: () => ({
     data: {
-      version: 1, lastModified: '2026-07-23T00:00:00.000Z',
+      version: 1,
+      lastModified: '2026-07-23T00:00:00.000Z',
       settings: { categories: ['人力资源', '培训', '招聘'] },
       projects: [
         {
@@ -93,33 +135,70 @@ vi.mock('../DataContext', () => ({
       ],
       tasks: [
         {
-          id: 't-p1', projectId: 'p-test-1', title: '子任务1', category: '人力资源',
-          priority: 'normal', status: 'todo', createdDate: '2026-01-01',
-          updatedDate: '2026-01-01', deadline: null, completedDate: null,
-          quantities: [], subtasks: [], notes: '',
-          isLeaderAssigned: false, isCrossYear: false, isBlocked: false,
+          id: 't-p1',
+          projectId: 'p-test-1',
+          title: '子任务1',
+          category: '人力资源',
+          priority: 'normal',
+          status: 'todo',
+          createdDate: '2026-01-01',
+          updatedDate: '2026-01-01',
+          deadline: null,
+          completedDate: null,
+          quantities: [],
+          subtasks: [],
+          notes: '',
+          isLeaderAssigned: false,
+          isCrossYear: false,
+          isBlocked: false,
         },
         {
-          id: 't-p2', projectId: 'p-test-1', title: '子任务2', category: '人力资源',
-          priority: 'normal', status: 'done', createdDate: '2026-01-01',
-          updatedDate: '2026-03-01', deadline: null, completedDate: '2026-03-01',
-          quantities: [], subtasks: [], notes: '',
-          isLeaderAssigned: false, isCrossYear: false, isBlocked: false,
+          id: 't-p2',
+          projectId: 'p-test-1',
+          title: '子任务2',
+          category: '人力资源',
+          priority: 'normal',
+          status: 'done',
+          createdDate: '2026-01-01',
+          updatedDate: '2026-03-01',
+          deadline: null,
+          completedDate: '2026-03-01',
+          quantities: [],
+          subtasks: [],
+          notes: '',
+          isLeaderAssigned: false,
+          isCrossYear: false,
+          isBlocked: false,
         },
         {
-          id: 't-p3', projectId: 'p-test-1', title: '子任务3', category: '人力资源',
-          priority: 'important', status: 'in-progress', createdDate: '2026-02-01',
-          updatedDate: '2026-04-01', deadline: null, completedDate: null,
-          quantities: [], subtasks: [], notes: '',
-          isLeaderAssigned: false, isCrossYear: false, isBlocked: false,
+          id: 't-p3',
+          projectId: 'p-test-1',
+          title: '子任务3',
+          category: '人力资源',
+          priority: 'important',
+          status: 'in-progress',
+          createdDate: '2026-02-01',
+          updatedDate: '2026-04-01',
+          deadline: null,
+          completedDate: null,
+          quantities: [],
+          subtasks: [],
+          notes: '',
+          isLeaderAssigned: false,
+          isCrossYear: false,
+          isBlocked: false,
         },
       ],
       archives: { weeks: {}, months: {}, years: {} },
     },
     dispatch: mockDispatch,
-    openDirectory: vi.fn(), saveData: vi.fn(),
-    loading: false, error: null, hasStoredHandle: true,
-    reopenStored: vi.fn().mockResolvedValue(null), lastFolderInfo: null,
+    openDirectory: vi.fn(),
+    saveData: vi.fn(),
+    loading: false,
+    error: null,
+    hasStoredHandle: true,
+    reopenStored: vi.fn().mockResolvedValue(null),
+    lastFolderInfo: null,
   }),
   DataProvider: ({ children }: any) => children,
   DEFAULT_CATEGORIES: ['人力资源', '培训', '招聘', '其他'],

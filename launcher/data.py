@@ -5,9 +5,10 @@ import json
 import os
 import shutil
 import sys
+from datetime import UTC
 from pathlib import Path
 
-from launcher.constants import BACKUP_COUNT, BACKUP_BASENAME
+from launcher.constants import BACKUP_BASENAME, BACKUP_COUNT
 from launcher.state import get_state
 from launcher.state_persistence import read_state
 
@@ -90,10 +91,10 @@ def get_configured_data_folder(debug: bool = False) -> str | None:
 
 
 def _default_data_dict() -> dict:
-    from datetime import datetime, timezone
+    from datetime import datetime
     return {
         "version": 1,
-        "lastModified": datetime.now(timezone.utc).isoformat(),
+        "lastModified": datetime.now(UTC).isoformat(),
         "settings": {
             "weeklySummaryDay": 5,
             "monthlySummaryDay": 28,

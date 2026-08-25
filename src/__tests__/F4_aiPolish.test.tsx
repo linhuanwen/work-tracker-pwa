@@ -11,13 +11,26 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 // ---- Mock CSS ----
 vi.mock('../WeeklySummary.module.css', () => ({
   default: {
-    container: 'container', heading: 'heading', backBtn: 'backBtn',
-    weekSelector: 'weekSelector', weekBtn: 'weekBtn', weekLabel: 'weekLabel',
-    generateBtn: 'generateBtn', regenerateBtn: 'regenerateBtn', summaryBtn: 'summaryBtn',
-    sections: 'sections', section: 'section', sectionHeader: 'sectionHeader',
-    sectionTitle: 'sectionTitle', aiBtn: 'aiBtn',
-    editable: 'editable', addPlanRow: 'addPlanRow', planInput: 'planInput',
-    statusBar: 'statusBar', statusOk: 'statusOk', statusPending: 'statusPending',
+    container: 'container',
+    heading: 'heading',
+    backBtn: 'backBtn',
+    weekSelector: 'weekSelector',
+    weekBtn: 'weekBtn',
+    weekLabel: 'weekLabel',
+    generateBtn: 'generateBtn',
+    regenerateBtn: 'regenerateBtn',
+    summaryBtn: 'summaryBtn',
+    sections: 'sections',
+    section: 'section',
+    sectionHeader: 'sectionHeader',
+    sectionTitle: 'sectionTitle',
+    aiBtn: 'aiBtn',
+    editable: 'editable',
+    addPlanRow: 'addPlanRow',
+    planInput: 'planInput',
+    statusBar: 'statusBar',
+    statusOk: 'statusOk',
+    statusPending: 'statusPending',
   },
 }));
 
@@ -36,7 +49,11 @@ vi.mock('../aiConfig', () => ({
 // ---- Mock weeklyUtils：固定 weekKey，隔离日期计算 ----
 vi.mock('../weeklyUtils', () => ({
   getWeekKey: () => '2026-W29',
-  getWeekDateRange: () => ({ start: '2026-07-20', end: '2026-07-24', label: '7月20日 - 7月24日' }),
+  getWeekDateRange: () => ({
+    start: '2026-07-20',
+    end: '2026-07-24',
+    label: '7月20日 - 7月24日',
+  }),
   getAdjacentWeek: (k: string) => k,
   getCompletedTasksByCategory: () => [],
   getProjectProgressChanges: () => [],
@@ -49,9 +66,12 @@ const mockDispatch = vi.fn();
 vi.mock('../DataContext', () => ({
   useData: () => ({
     data: {
-      version: 1, lastModified: '2026-07-23T00:00:00.000Z',
+      version: 1,
+      lastModified: '2026-07-23T00:00:00.000Z',
       settings: {
-        weeklySummaryDay: 5, monthlySummaryDay: 28, aiPolishFlag: false,
+        weeklySummaryDay: 5,
+        monthlySummaryDay: 28,
+        aiPolishFlag: false,
         categories: ['人力资源', '培训'],
       },
       projects: [],
@@ -74,10 +94,15 @@ vi.mock('../DataContext', () => ({
       },
     },
     dispatch: mockDispatch,
-    openDirectory: vi.fn(), saveData: vi.fn(),
-    loading: false, error: null,
-    hasStoredHandle: false, reopenStored: vi.fn(), lastFolderInfo: null,
-    backendMode: false, backendFolderPath: null,
+    openDirectory: vi.fn(),
+    saveData: vi.fn(),
+    loading: false,
+    error: null,
+    hasStoredHandle: false,
+    reopenStored: vi.fn(),
+    lastFolderInfo: null,
+    backendMode: false,
+    backendFolderPath: null,
   }),
   DataProvider: ({ children }: any) => children,
 }));
@@ -158,7 +183,8 @@ describe('F4 — AI 润色前端联调 (/api/polish)', () => {
       vi.fn(() =>
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ ok: false, error: 'AI_API_KEY 未配置' }),
+          json: () =>
+            Promise.resolve({ ok: false, error: 'AI_API_KEY 未配置' }),
         }),
       ),
     );
@@ -182,7 +208,9 @@ describe('F4 — AI 润色前端联调 (/api/polish)', () => {
     fireEvent.click(screen.getAllByText('请求润色')[0]);
 
     await waitFor(() => {
-      expect(mockShowToast).toHaveBeenCalledWith('润色请求失败，请确认桌面应用已启动');
+      expect(mockShowToast).toHaveBeenCalledWith(
+        '润色请求失败，请确认桌面应用已启动',
+      );
     });
     expect(mockDispatch).not.toHaveBeenCalled();
   });

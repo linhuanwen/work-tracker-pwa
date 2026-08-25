@@ -49,13 +49,8 @@ function AppShell() {
 
   // Frameless desktop window bridge — in a plain browser every control
   // degrades gracefully (isDesktopWindow === false).
-  const {
-    isDesktopWindow,
-    maximized,
-    minimize,
-    toggleMaximize,
-    close,
-  } = useWindowControls();
+  const { isDesktopWindow, maximized, minimize, toggleMaximize, close } =
+    useWindowControls();
 
   // Title-bar drag — 已彻底关闭：窗口固定为右侧侧边栏，不应被拖动移动。
   // 后端 move_resize_window 也会强制右缘贴齐，前端不再发起移动事件。
@@ -88,7 +83,8 @@ function AppShell() {
   }, [hasStoredHandle, data, reopenStored]);
 
   // Show initial picker when no stored handle, or when stored handle reopen failed
-  const showInitialPicker = !isReady && !autoLoading && (!hasStoredHandle || reopenFailed);
+  const showInitialPicker =
+    !isReady && !autoLoading && (!hasStoredHandle || reopenFailed);
 
   // Split tasks into active and hibernating
   const { active: activeTasks, hibernating: hibernatingTasks } = data
@@ -104,7 +100,7 @@ function AppShell() {
 
     if (patch.priority === 'urgent' && data) {
       const updatedTasks: Task[] = data.tasks.map((t) =>
-        t.id === taskId ? { ...t, ...patch } as Task : t,
+        t.id === taskId ? ({ ...t, ...patch } as Task) : t,
       );
       const result = limitUrgentTasks(updatedTasks);
       if (result.demotedIds.length > 0) {
@@ -239,9 +235,11 @@ function AppShell() {
               onClick={openDirectory}
               disabled={loading}
             >
-              {loading ? '加载中…' : lastFolderInfo
-                ? `重新打开「${lastFolderInfo.folderName}」`
-                : '打开数据文件夹'}
+              {loading
+                ? '加载中…'
+                : lastFolderInfo
+                  ? `重新打开「${lastFolderInfo.folderName}」`
+                  : '打开数据文件夹'}
             </button>
             <span className={styles.folderPath}>
               {lastFolderInfo
@@ -280,9 +278,13 @@ function AppShell() {
                 className={styles.changeFolderBtn}
                 onClick={openDirectory}
                 disabled={loading}
-                title={backendMode ? '临时切换到其他文件夹（重启后仍使用默认文件夹）' : '更换文件夹'}
+                title={
+                  backendMode
+                    ? '临时切换到其他文件夹（重启后仍使用默认文件夹）'
+                    : '更换文件夹'
+                }
               >
-                {loading ? '…' : (backendMode ? '临时切换' : '更换文件夹')}
+                {loading ? '…' : backendMode ? '临时切换' : '更换文件夹'}
               </button>
             </div>
           </>
@@ -302,11 +304,12 @@ function AppShell() {
   }
 
   // ---- BottomNav page derivation ----
-  const bottomNavPage = (
-    path === '/settings' ? 'settings' as const :
-    path === '/' ? 'tasks' as const :
-    'reports' as const
-  );
+  const bottomNavPage =
+    path === '/settings'
+      ? ('settings' as const)
+      : path === '/'
+        ? ('tasks' as const)
+        : ('reports' as const);
 
   const handleBottomNav = (page: 'tasks' | 'reports' | 'settings') => {
     if (page === 'tasks') navigate('/');
@@ -329,7 +332,9 @@ function AppShell() {
       />
 
       {/* Frameless window resize grips (desktop window only) */}
-      <WindowResizeHandles disabled={!isDesktopWindow || maximized || collapsed} />
+      <WindowResizeHandles
+        disabled={!isDesktopWindow || maximized || collapsed}
+      />
 
       {/* Sidebar — handles its own visibility based on screen width */}
       {!collapsed && <Sidebar currentPath={path} onNavigate={navigate} />}
@@ -341,9 +346,7 @@ function AppShell() {
         className={styles.scroll}
         style={collapsed ? { display: 'none' } : undefined}
       >
-        <div className={styles.app}>
-          {pageContent}
-        </div>
+        <div className={styles.app}>{pageContent}</div>
       </div>
 
       {/* Bottom navigation — mobile only */}

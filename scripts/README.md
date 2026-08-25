@@ -47,11 +47,11 @@ AI_MODEL=qwen-turbo
 
 ### 配置项说明
 
-| 变量 | 必填 | 说明 |
-|------|------|------|
-| `AI_API_KEY` | ✅ | API 密钥，从 DeepSeek 开放平台或阿里云 DashScope 获取 |
-| `AI_ENDPOINT` | ❌ | API 基础 URL，默认为 DeepSeek |
-| `AI_MODEL` | ❌ | 模型名称，默认为 `deepseek-chat` |
+| 变量          | 必填 | 说明                                                  |
+| ------------- | ---- | ----------------------------------------------------- |
+| `AI_API_KEY`  | ✅   | API 密钥，从 DeepSeek 开放平台或阿里云 DashScope 获取 |
+| `AI_ENDPOINT` | ❌   | API 基础 URL，默认为 DeepSeek                         |
+| `AI_MODEL`    | ❌   | 模型名称，默认为 `deepseek-chat`                      |
 
 ## 运行方式
 

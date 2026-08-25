@@ -7,6 +7,7 @@ Output: build/工作清单.ico
 """
 
 from pathlib import Path
+
 from PIL import Image, ImageDraw
 
 SIZE = 256

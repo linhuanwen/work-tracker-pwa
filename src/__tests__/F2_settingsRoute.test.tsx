@@ -10,10 +10,14 @@ import { render, screen } from '@testing-library/react';
 // ---- Polyfills ----
 beforeAll(() => {
   if (!HTMLDialogElement.prototype.showModal) {
-    HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
+    HTMLDialogElement.prototype.showModal = function () {
+      this.setAttribute('open', '');
+    };
   }
   if (!HTMLDialogElement.prototype.close) {
-    HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
+    HTMLDialogElement.prototype.close = function () {
+      this.removeAttribute('open');
+    };
   }
   // jsdom doesn't implement matchMedia
   if (typeof window !== 'undefined' && !window.matchMedia) {
@@ -36,33 +40,75 @@ beforeAll(() => {
 // ---- Mock CSS modules ----
 vi.mock('../Settings.module.css', () => ({
   default: {
-    container: 'container', heading: 'heading',
-    backBtn: 'backBtn', sections: 'sections', section: 'section',
-    sectionTitle: 'sectionTitle', input: 'input', select: 'select',
-    addBtn: 'addBtn', removeBtn: 'removeBtn', saveBtn: 'saveBtn',
-    categoryList: 'categoryList', categoryItem: 'categoryItem',
-    label: 'label', hint: 'hint', row: 'row',
+    container: 'container',
+    heading: 'heading',
+    backBtn: 'backBtn',
+    sections: 'sections',
+    section: 'section',
+    sectionTitle: 'sectionTitle',
+    input: 'input',
+    select: 'select',
+    addBtn: 'addBtn',
+    removeBtn: 'removeBtn',
+    saveBtn: 'saveBtn',
+    categoryList: 'categoryList',
+    categoryItem: 'categoryItem',
+    label: 'label',
+    hint: 'hint',
+    row: 'row',
     themeSection: 'themeSection',
   },
 }));
 vi.mock('../App.module.css', () => ({
   default: {
-    app: 'app', header: 'header', title: 'title', subtitle: 'subtitle',
-    nav: 'nav', navBtn: 'navBtn', folderBar: 'folderBar',
-    folderPath: 'folderPath', folderBtn: 'folderBtn',
-    error: 'error', fab: 'fab', bottomFolderBar: 'bottomFolderBar',
-    bottomFolderLabel: 'bottomFolderLabel', changeFolderBtn: 'changeFolderBtn',
-    dragBar: 'dragBar', dragHandle: 'dragHandle',
-    resizeEdge: 'resizeEdge', resizeN: 'resizeN', resizeS: 'resizeS',
-    resizeE: 'resizeE', resizeW: 'resizeW', resizeNE: 'resizeNE',
-    resizeNW: 'resizeNW', resizeSE: 'resizeSE', resizeSW: 'resizeSW',
+    app: 'app',
+    header: 'header',
+    title: 'title',
+    subtitle: 'subtitle',
+    nav: 'nav',
+    navBtn: 'navBtn',
+    folderBar: 'folderBar',
+    folderPath: 'folderPath',
+    folderBtn: 'folderBtn',
+    error: 'error',
+    fab: 'fab',
+    bottomFolderBar: 'bottomFolderBar',
+    bottomFolderLabel: 'bottomFolderLabel',
+    changeFolderBtn: 'changeFolderBtn',
+    dragBar: 'dragBar',
+    dragHandle: 'dragHandle',
+    resizeEdge: 'resizeEdge',
+    resizeN: 'resizeN',
+    resizeS: 'resizeS',
+    resizeE: 'resizeE',
+    resizeW: 'resizeW',
+    resizeNE: 'resizeNE',
+    resizeNW: 'resizeNW',
+    resizeSE: 'resizeSE',
+    resizeSW: 'resizeSW',
   },
 }));
 vi.mock('../Sidebar.module.css', () => ({
-  default: { sidebar: 'sidebar', nav: 'nav', navItem: 'navItem', navItemActive: 'navItemActive', icon: 'icon', label: 'label', dragHandle: 'dragHandle', dragging: 'dragging' },
+  default: {
+    sidebar: 'sidebar',
+    nav: 'nav',
+    navItem: 'navItem',
+    navItemActive: 'navItemActive',
+    icon: 'icon',
+    label: 'label',
+    dragHandle: 'dragHandle',
+    dragging: 'dragging',
+  },
 }));
 vi.mock('../BottomNav.module.css', () => ({
-  default: { nav: 'nav', tab: 'tab', active: 'active', icon: 'icon', label: 'label', hibernateBtn: 'hibernateBtn' },
+  default: {
+    nav: 'nav',
+    tab: 'tab',
+    active: 'active',
+    icon: 'icon',
+    label: 'label',
+    hibernateBtn: 'hibernateBtn',
+  },
 }));
 vi.mock('../HibernateDrawer.module.css', () => ({ default: {} }));
 vi.mock('../Toast.module.css', () => ({ default: {} }));
@@ -73,11 +119,31 @@ vi.mock('../Fab.module.css', () => ({ default: {} }));
 vi.mock('../AddTaskForm.module.css', () => ({ default: {} }));
 vi.mock('../TaskList.module.css', () => ({ default: {} }));
 vi.mock('../TaskCard.module.css', () => ({
-  default: { card: 'card', cardHeader: 'cardHeader', body: 'body', title: 'title', meta: 'meta', dateFooter: 'dateFooter', statusSelect: 'statusSelect', expandArrow: 'expandArrow', deleteBtn: 'deleteBtn', editPanel: 'editPanel' },
+  default: {
+    card: 'card',
+    cardHeader: 'cardHeader',
+    body: 'body',
+    title: 'title',
+    meta: 'meta',
+    dateFooter: 'dateFooter',
+    statusSelect: 'statusSelect',
+    expandArrow: 'expandArrow',
+    deleteBtn: 'deleteBtn',
+    editPanel: 'editPanel',
+  },
 }));
 vi.mock('../Tag.module.css', () => ({ default: {} }));
 vi.mock('../ConfirmDialog.module.css', () => ({
-  default: { dialog: 'dialog', content: 'content', header: 'header', title: 'title', message: 'message', footer: 'footer', cancelBtn: 'cancelBtn', confirmBtn: 'confirmBtn' },
+  default: {
+    dialog: 'dialog',
+    content: 'content',
+    header: 'header',
+    title: 'title',
+    message: 'message',
+    footer: 'footer',
+    cancelBtn: 'cancelBtn',
+    confirmBtn: 'confirmBtn',
+  },
 }));
 vi.mock('../ContextMenu.module.css', () => ({ default: {} }));
 
@@ -93,8 +159,14 @@ vi.mock('../useHashRoute', () => ({
 }));
 vi.mock('../useWindowResize', () => ({
   useWindowResize: () => ({
-    onN: vi.fn(), onS: vi.fn(), onE: vi.fn(), onW: vi.fn(),
-    onNE: vi.fn(), onNW: vi.fn(), onSE: vi.fn(), onSW: vi.fn(),
+    onN: vi.fn(),
+    onS: vi.fn(),
+    onE: vi.fn(),
+    onW: vi.fn(),
+    onNE: vi.fn(),
+    onNW: vi.fn(),
+    onSE: vi.fn(),
+    onSW: vi.fn(),
   }),
 }));
 

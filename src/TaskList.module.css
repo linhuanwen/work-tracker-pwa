@@ -120,7 +120,9 @@
   border-radius: var(--radius-sm);
   min-height: 44px;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 .archiveToggle:active {
   background: var(--glass-bg-subtle);

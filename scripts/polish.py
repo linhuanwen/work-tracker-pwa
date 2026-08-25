@@ -17,7 +17,7 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -332,7 +332,7 @@ def main() -> None:
             prompt = build_polish_prompt(item["summary"])
             polished = call_ai_api(prompt, config)
             apply_polish(data, item, polished)
-            print(f"  ✅ 润色完成")
+            print("  ✅ 润色完成")
             print(f"  预览: {_truncate(polished, 120)}")
             success_count += 1
         except Exception as e:
@@ -346,7 +346,7 @@ def main() -> None:
         print(f"💾 已保存到 {data_path}")
         print(f"   成功: {success_count} 条  |  失败: {fail_count} 条")
     else:
-        print(f"\n❌ 所有条目润色失败，原始数据未被修改。")
+        print("\n❌ 所有条目润色失败，原始数据未被修改。")
 
 
 if __name__ == "__main__":

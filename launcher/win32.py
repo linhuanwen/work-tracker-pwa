@@ -10,19 +10,19 @@ import sys
 import time
 
 from launcher.constants import (
-    WINDOW_TITLE,
-    WINDOW_MIN_WIDTH,
-    WINDOW_MIN_HEIGHT,
-    SWP_NOZORDER,
+    HTCAPTION,
+    SPI_GETWORKAREA,
+    SW_HIDE,
+    SW_MAXIMIZE,
+    SW_MINIMIZE,
+    SW_RESTORE,
     SWP_NOACTIVATE,
     SWP_NOMOVE,
-    SW_HIDE,
-    SW_MINIMIZE,
-    SW_MAXIMIZE,
-    SW_RESTORE,
-    SPI_GETWORKAREA,
+    SWP_NOZORDER,
+    WINDOW_MIN_HEIGHT,
+    WINDOW_MIN_WIDTH,
+    WINDOW_TITLE,
     WM_NCLBUTTONDOWN,
-    HTCAPTION,
 )
 from launcher.state import get_state
 
@@ -287,8 +287,7 @@ def move_resize_window(left: int, top: int, width: int, height: int) -> bool:
     wa = _get_work_area(hwnd)
     if wa:
         max_w = max(0, wa.right - wa.left)
-        if width > max_w:
-            width = max_w
+        width = min(width, max_w)
         # 固定右缘：右缘 = 工作区右缘；left 由 width 推导。
         left = wa.right - width
     return user32.SetWindowPos(

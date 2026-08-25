@@ -1,16 +1,12 @@
 from launcher.state import get_state
 from launcher.win32 import (
-    resize_window,
-    move_resize_window,
-    start_drag_window,
-    minimize_window,
-    toggle_maximize_window,
-    is_window_maximized,
-    get_min_window_size,
     dock_right,
-    hide_window,
-    show_window,
+    get_min_window_size,
     get_window_rect,
+    minimize_window,
+    move_resize_window,
+    resize_window,
+    toggle_maximize_window,
 )
 
 
@@ -56,8 +52,8 @@ def test_get_window_rect(mock_user32):
 
 def test_find_and_store_hwnd_docks_right_immediately(mock_user32):
     """启动时拿到 HWND 后应立刻停靠，避免依赖前端 /api/window 探针时机。"""
-    from launcher.win32 import find_and_store_hwnd
     from launcher.state import get_state
+    from launcher.win32 import find_and_store_hwnd
 
     # FindWindowW 命中即可（mock_user32 默认返回 12345）。
     find_and_store_hwnd()
@@ -69,7 +65,7 @@ def test_find_and_store_hwnd_docks_right_immediately(mock_user32):
 def test_move_resize_window_keeps_right_edge_on_any_workarea(monkeypatch, mock_user32):
     """验证不同分辨率/工作区下，move_resize_window 都会让右缘贴齐 workarea.right。"""
     from launcher import win32
-    from launcher.win32 import move_resize_window, RECT
+    from launcher.win32 import RECT
 
     get_state().window_hwnd = 12345
 
@@ -100,7 +96,7 @@ def test_move_resize_window_keeps_right_edge_on_any_workarea(monkeypatch, mock_u
 def test_move_resize_window_clamps_width_to_workarea_width(monkeypatch, mock_user32):
     """窗口宽度超过工作区时，自动收窄到工作区宽度并贴左缘。"""
     from launcher import win32
-    from launcher.win32 import move_resize_window, RECT
+    from launcher.win32 import RECT
 
     get_state().window_hwnd = 12345
     wa = RECT()

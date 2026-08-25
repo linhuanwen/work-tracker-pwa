@@ -13,7 +13,9 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-export async function storeHandle(handle: FileSystemDirectoryHandle): Promise<void> {
+export async function storeHandle(
+  handle: FileSystemDirectoryHandle,
+): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');

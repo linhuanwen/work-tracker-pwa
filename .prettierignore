@@ -1,0 +1,6 @@
+dist/
+build/
+release/
+node_modules/
+共享/
+*.ico

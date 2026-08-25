@@ -55,7 +55,9 @@ export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
   const [priority, setPriority] = useState<Priority>('normal');
   const [dueDate, setDueDate] = useState<string | null>(null);
   const [reminderTime, setReminderTime] = useState<string | null>(null);
-  const [openDropdown, setOpenDropdown] = useState<'dueDate' | 'reminder' | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<
+    'dueDate' | 'reminder' | null
+  >(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDateTimePicker, setShowDateTimePicker] = useState(false);
   /** 空间不足时让下拉/原生选择器向上弹出，避免被底部导航遮挡。 */
@@ -105,7 +107,10 @@ export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
   useEffect(() => {
     if (!openDropdown) return;
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setOpenDropdown(null);
       }
     };
@@ -117,7 +122,10 @@ export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
   useEffect(() => {
     if (!active) return;
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         if (!title.trim() && !dueDate && !reminderTime && !openDropdown) {
           setActive(false);
         }
@@ -153,7 +161,16 @@ export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
     setShowDatePicker(false);
     setShowDateTimePicker(false);
     onTaskAdded?.();
-  }, [title, category, priority, dueDate, reminderTime, categories, dispatch, onTaskAdded]);
+  }, [
+    title,
+    category,
+    priority,
+    dueDate,
+    reminderTime,
+    categories,
+    dispatch,
+    onTaskAdded,
+  ]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -231,7 +248,9 @@ export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
           if (e.key === 'Enter' || e.key === ' ') setActive(true);
         }}
       >
-        <span className={styles.collapsedIcon}><Icon name="plus" size={20} /></span>
+        <span className={styles.collapsedIcon}>
+          <Icon name="plus" size={20} />
+        </span>
         <span className={styles.collapsedText}>添加新任务</span>
       </div>
     );
@@ -242,7 +261,10 @@ export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
   // ============================================================
   if (!expanded && active) {
     return (
-      <div className={`${styles.activeCollapsed}${openUp ? ' ' + styles.openUp : ''}`} ref={containerRef}>
+      <div
+        className={`${styles.activeCollapsed}${openUp ? ' ' + styles.openUp : ''}`}
+        ref={containerRef}
+      >
         <div className={styles.inputWrapper}>
           <input
             ref={activeInputRef}
@@ -333,7 +355,9 @@ export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
                 type="button"
                 className={styles.dropdownItem}
                 role="menuitem"
-                onClick={() => handleReminderSelect(`${getTomorrowStr()}T09:00`)}
+                onClick={() =>
+                  handleReminderSelect(`${getTomorrowStr()}T09:00`)
+                }
               >
                 明天9:00
               </button>

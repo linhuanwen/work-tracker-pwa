@@ -63,7 +63,13 @@ describe('ContextMenu — positioning', () => {
   it('renders nothing when open=false', () => {
     const items = makeItems();
     render(
-      <ContextMenu items={items} x={200} y={150} open={false} onClose={vi.fn()} />,
+      <ContextMenu
+        items={items}
+        x={200}
+        y={150}
+        open={false}
+        onClose={vi.fn()}
+      />,
     );
 
     // No menu should be in the DOM
@@ -73,7 +79,13 @@ describe('ContextMenu — positioning', () => {
   it('renders menu via portal at (x, y) when open=true', () => {
     const items = makeItems();
     render(
-      <ContextMenu items={items} x={200} y={150} open={true} onClose={vi.fn()} />,
+      <ContextMenu
+        items={items}
+        x={200}
+        y={150}
+        open={true}
+        onClose={vi.fn()}
+      />,
     );
 
     const menu = screen.getByRole('menu');
@@ -87,7 +99,13 @@ describe('ContextMenu — positioning', () => {
   it('renders menu as a direct child of document.body (portal)', () => {
     const items = makeItems();
     render(
-      <ContextMenu items={items} x={100} y={50} open={true} onClose={vi.fn()} />,
+      <ContextMenu
+        items={items}
+        x={100}
+        y={50}
+        open={true}
+        onClose={vi.fn()}
+      />,
     );
 
     const menu = screen.getByRole('menu');
@@ -188,9 +206,7 @@ describe('ContextMenu — item click callbacks', () => {
   });
 
   it('does not crash when clicking an item without onClick', () => {
-    const items: ContextMenuItem[] = [
-      { id: 'noop', label: '无操作' },
-    ];
+    const items: ContextMenuItem[] = [{ id: 'noop', label: '无操作' }];
 
     render(
       <ContextMenu items={items} x={0} y={0} open={true} onClose={vi.fn()} />,

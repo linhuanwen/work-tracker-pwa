@@ -1,6 +1,5 @@
-import json
 
-from launcher.state_persistence import read_state, write_state, get_state_path
+from launcher.state_persistence import read_state, write_state
 
 
 def test_read_state_missing_file_returns_empty_dict(tmp_path, monkeypatch):

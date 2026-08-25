@@ -110,7 +110,12 @@ export function useWindowDrag(options?: UseWindowDragOptions) {
         rafRef.current = null;
       }
       if (pendingRef.current) {
-        sendMove(pendingRef.current.x, pendingRef.current.y, state.width, state.height);
+        sendMove(
+          pendingRef.current.x,
+          pendingRef.current.y,
+          state.width,
+          state.height,
+        );
         pendingRef.current = null;
       }
     };

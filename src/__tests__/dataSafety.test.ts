@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { backupRotationSteps, BACKUP_COUNT, BACKUP_BASENAME, computeNextRevision } from '../useFileSystem';
+import {
+  backupRotationSteps,
+  BACKUP_COUNT,
+  BACKUP_BASENAME,
+  computeNextRevision,
+} from '../useFileSystem';
 
 /**
  * 自动快照轮转逻辑（纯函数）测试。
@@ -31,7 +36,10 @@ describe('backupRotationSteps — 自动快照轮转', () => {
       expect(steps[i]).toEqual({ from, to });
     }
 
-    expect(steps[BACKUP_COUNT - 1]).toEqual({ from: null, to: BACKUP_BASENAME });
+    expect(steps[BACKUP_COUNT - 1]).toEqual({
+      from: null,
+      to: BACKUP_BASENAME,
+    });
   });
 
   it('count 参数可自定义轮转深度', () => {

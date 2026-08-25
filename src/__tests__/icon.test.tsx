@@ -45,7 +45,9 @@ describe('Icon component', () => {
   // ----------------------------------------------------------------
 
   it('applies a custom className to the SVG', () => {
-    const { container } = render(<Icon name="arrow-left" className="my-icon" />);
+    const { container } = render(
+      <Icon name="arrow-left" className="my-icon" />,
+    );
     const svg = container.querySelector('svg');
     expect(svg!.classList.contains('my-icon')).toBe(true);
   });
@@ -86,7 +88,9 @@ describe('Icon component', () => {
   });
 
   it('renders the status circle icon (used for urgent indicator)', () => {
-    const { container } = render(<Icon name="circle" size={12} color="#ef4444" />);
+    const { container } = render(
+      <Icon name="circle" size={12} color="#ef4444" />,
+    );
     const svg = container.querySelector('svg');
     expect(svg).not.toBeNull();
   });

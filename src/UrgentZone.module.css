@@ -80,7 +80,10 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--glass-border-subtle);
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s;
 }
 
 .urgentCard:active {
@@ -176,7 +179,9 @@
   align-items: center;
   justify-content: center;
   line-height: 1;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
 }
@@ -216,7 +221,9 @@
   align-items: center;
   justify-content: center;
   line-height: 1;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
 }

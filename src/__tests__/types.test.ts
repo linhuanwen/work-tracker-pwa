@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import type { DataJson, Task, Project, Settings, Archive } from '../types';
-import { createDefaultDataJson, validateDataJson, migrateDataJson, parseDataJson, DATA_VERSION } from '../types';
+import {
+  createDefaultDataJson,
+  validateDataJson,
+  migrateDataJson,
+  parseDataJson,
+  DATA_VERSION,
+} from '../types';
 
 /**
  * Seam 1: data.json TypeScript types
@@ -230,11 +236,15 @@ describe('parseDataJson — 安全解析', () => {
 
   it('字段缺失抛错并给出原因', () => {
     const { tasks: _omit, ...rest } = VALID_DATA_JSON;
-    expect(() => parseDataJson(JSON.stringify(rest))).toThrow(/内容不完整或已损坏/);
+    expect(() => parseDataJson(JSON.stringify(rest))).toThrow(
+      /内容不完整或已损坏/,
+    );
   });
 
   it('字段类型错误（如 version 为字符串）抛错', () => {
     const bad = { ...VALID_DATA_JSON, version: '1' };
-    expect(() => parseDataJson(JSON.stringify(bad))).toThrow(/version 字段类型错误/);
+    expect(() => parseDataJson(JSON.stringify(bad))).toThrow(
+      /version 字段类型错误/,
+    );
   });
 });

@@ -4,8 +4,6 @@
 后台 HTTP 服务器 + 无边框透明 WebView2 窗口 + 系统托盘。
 """
 
-import os
-import sys
 from pathlib import Path
 
 # 项目根目录（launcher 包的上级）
