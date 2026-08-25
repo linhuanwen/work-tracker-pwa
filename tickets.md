@@ -73,3 +73,6 @@ Spec: [docs/DESKTOP-SHORTCUT-SPEC.md](docs/DESKTOP-SHORTCUT-SPEC.md)
 | ------ | --------------------------------------------------------------- | ------------------------------------- | --------- |
 | C1     | [#18](https://github.com/linhuanwen/work-tracker-pwa/issues/18) | 发布流程脚本化（一条命令出包 + 文档） | ✅ 已实现 |
 | C2     | [#19](https://github.com/linhuanwen/work-tracker-pwa/issues/19) | 代码质量门禁与本地检查脚本            | ✅ 已实现 |
+
+| C3 | [#20](https://github.com/linhuanwen/work-tracker-pwa/issues/20) | 边界测试补强（数据迁移/快捷方式） | ✅ 已实现 |
+| C4 | [#21](https://github.com/linhuanwen/work-tracker-pwa/issues/21) | 子任务行内展示截止/优先级标签 | ✅ 已实现 |

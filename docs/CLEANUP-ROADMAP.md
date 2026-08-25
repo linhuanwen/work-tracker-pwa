@@ -27,6 +27,15 @@
 - [x] 引入 Ruff，Python 静态检查通过
 - [x] 新增 `python scripts/check_all.py` 统一质量门禁
 
+## 已完成（本阶段）
+
+- [x] P0 提交整理：当前工作区已整理为多个干净提交
+- [x] P1 前端 ESLint + Prettier 接入
+- [x] P1 Python Ruff 接入
+- [x] P1 本地质量门禁 check_all.py
+- [x] P2 测试补强：数据迁移合并冲突、快捷方式转义等边界用例
+- [x] P2 子任务行内展示截止/优先级标签
+
 ## 后续优化候选
 
 | 优先级 | 项目               | 说明                                                                                                |
@@ -45,3 +54,5 @@
 | ----------------------------- | --------------------------------------------------------------- | --------- |
 | C1 发布流程脚本化             | [#18](https://github.com/linhuanwen/work-tracker-pwa/issues/18) | ✅ 已实现 |
 | C2 代码质量门禁与本地检查脚本 | [#19](https://github.com/linhuanwen/work-tracker-pwa/issues/19) | ✅ 已实现 |
+| C3 边界测试补强               | [#20](https://github.com/linhuanwen/work-tracker-pwa/issues/20) | ✅ 已实现 |
+| C4 子任务行内元信息           | [#21](https://github.com/linhuanwen/work-tracker-pwa/issues/21) | ✅ 已实现 |
