@@ -41,6 +41,9 @@ vi.mock('../SubtaskEditor.module.css', () => ({
     quantityNumber: 'quantityNumber',
     quantityUnit: 'quantityUnit',
     addQuantityBtn: 'addQuantityBtn',
+    subtaskDeadline: 'subtaskDeadline',
+    subtaskPriority: 'subtaskPriority',
+    subtaskPriorityUrgent: 'subtaskPriorityUrgent',
   },
 }));
 
@@ -207,5 +210,39 @@ describe('T1 — 子任务详情编辑（与父任务字段对齐）', () => {
     });
     fireEvent.click(screen.getByText('分类子任务'));
     expect(screen.getByLabelText('分类')).toBeDefined();
+  });
+});
+
+describe('T1 — 子任务行内元信息（C4）', () => {
+  it('有截止日期时显示日期标签', () => {
+    renderEditor({
+      subtasks: [
+        { id: 's1', title: '带截止', status: 'todo', deadline: '2026-09-30' },
+      ],
+    });
+    expect(screen.getByText('9月30日')).toBeDefined();
+  });
+
+  it('优先级为紧急时显示紧急标签', () => {
+    renderEditor({
+      subtasks: [
+        { id: 's1', title: '紧急子任务', status: 'todo', priority: 'urgent' },
+      ],
+    });
+    expect(screen.getByText('紧急')).toBeDefined();
+  });
+
+  it('普通优先级且无截止时不额外显示标签', () => {
+    const { container } = render(
+      <SubtaskEditor
+        subtasks={[{ id: 's1', title: '普通', status: 'todo' }]}
+        onAdd={vi.fn()}
+        onToggle={vi.fn()}
+        onDelete={vi.fn()}
+        onUpdate={vi.fn()}
+      />,
+    );
+    expect(container.querySelector('.subtaskDeadline')).toBeNull();
+    expect(container.querySelector('.subtaskPriority')).toBeNull();
   });
 });

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { SubTask, Priority, Quantity } from './types';
 import { Icon } from './Icon';
+import { formatDate } from './taskUtils';
 import styles from './SubtaskEditor.module.css';
 
 const PRIORITIES: { value: Priority; label: string }[] = [
@@ -132,6 +133,19 @@ export function SubtaskEditor({
                   >
                     {sub.title}
                   </span>
+                  {sub.deadline && (
+                    <span className={styles.subtaskDeadline}>
+                      {formatDate(sub.deadline)}
+                    </span>
+                  )}
+                  {priority !== 'normal' && (
+                    <span
+                      className={`${styles.subtaskPriority} ${priority === 'urgent' ? styles.subtaskPriorityUrgent : ''}`}
+                    >
+                      {PRIORITIES.find((p) => p.value === priority)?.label ??
+                        '重要'}
+                    </span>
+                  )}
                   <button
                     type="button"
                     className={styles.expandBtn}

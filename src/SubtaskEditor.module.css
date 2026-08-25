@@ -261,3 +261,28 @@
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
+
+/* ---- 子任务行内元信息 ---- */
+.subtaskDeadline,
+.subtaskPriority {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-tag);
+  line-height: 1.4;
+}
+
+.subtaskDeadline {
+  background: var(--glass-bg-blue);
+  color: var(--color-primary);
+}
+
+.subtaskPriority {
+  background: var(--glass-bg-warm);
+  color: var(--color-warning-dark);
+}
+
+.subtaskPriorityUrgent {
+  background: var(--glass-bg-red);
+  color: var(--color-danger-dark);
+}
