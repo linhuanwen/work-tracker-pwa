@@ -125,7 +125,8 @@ export function mergeForImport(
 
   // ---- 任务 ----
   const tasksByLocalId = new Map(local.tasks.map((t) => [t.id, t]));
-  const newTasks: DataJson['tasks'] = [...local.tasks];
+  const localTasks: DataJson['tasks'] = [...local.tasks];
+  const incomingTasksToAdd: DataJson['tasks'] = [];
 
   for (const inc of incoming.tasks) {
     const existing = tasksByLocalId.get(inc.id);
@@ -136,9 +137,9 @@ export function mergeForImport(
       }
       // id 冲突且内容不同：新 id
       summary.remappedTaskIds += 1;
-      newTasks.push({ ...inc, id: genId('t') });
+      incomingTasksToAdd.push({ ...inc, id: genId('t') });
     } else {
-      newTasks.push(inc);
+      incomingTasksToAdd.push(inc);
     }
   }
 
@@ -164,16 +165,19 @@ export function mergeForImport(
       newProjects.push(inc);
     }
   }
-  // 任务引用的“导入项目 id”映射为最终项目 id（任务与项目 id 分属各自命名空间）。
-  // 若任务引用本地已有、未被导入改名的项目，其 projectId 不在 newProjectIdMap 中，保持不变。
-  const finalTasks = newTasks.map((t) => {
-    if (!t.projectId) return t;
-    const mapped = newProjectIdMap.get(t.projectId);
-    if (mapped !== undefined && mapped !== t.projectId) {
-      return { ...t, projectId: mapped };
-    }
-    return t;
-  });
+  // 只有“导入的任务”需要按 newProjectIdMap 重映射 projectId；
+  // 本地任务维持原引用，避免被同名导入项目误改到新项目。
+  const finalTasks: DataJson['tasks'] = [
+    ...localTasks,
+    ...incomingTasksToAdd.map((t) => {
+      if (!t.projectId) return t;
+      const mapped = newProjectIdMap.get(t.projectId);
+      if (mapped !== undefined && mapped !== t.projectId) {
+        return { ...t, projectId: mapped };
+      }
+      return t;
+    }),
+  ];
 
   // ---- 设置分类并集 ----
   const catSet = new Set<string>(local.settings.categories);

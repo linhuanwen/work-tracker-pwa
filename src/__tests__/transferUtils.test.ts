@@ -264,3 +264,54 @@ describe('T3 — 额外边界场景', () => {
     expect(result.revision).toBe(7);
   });
 });
+
+describe('T3 — 更多边界场景（C3）', () => {
+  it('任务和项目同时冲突时，任务 projectId 指向重命名后的新项目', () => {
+    const local = createDefaultDataJson();
+    local.tasks = [makeTask('t1', { title: '本地任务', projectId: 'p1' })];
+    local.projects = [makeProject('p1', { title: '本地项目' })];
+
+    const incoming = createDefaultDataJson();
+    incoming.tasks = [makeTask('t1', { title: '导入任务', projectId: 'p1' })];
+    incoming.projects = [makeProject('p1', { title: '导入项目' })];
+
+    const { data, summary } = mergeForImport(local, incoming);
+    expect(summary.remappedTaskIds).toBe(1);
+    expect(summary.remappedProjectIds).toBe(1);
+    const importedTask = data.tasks.find((t) => t.title === '导入任务')!;
+    const importedProject = data.projects.find((p) => p.title === '导入项目')!;
+    expect(importedTask.projectId).toBe(importedProject.id);
+    // 本地任务仍指向本地项目
+    const localTask = data.tasks.find((t) => t.title === '本地任务')!;
+    const localProject = data.projects.find((p) => p.title === '本地项目')!;
+    expect(localTask.projectId).toBe(localProject.id);
+  });
+
+  it('合并相同任务和项目时分别记录跳过计数', () => {
+    const task = makeTask('dup');
+    const project = makeProject('dup');
+    const local = createDefaultDataJson();
+    local.tasks = [task];
+    local.projects = [project];
+
+    const incoming = createDefaultDataJson();
+    incoming.tasks = [task];
+    incoming.projects = [project];
+
+    const { data, summary } = mergeForImport(local, incoming);
+    expect(data.tasks).toHaveLength(1);
+    expect(data.projects).toHaveLength(1);
+    expect(summary.skippedIdenticalTasks).toBe(1);
+    expect(summary.skippedIdenticalProjects).toBe(1);
+  });
+
+  it('快照缺少 data 字段时抛出可读错误', () => {
+    const text = JSON.stringify({
+      app: 'work-list',
+      kind: 'snapshot',
+      formatVersion: 1,
+      exportedAt: 'x',
+    });
+    expect(() => parseImportText(text)).toThrow();
+  });
+});

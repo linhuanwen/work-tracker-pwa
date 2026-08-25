@@ -97,3 +97,17 @@ def test_non_windows_returns_false(frozen_exe, monkeypatch):
     create = lambda target, lnk: (_ for _ in ()).throw(AssertionError("不应创建"))
     monkeypatch.setattr(sc, "create_shortcut", create)
     assert sc.ensure_desktop_shortcut() is False
+
+
+def test_create_shortcut_escapes_single_quotes(frozen_exe, monkeypatch, tmp_path):
+    """路径含单引号时，PS 单引号字符串需要转义，避免脚本被截断。"""
+    lnk = str(tmp_path / "工作清单.lnk")
+    target = r"C:\App\O'Brien\工作清单.exe"
+    captured = {}
+
+    def fake_invoke(script):
+        captured["script"] = script
+
+    monkeypatch.setattr(sc, "invoke_ps", fake_invoke)
+    assert sc.create_shortcut(target, lnk) is True
+    assert "O''Brien" in captured["script"]
