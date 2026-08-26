@@ -68,17 +68,22 @@ def test_copy_exe_to_release(tmp_project):
     assert (tmp_project / "release" / "工作清单" / "工作清单.exe").read_bytes() == b"exe-bytes"
 
 
-def test_create_release_zip_excludes_local_state(tmp_project):
+def test_create_release_zip_preserves_env_example_and_excludes_local_state(tmp_project):
     (tmp_project / "dist" / "工作清单.exe").write_bytes(b"exe-bytes")
     br.copy_exe_to_release()
-    # 模拟本地状态文件不应被打进 zip
+    # 模拟本地状态文件不应被打进 zip；.env.example 模板应保留
     (tmp_project / "release" / "工作清单" / ".wjl-state.json").write_text("{}", encoding="utf-8")
+    (tmp_project / "release" / "工作清单" / "scripts").mkdir(exist_ok=True)
+    (tmp_project / "release" / "工作清单" / "scripts" / ".env.example").write_text("template", encoding="utf-8")
+    (tmp_project / "release" / "工作清单" / "scripts" / ".env").write_text("secret", encoding="utf-8")
     br.create_release_zip()
     zip_path = tmp_project / "release" / "工作清单.zip"
     assert zip_path.exists()
     with zipfile.ZipFile(zip_path) as zf:
         names = zf.namelist()
         assert "工作清单.exe" in names
+        assert "scripts/.env.example" in names
+        assert "scripts/.env" not in names
         assert ".wjl-state.json" not in names
 
 

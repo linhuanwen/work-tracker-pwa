@@ -67,9 +67,11 @@ def create_release_zip() -> bool:
         for file in sorted(RELEASE_DIR.rglob("*")):
             if file.is_dir():
                 continue
-            if file.name in _EXCLUDE_NAMES or file.name.startswith("."):
+            rel = file.relative_to(RELEASE_DIR).as_posix()
+            # 只排除本地运行状态和真实密钥文件，保留 .env.example 模板
+            if file.name in _EXCLUDE_NAMES or rel.endswith("/.env") or rel == ".env":
                 continue
-            zf.write(file, arcname=file.relative_to(RELEASE_DIR).as_posix())
+            zf.write(file, arcname=rel)
     return True
 
 
