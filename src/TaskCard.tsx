@@ -8,6 +8,7 @@ import {
   toggleSubtask,
   deleteSubtask,
   updateSubtask,
+  isFutureTask,
 } from './taskUtils';
 import { SubtaskEditor } from './SubtaskEditor';
 import { Tag } from './Tag';
@@ -196,6 +197,10 @@ export function TaskCard({
               {PRIORITY_OPTIONS.find((p) => p.value === task.priority)?.label}
             </Tag>
 
+            {isFutureTask(task) && task.startDate && (
+              <Tag variant="date">{task.startDate}</Tag>
+            )}
+
             {task.deadline && <Tag variant="date">{task.deadline}</Tag>}
 
             {task.isLeaderAssigned && (
@@ -339,6 +344,21 @@ export function TaskCard({
               </div>
             </label>
           </div>
+
+          {/* 起始日期 */}
+          <label className={styles.editLabel}>
+            起始日期
+            <input
+              className={styles.editInput}
+              type="date"
+              value={task.startDate ?? ''}
+              onChange={(e) =>
+                handleFieldChange({
+                  startDate: e.target.value || null,
+                })
+              }
+            />
+          </label>
 
           {/* 截止日期 */}
           <label className={styles.editLabel}>

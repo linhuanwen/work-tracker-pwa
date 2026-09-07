@@ -236,3 +236,26 @@
   outline: 2px solid var(--color-primary);
   outline-offset: -2px;
 }
+
+
+.statusSelect {
+  flex-shrink: 0;
+  padding: 4px 6px;
+  font-size: var(--fs-tag);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-border-subtle);
+  background: var(--glass-bg-input);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  outline: none;
+  min-height: 32px;
+  min-width: 64px;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.statusSelect:focus {
+  border-color: var(--color-primary);
+  background: var(--glass-bg-input-focus);
+}

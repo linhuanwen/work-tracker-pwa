@@ -10,6 +10,26 @@ export function filterCancelledTasks(tasks: Task[]): Task[] {
   return tasks.filter((t) => t.status === 'cancelled');
 }
 
+/** 进行中任务：待办 + 进行中，排除已完成/已取消 */
+export function filterOngoingTasks(tasks: Task[]): Task[] {
+  return tasks.filter(
+    (t) => t.status !== 'done' && t.status !== 'cancelled',
+  );
+}
+
+/** 已完成任务：已完成 + 已取消 */
+export function filterCompletedTasks(tasks: Task[]): Task[] {
+  return tasks.filter((t) => t.status === 'done' || t.status === 'cancelled');
+}
+
+/** 判断是否为设置了未来起始日期的远期任务 */
+export function isFutureTask(task: Task, now?: Date): boolean {
+  if (!task.startDate) return false;
+  const reference = now ?? new Date();
+  const today = reference.toISOString().slice(0, 10);
+  return task.startDate > today;
+}
+
 /** 按优先级分组 */
 export interface PriorityGroups {
   urgent: Task[];
@@ -83,6 +103,7 @@ export interface UpdateTaskPatch {
   category?: string;
   priority?: Priority;
   deadline?: string | null;
+  startDate?: string | null;
   notes?: string;
   quantities?: Task['quantities'];
   subtasks?: Task['subtasks'];
@@ -141,6 +162,7 @@ export interface CreateTaskInput {
   priority: Priority;
   projectId?: string | null;
   deadline?: string | null;
+  startDate?: string | null;
   notes?: string;
 }
 
@@ -163,6 +185,7 @@ export function createTask(input: CreateTaskInput): Task {
     createdDate: today,
     updatedDate: today,
     deadline: input.deadline ?? null,
+    startDate: input.startDate ?? today,
     completedDate: null,
     quantities: [],
     subtasks: [],

@@ -9,6 +9,16 @@
   margin-bottom: 16px;
 }
 
+.disabledHint {
+  padding: 20px;
+  border: 1px dashed var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--glass-bg-nested);
+  color: var(--color-text-muted);
+  font-size: var(--fs-body);
+  line-height: 1.8;
+}
+
 /* Tabs */
 .tabs {
   display: flex;

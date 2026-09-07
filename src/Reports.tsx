@@ -10,13 +10,26 @@ import styles from './Reports.module.css';
 
 type ReportTab = 'weekly' | 'monthly' | 'yearly';
 
-export function Reports() {
+export function Reports({ disabled = false }: { disabled?: boolean }) {
   const { data } = useData();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<ReportTab>('weekly');
   const [generating, setGenerating] = useState(false);
 
   if (!data) return null;
+
+  if (disabled) {
+    return (
+      <div className={styles.container}>
+        <h2 className={styles.heading}>报表</h2>
+        <div className={styles.disabledHint}>
+          未设置共享文件夹，报表功能暂不启用。
+          <br />
+          请先到「设置 → 共享文件夹」完成云同步文件夹设置。
+        </div>
+      </div>
+    );
+  }
 
   const tabs: { key: ReportTab; label: string }[] = [
     { key: 'weekly', label: '周报' },

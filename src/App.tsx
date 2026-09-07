@@ -1,10 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Task, TaskStatus } from './types';
 import type { UpdateTaskPatch } from './taskUtils';
-import { limitUrgentTasks, filterHibernatingTasks } from './taskUtils';
+import {
+  limitUrgentTasks,
+  filterHibernatingTasks,
+  filterOngoingTasks,
+  filterCompletedTasks,
+} from './taskUtils';
 import { DataProvider, useData } from './DataContext';
 import { AddTaskForm } from './AddTaskForm';
 import { TaskList } from './TaskList';
+import { CompletedTaskList } from './CompletedTaskList';
 import { TaskEditPanel } from './TaskEditPanel';
 import { ToastProvider, useToast } from './Toast';
 import { InstallBanner } from './InstallBanner';
@@ -66,7 +72,6 @@ function AppShell() {
 
   // Auto-reopen previously used folder on mount
   const [autoLoading, setAutoLoading] = useState(hasStoredHandle);
-  const [reopenFailed, setReopenFailed] = useState(false);
   const [hibernateOpen, setHibernateOpen] = useState(false);
 
   const isReady = data !== null;
@@ -76,20 +81,25 @@ function AppShell() {
       setAutoLoading(true);
       reopenStored()
         .then((result) => {
-          if (!result) setReopenFailed(true);
+          if (!result) {
+            // 没有可恢复的共享文件夹时保持内存模式，不强制用户配置。
+          }
         })
         .finally(() => setAutoLoading(false));
     }
   }, [hasStoredHandle, data, reopenStored]);
 
-  // Show initial picker when no stored handle, or when stored handle reopen failed
-  const showInitialPicker =
-    !isReady && !autoLoading && (!hasStoredHandle || reopenFailed);
+  // 不再强制首次选择共享文件夹：未配置时使用本地内存数据，设置页可随时配置。
+  const showInitialPicker = false;
 
   // Split tasks into active and hibernating
   const { active: activeTasks, hibernating: hibernatingTasks } = data
     ? filterHibernatingTasks(data.tasks)
     : { active: [] as Task[], hibernating: [] as Task[] };
+
+  const ongoingTasks = filterOngoingTasks(activeTasks);
+  const completedTasks = filterCompletedTasks(activeTasks);
+  const hasSharedFolder = Boolean(data && (backendMode || hasStoredHandle));
 
   const handleTransitionStatus = (taskId: string, newStatus: TaskStatus) => {
     dispatch({ type: 'TRANSITION_STATUS', payload: { taskId, newStatus } });
@@ -199,7 +209,43 @@ function AppShell() {
   } else if (path === '/settings') {
     pageContent = <Settings />;
   } else if (path === '/reports') {
-    pageContent = <Reports />;
+    pageContent = <Reports disabled={!hasSharedFolder} />;
+  } else if (path === '/completed') {
+    pageContent = (
+      <>
+        <header className={styles.header}>
+          <div className={styles.headerText}>
+            <h1 className={styles.title}>{dateLabel}</h1>
+            <p className={styles.subtitle}>个人工作管理 · 自动小结</p>
+          </div>
+          {isReady && hibernatingTasks.length > 0 && (
+            <button
+              type="button"
+              className={styles.hibernateEntry}
+              onClick={() => setHibernateOpen(true)}
+            >
+              <Icon name="moon" size={15} />
+              <span>休眠 {hibernatingTasks.length}</span>
+            </button>
+          )}
+        </header>
+
+        <CompletedTaskList
+          tasks={completedTasks}
+          categories={data?.settings.categories ?? []}
+          onTransitionStatus={handleTransitionStatus}
+          onUpdateTask={handleUpdateTask}
+          onDeleteTask={handleDeleteTask}
+        />
+
+        {editingTask && (
+          <TaskEditPanel
+            task={editingTask}
+            onClose={() => setEditingTask(null)}
+          />
+        )}
+      </>
+    );
   } else {
     pageContent = (
       <>
@@ -255,7 +301,7 @@ function AppShell() {
           <>
             <AddTaskForm onTaskAdded={handleAddTaskToast} />
             <TaskList
-              tasks={activeTasks}
+              tasks={ongoingTasks}
               categories={data.settings.categories}
               onTransitionStatus={handleTransitionStatus}
               onUpdateTask={handleUpdateTask}
@@ -268,24 +314,41 @@ function AppShell() {
 
             {/* Bottom folder bar: show current folder + change option */}
             <div className={styles.bottomFolderBar}>
-              <span className={styles.bottomFolderLabel}>
-                <Icon name="folder" size={14} />
-                {backendMode
-                  ? `默认文件夹：${backendFolderPath ?? '已配置'}（最后保存 ${data.lastModified ? new Date(data.lastModified).toLocaleString('zh-CN') : '—'}）`
-                  : `数据文件夹：${data.lastModified ? `最后保存 ${new Date(data.lastModified).toLocaleString('zh-CN')}` : '已加载'}`}
-              </span>
-              <button
-                className={styles.changeFolderBtn}
-                onClick={openDirectory}
-                disabled={loading}
-                title={
-                  backendMode
-                    ? '临时切换到其他文件夹（重启后仍使用默认文件夹）'
-                    : '更换文件夹'
-                }
-              >
-                {loading ? '…' : backendMode ? '临时切换' : '更换文件夹'}
-              </button>
+              {hasSharedFolder ? (
+                <>
+                  <span className={styles.bottomFolderLabel}>
+                    <Icon name="folder" size={14} />
+                    {backendMode
+                      ? `默认文件夹：${backendFolderPath ?? '已配置'}（最后保存 ${data.lastModified ? new Date(data.lastModified).toLocaleString('zh-CN') : '—'}）`
+                      : `数据文件夹：${data.lastModified ? `最后保存 ${new Date(data.lastModified).toLocaleString('zh-CN')}` : '已加载'}`}
+                  </span>
+                  <button
+                    className={styles.changeFolderBtn}
+                    onClick={openDirectory}
+                    disabled={loading}
+                    title={
+                      backendMode
+                        ? '临时切换到其他文件夹（重启后仍使用默认文件夹）'
+                        : '更换文件夹'
+                    }
+                  >
+                    {loading ? '…' : backendMode ? '临时切换' : '更换文件夹'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className={styles.bottomFolderLabel}>
+                    <Icon name="folder" size={14} />
+                    未设置共享文件夹，报表功能暂不启用
+                  </span>
+                  <button
+                    className={styles.changeFolderBtn}
+                    onClick={() => navigate('/settings')}
+                  >
+                    去设置
+                  </button>
+                </>
+              )}
             </div>
           </>
         )}
@@ -308,11 +371,16 @@ function AppShell() {
     path === '/settings'
       ? ('settings' as const)
       : path === '/'
-        ? ('tasks' as const)
-        : ('reports' as const);
+        ? ('ongoing' as const)
+        : path === '/completed'
+          ? ('completed' as const)
+          : ('reports' as const);
 
-  const handleBottomNav = (page: 'tasks' | 'reports' | 'settings') => {
-    if (page === 'tasks') navigate('/');
+  const handleBottomNav = (
+    page: 'ongoing' | 'completed' | 'reports' | 'settings',
+  ) => {
+    if (page === 'ongoing') navigate('/');
+    else if (page === 'completed') navigate('/completed');
     else if (page === 'reports') navigate('/reports');
     else navigate('/settings');
   };
@@ -350,7 +418,7 @@ function AppShell() {
       </div>
 
       {/* Bottom navigation — mobile only */}
-      {!collapsed && isReady && (
+      {!collapsed && (
         <BottomNav
           currentPage={bottomNavPage}
           onNavigate={handleBottomNav}

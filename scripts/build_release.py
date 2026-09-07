@@ -50,6 +50,9 @@ def build_frontend() -> bool:
 
 
 def build_installer() -> bool:
+    # 清理旧的打包输出，避免把上一次生成的 exe 当作静态资源打进新包（递归膨胀）。
+    if DIST_EXE.exists():
+        DIST_EXE.unlink()
     run_command([sys.executable, "-m", "PyInstaller", str(ROOT / "launcher.spec"), "--noconfirm"])
     return True
 

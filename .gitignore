@@ -21,6 +21,7 @@ build/
 
 # Local runtime state
 .wjl-state.json
+data.json
 backups/
 .claude/
 

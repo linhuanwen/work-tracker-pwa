@@ -5,6 +5,7 @@ import {
   filterActiveTasks,
   filterCancelledTasks,
   groupTasksByPriority,
+  isFutureTask,
 } from './taskUtils';
 import { TaskCard } from './TaskCard';
 import { UrgentZone } from './UrgentZone';
@@ -63,7 +64,9 @@ export function TaskList({
 }: TaskListProps) {
   const active = filterActiveTasks(tasks);
   const cancelled = filterCancelledTasks(tasks);
-  const groups = groupTasksByPriority(active);
+  const future = active.filter((t) => isFutureTask(t));
+  const current = active.filter((t) => !isFutureTask(t));
+  const groups = groupTasksByPriority(current);
 
   const [archiveOpen, setArchiveOpen] = useState(false);
 
@@ -74,6 +77,7 @@ export function TaskList({
       {/* ================================================ */}
       <UrgentZone
         tasks={groups.urgent}
+        onTransitionStatus={onTransitionStatus}
         onEditTask={onEditTask}
         onDeleteTask={onDeleteTask}
         onMoveUp={onMoveUrgentUp}
@@ -83,13 +87,13 @@ export function TaskList({
       {/* ================================================ */}
       {/* 活跃任务（按优先级分组，紧急区已提走） */}
       {/* ================================================ */}
-      {active.length === 0 && cancelled.length === 0 && (
+      {current.length === 0 && future.length === 0 && cancelled.length === 0 && (
         <div className={styles.empty}>
           暂无任务。在上方输入框添加第一个任务吧。
         </div>
       )}
 
-      {active.length === 0 && cancelled.length > 0 && (
+      {current.length === 0 && future.length === 0 && cancelled.length > 0 && (
         <div className={styles.empty}>
           所有任务已归档。在下方"已完成"区查看已取消的任务。
         </div>
@@ -125,6 +129,34 @@ export function TaskList({
           </div>
         );
       })}
+
+      {/* ================================================ */}
+      {/* 远期任务：起始日期在未来，暂不进入紧急/重要/日常 */}
+      {/* ================================================ */}
+      {future.length > 0 && (
+        <div className={`${styles.group} ${styles.futureGroup}`}>
+          <div className={styles.groupHeader}>
+            <span
+              className={`${styles.groupDot} ${styles.groupDotFuture}`}
+              aria-hidden="true"
+            />
+            <span className={styles.groupTitle}>远期任务</span>
+            <span className={styles.groupCount}>{future.length}</span>
+          </div>
+          <div className={styles.cards}>
+            {future.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                categories={categories}
+                onTransitionStatus={onTransitionStatus}
+                onUpdateTask={onUpdateTask}
+                onDelete={onDeleteTask}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ================================================ */}
       {/* 已完成折叠区（取消的任务） */}

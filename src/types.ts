@@ -43,6 +43,7 @@ export interface Task {
   createdDate: string; // ISO date
   updatedDate: string; // ISO date — last modification date
   deadline: string | null; // ISO date
+  startDate?: string | null; // ISO date 起始日期，默认当天；未来日期视为远期任务
   completedDate: string | null; // ISO date
   quantities: Quantity[];
   subtasks: SubTask[];
@@ -286,6 +287,8 @@ function validateTask(task: unknown, idx: number, errors: string[]): void {
     errors.push(fail(p + '.leaderDeadline', 'must be a string if present'));
   if (task.hibernateUntil !== undefined && !isString(task.hibernateUntil))
     errors.push(fail(p + '.hibernateUntil', 'must be a string if present'));
+  if (task.startDate !== undefined && !isStringOrNull(task.startDate))
+    errors.push(fail(p + '.startDate', 'must be a string or null if present'));
 }
 
 function validateProject(
@@ -418,6 +421,12 @@ function normalizeTask(raw: unknown): Record<string, unknown> {
     leaderAssignedDate: normalizeStringOptional(t.leaderAssignedDate),
     leaderDeadline: normalizeStringOptional(t.leaderDeadline),
     hibernateUntil: normalizeStringOptional(t.hibernateUntil),
+    startDate:
+      t.startDate === undefined || t.startDate === null
+        ? undefined
+        : isString(t.startDate)
+          ? t.startDate
+          : undefined,
   };
 }
 

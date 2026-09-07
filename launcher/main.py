@@ -16,6 +16,29 @@ from launcher.tray import on_window_closing, start_tray
 from launcher.win32 import find_and_store_hwnd, watch_dock_right
 
 
+class LauncherApi:
+    """pywebview JS 桥：向前端暴露桌面原生能力。
+
+    pick_folder: 打开系统目录选择框并返回所选文件夹的绝对路径。
+    前端拿到路径后注册为数据文件夹，data.json 与生成的总结文档
+    （周报/月报/年报 子目录）都会保存到该文件夹。
+    """
+
+    @staticmethod
+    def pick_folder() -> str | None:
+        import webview
+
+        win = webview.windows[0] if webview.windows else None
+        if win is None:
+            return None
+        try:
+            result = win.create_file_dialog(webview.FOLDER_DIALOG)
+        except Exception:
+            return None
+        # create_file_dialog 返回选中路径的序列；取消时返回 None
+        return result[0] if result else None
+
+
 def start_shortcut_creation(debug: bool = False) -> threading.Thread:
     """在后台 daemon 线程创建桌面快捷方式（非阻塞；已存在跳过；失败静默）。"""
     t = threading.Thread(
@@ -94,6 +117,7 @@ def main():
         confirm_close=False,
         text_select=True,
         easy_drag=False,
+        js_api=LauncherApi(),
     )
     state.webview_window.events.closing += on_window_closing
 

@@ -60,7 +60,8 @@ describe('Sidebar — responsive rendering (Seam 1)', () => {
   }>;
 
   const NAV_ITEMS = [
-    { label: '任务清单', route: '/' },
+    { label: '进行中', route: '/' },
+    { label: '已完成', route: '/completed' },
     { label: '周报', route: '/weekly' },
     { label: '月报', route: '/summary/monthly' },
     { label: '年报', route: '/summary/yearly' },
@@ -119,7 +120,7 @@ describe('Sidebar — responsive rendering (Seam 1)', () => {
       expect(aside.getAttribute('data-mode')).toBe('icons');
     });
 
-    it('renders all 6 navigation items as icon buttons', () => {
+    it('renders all navigation items as icon buttons', () => {
       render(<Sidebar currentPath="/" onNavigate={() => {}} />);
       const items = screen.getAllByRole('button');
       expect(items).toHaveLength(NAV_ITEMS.length);
@@ -136,7 +137,7 @@ describe('Sidebar — responsive rendering (Seam 1)', () => {
     it('hides text labels visually in icon mode', () => {
       render(<Sidebar currentPath="/" onNavigate={() => {}} />);
       const labels = screen.getAllByText(
-        /任务清单|周报|月报|年报|项目管理|设置/,
+        /进行中|已完成|周报|月报|年报|项目管理|设置/,
       );
       for (const label of labels) {
         expect(label.classList.contains('label')).toBe(true);
@@ -175,7 +176,7 @@ describe('Sidebar — responsive rendering (Seam 1)', () => {
       expect(aside.getAttribute('data-mode')).toBe('full');
     });
 
-    it('renders all 6 navigation items with labels visible', () => {
+    it('renders all navigation items with labels visible', () => {
       render(<Sidebar currentPath="/" onNavigate={() => {}} />);
       for (const item of NAV_ITEMS) {
         const btn = screen.getByRole('button', { name: item.label });
@@ -354,15 +355,22 @@ describe('Sidebar — route highlighting (Seam 3)', () => {
     localStorage.removeItem(STORAGE_KEY);
   });
 
-  it('highlights "任务清单" when currentPath is "/"', () => {
+  it('highlights "进行中" when currentPath is "/"', () => {
     render(<Sidebar currentPath="/" onNavigate={onNavigate} />);
 
-    const activeBtn = screen.getByRole('button', { name: '任务清单' });
+    const activeBtn = screen.getByRole('button', { name: '进行中' });
     expect(activeBtn.getAttribute('aria-current')).toBe('page');
 
     // Other items should NOT have aria-current
     const weeklyBtn = screen.getByRole('button', { name: '周报' });
     expect(weeklyBtn.getAttribute('aria-current')).toBeNull();
+  });
+
+  it('highlights "已完成" when currentPath is "/completed"', () => {
+    render(<Sidebar currentPath="/completed" onNavigate={onNavigate} />);
+
+    const activeBtn = screen.getByRole('button', { name: '已完成' });
+    expect(activeBtn.getAttribute('aria-current')).toBe('page');
   });
 
   it('highlights "周报" when currentPath is "/weekly"', () => {

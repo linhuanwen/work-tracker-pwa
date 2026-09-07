@@ -1,7 +1,7 @@
 import { Icon } from './Icon';
 import styles from './BottomNav.module.css';
 
-export type Page = 'tasks' | 'reports' | 'settings';
+export type Page = 'ongoing' | 'completed' | 'reports' | 'settings';
 
 interface BottomNavProps {
   currentPage: Page;
@@ -19,13 +19,23 @@ export function BottomNav({
   return (
     <nav className={styles.nav}>
       <button
-        className={`${styles.tab} ${currentPage === 'tasks' ? styles.active : ''}`}
-        onClick={() => onNavigate('tasks')}
+        className={`${styles.tab} ${currentPage === 'ongoing' ? styles.active : ''}`}
+        onClick={() => onNavigate('ongoing')}
       >
         <span className={styles.icon}>
           <Icon name="clipboard-list" size={20} />
         </span>
-        <span className={styles.label}>任务</span>
+        <span className={styles.label}>进行中</span>
+      </button>
+
+      <button
+        className={`${styles.tab} ${currentPage === 'completed' ? styles.active : ''}`}
+        onClick={() => onNavigate('completed')}
+      >
+        <span className={styles.icon}>
+          <Icon name="check-circle" size={20} />
+        </span>
+        <span className={styles.label}>已完成</span>
       </button>
 
       {hibernatingCount > 0 && (

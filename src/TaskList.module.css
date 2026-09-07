@@ -32,6 +32,12 @@
 .groupDotNormal {
   background: var(--color-status-todo);
 }
+.groupDotFuture {
+  background: var(--color-text-faded);
+}
+.futureGroup {
+  opacity: 0.85;
+}
 
 .groupTitle {
   font-size: var(--fs-ui);

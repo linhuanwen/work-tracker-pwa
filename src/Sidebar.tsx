@@ -35,7 +35,8 @@ const MIN_WIDTH = 200;
 const MAX_WIDTH = 400;
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: '任务清单', icon: 'clipboard-list', route: '/' },
+  { label: '进行中', icon: 'clipboard-list', route: '/' },
+  { label: '已完成', icon: 'check-circle', route: '/completed' },
   { label: '周报', icon: 'clipboard-list', route: '/weekly' },
   { label: '月报', icon: 'calendar', route: '/summary/monthly' },
   { label: '年报', icon: 'bar-chart-3', route: '/summary/yearly' },

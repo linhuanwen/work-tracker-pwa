@@ -1,9 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useData } from './DataContext';
 import { useToast } from './Toast';
 import { ThemeToggle } from './ThemeToggle';
 import { ThemePicker } from './ThemePicker';
 import { loadAiConfig, saveAiConfig, DEFAULT_AI_CONFIG } from './aiConfig';
+import { setBackendDataFolder } from './fs/backendApi';
+import { useWindowControls } from './useWindowControls';
 import {
   createSnapshotText,
   defaultExportFileName,
@@ -28,16 +30,75 @@ const MONTH_DAYS = Array.from({ length: 28 }, (_, i) => ({
 }));
 
 export function Settings() {
-  const { data, dispatch } = useData();
+  const {
+    data,
+    dispatch,
+    openDirectory,
+    loading: folderLoading,
+    hasStoredHandle,
+    backendMode,
+    backendFolderPath,
+    lastFolderInfo,
+  } = useData();
   const { showToast } = useToast();
+  const { isDesktopWindow } = useWindowControls();
 
   const [editingCat, setEditingCat] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [newCatValue, setNewCatValue] = useState('');
   const [showAddInput, setShowAddInput] = useState(false);
+  // 只允许后端已配置的绝对路径预填输入框；FSA 方式只记录文件夹名，
+  // 名字≠路径，预填会让用户把相对名当绝对路径保存回去（后端找不到该目录）。
+  const [folderPathInput, setFolderPathInput] = useState(
+    backendMode ? (backendFolderPath ?? '') : '',
+  );
+  const [savingFolder, setSavingFolder] = useState(false);
+
+  // 当后端路径变化时（例如保存成功后），同步输入框显示。
+  useEffect(() => {
+    if (backendMode) {
+      setFolderPathInput(backendFolderPath ?? '');
+    }
+  }, [backendMode, backendFolderPath]);
 
   // AI 配置（存 localStorage，不进 data.json，避免 API Key 同步到云文档）
   const [aiConfig, setAiConfig] = useState(() => loadAiConfig());
+
+  // 选择共享文件夹：桌面版走 pywebview 原生目录选择并把绝对路径注册给后端
+  // （data.json 与总结文档都保存在所选文件夹）；纯浏览器退回 FSA 句柄方式。
+  const chooseDataFolder = async () => {
+    const pw = (window as unknown as {
+      pywebview?: { api?: { pick_folder?: () => Promise<string | null> } };
+    }).pywebview;
+    const pickFolder = pw?.api?.pick_folder;
+
+    if (typeof pickFolder === 'function') {
+      let path: string | null = null;
+      try {
+        path = await pickFolder();
+      } catch {
+        // 桥调用异常：静默，仍可改用下方“保存路径”手动输入绝对路径
+      }
+      if (!path) return; // 用户取消选择
+      const result = await setBackendDataFolder(path);
+      if (!result.ok) {
+        showToast(result.error || '保存共享文件夹路径失败');
+        return;
+      }
+      showToast('已设置共享文件夹');
+      // 重新挂载：让 backendMode / 后端路径 / 数据加载统一走后端。
+      window.location.reload();
+      return;
+    }
+
+    // 纯浏览器环境（无 pywebview 桥）：退回 File System Access 句柄方式
+    try {
+      await openDirectory();
+      showToast('已设置共享文件夹');
+    } catch {
+      // 用户取消或选择失败时静默处理
+    }
+  };
 
   // ---- 数据迁移（导入 / 导出）----
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,7 +107,27 @@ export function Settings() {
     data: ReturnType<typeof parseImportText>;
   } | null>(null);
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className={styles.container}>
+        <h2 className={styles.heading}>设置</h2>
+        <section className={styles.section}>
+          <p className={styles.folderHint}>
+            数据尚未加载。如果这是新电脑，请先选择共享文件夹；也可以直接开始使用本地内存数据。
+          </p>
+          <div className={styles.folderRow}>
+            <button
+              className={styles.folderBtn}
+              onClick={chooseDataFolder}
+              disabled={folderLoading}
+            >
+              {folderLoading ? '加载中…' : '选择共享文件夹'}
+            </button>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   const handleExport = async () => {
     const text = createSnapshotText(data);
@@ -116,10 +197,21 @@ export function Settings() {
 
   const handleConfirmOverwrite = () => {
     if (!importPending || !data) return;
-    dispatch({ type: 'SET_DATA', payload: importPending.data });
+    const imported = importPending.data;
+    // 导入内容来自其他目录/更早的导出，其 revision 与当前数据往往不一致；
+    // 若直接沿用，自动保存的 revision 校验会把导入误判为“其他设备修改”而拒写。
+    // 覆盖后 revision 归位到当前基线，内容差异由随后的自动保存正常落盘。
+    dispatch({
+      type: 'SET_DATA',
+      payload: {
+        ...imported,
+        revision: data.revision ?? 0,
+        lastModified: data.lastModified ?? imported.lastModified,
+      },
+    });
     setImportPending(null);
     showToast(
-      `已覆盖导入（含 ${importPending.data.tasks.length} 个任务、${importPending.data.projects.length} 个项目）`,
+      `已覆盖导入（含 ${imported.tasks.length} 个任务、${imported.projects.length} 个项目）`,
     );
   };
 
@@ -233,6 +325,26 @@ export function Settings() {
     });
   };
 
+  const handleSaveFolderPath = async () => {
+    const path = folderPathInput.trim();
+    if (!path) return;
+    setSavingFolder(true);
+    try {
+      const result = await setBackendDataFolder(path);
+      if (!result.ok) {
+        showToast(result.error || '保存共享文件夹路径失败');
+        return;
+      }
+      showToast('已设置共享文件夹');
+      // 重新挂载：backendMode / 数据加载统一走后端，避免残留 FSA 句柄状态。
+      window.location.reload();
+    } catch {
+      showToast('保存共享文件夹路径失败');
+    } finally {
+      setSavingFolder(false);
+    }
+  };
+
   const handleSaveAiConfig = () => {
     saveAiConfig({
       apiKey: aiConfig.apiKey.trim(),
@@ -245,6 +357,58 @@ export function Settings() {
   return (
     <div className={styles.container}>
       <h2 className={styles.heading}>设置</h2>
+
+      {/* ---- 共享文件夹 ---- */}
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>共享文件夹</h3>
+        <p className={styles.folderHint}>
+          {hasStoredHandle || backendMode
+            ? '已设置共享文件夹，报表功能可用。数据将保存到所选云同步文件夹的 data.json。'
+            : '未设置共享文件夹，报表功能暂不启用。请选择一个云同步文件夹（如 WPS 云文档、OneDrive、坚果云），应用会在该文件夹中保存 data.json，实现多设备同步。'}
+          {isDesktopWindow && (
+            <>
+              <br />
+              桌面版点“选择共享文件夹”会打开系统目录选择框并<strong>自动保存绝对路径</strong>；data.json 与生成的总结文档（周报/月报/年报 子目录）都保存在所选文件夹。
+            </>
+          )}
+        </p>
+
+        <div className={styles.folderRow}>
+          <span className={styles.folderPath}>
+            {backendMode
+              ? backendFolderPath ?? '已配置'
+              : lastFolderInfo?.folderName
+                ? `已选择：${lastFolderInfo.folderName}`
+                : '尚未设置'}
+          </span>
+          <button
+            className={styles.folderBtn}
+            onClick={chooseDataFolder}
+            disabled={folderLoading}
+          >
+            {folderLoading ? '加载中…' : hasStoredHandle || backendMode ? '更改共享文件夹' : '选择共享文件夹'}
+          </button>
+        </div>
+
+        {(backendMode || isDesktopWindow) && (
+          <div className={styles.folderPathRow}>
+            <input
+              className={styles.folderInput}
+              type="text"
+              value={folderPathInput}
+              onChange={(e) => setFolderPathInput(e.target.value)}
+              placeholder="输入共享文件夹绝对路径（如 D:\\文档\\WPS云文档\\工作清单）"
+            />
+            <button
+              className={styles.folderSaveBtn}
+              onClick={handleSaveFolderPath}
+              disabled={savingFolder || !folderPathInput.trim()}
+            >
+              {savingFolder ? '保存中…' : '保存路径'}
+            </button>
+          </div>
+        )}
+      </section>
 
       {/* ---- 分类管理 ---- */}
       <section className={styles.section}>
@@ -414,8 +578,8 @@ export function Settings() {
         </button>
         <p className={styles.aiHint}>
           配置仅保存在本机浏览器存储中，不会写入共享的 data.json。
-          桌面端启动器固定读取 scripts/.env 中的 AI
-          配置；浏览器端（PWA）使用此处配置。
+          保存后立即生效：桌面端与浏览器端的「AI 润色」和「生成总结文档」都会使用此处配置。
+          若未填写 API Key，则回退读取可执行文件旁的 scripts/.env。
         </p>
       </section>
 

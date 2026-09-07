@@ -59,6 +59,33 @@ export async function saveLastFolderInfo(
   }
 }
 
+export async function setBackendDataFolder(
+  dataFolderPath: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const resp = await fetch('/api/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        dataFolderPath,
+        lastFolderName: dataFolderPath.split(/[\\/]/).pop() || dataFolderPath,
+        lastOpened: new Date().toISOString(),
+      }),
+    });
+    const result = (await resp.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+    } | null;
+    if (resp.ok && result?.ok !== false) return { ok: true };
+    return {
+      ok: false,
+      error: result?.error ?? `保存失败（HTTP ${resp.status}）`,
+    };
+  } catch {
+    return { ok: false, error: '后端不可达，请确认桌面应用已启动' };
+  }
+}
+
 export async function loadBackendData(): Promise<DataJson | null> {
   try {
     const resp = await fetch('/api/data', { cache: 'no-store' });

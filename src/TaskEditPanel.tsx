@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Task, Quantity, SubTask, Priority } from './types';
+import type { Task, Quantity, SubTask, Priority, TaskStatus } from './types';
 import { useData, DEFAULT_CATEGORIES } from './DataContext';
 import {
   calcDefaultHibernateUntil,
@@ -22,6 +22,13 @@ const PRIORITIES: { value: Priority; label: string }[] = [
   { value: 'normal', label: '日常' },
 ];
 
+const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
+  { value: 'todo', label: '待办' },
+  { value: 'in-progress', label: '进行中' },
+  { value: 'done', label: '已完成' },
+  { value: 'cancelled', label: '已取消' },
+];
+
 export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
   const { data, dispatch } = useData();
   const categories = data?.settings.categories ?? DEFAULT_CATEGORIES;
@@ -32,7 +39,9 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
   const [title, setTitle] = useState(task.title);
   const [category, setCategory] = useState(task.category);
   const [priority, setPriority] = useState<Priority>(task.priority);
+  const [status, setStatus] = useState<TaskStatus>(task.status);
   const [deadline, setDeadline] = useState(task.deadline ?? '');
+  const [startDate, setStartDate] = useState(task.startDate ?? '');
   const [notes, setNotes] = useState(task.notes ?? '');
   const [projectId, setProjectId] = useState(task.projectId ?? '');
 
@@ -86,6 +95,13 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
     const trimmedTitle = title.trim();
     if (!trimmedTitle) return;
 
+    if (status !== task.status) {
+      dispatch({
+        type: 'TRANSITION_STATUS',
+        payload: { taskId: task.id, newStatus: status },
+      });
+    }
+
     dispatch({
       type: 'UPDATE_TASK',
       payload: {
@@ -95,6 +111,7 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
           category: category || categories[0],
           priority,
           deadline: deadline || null,
+          startDate: startDate || null,
           notes,
           quantities,
           subtasks,
@@ -186,6 +203,21 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
           </div>
 
           <div className={styles.field}>
+            <label className={styles.label}>状态</label>
+            <select
+              className={styles.select}
+              value={status}
+              onChange={(e) => setStatus(e.target.value as TaskStatus)}
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.field}>
             <label className={styles.label}>优先级</label>
             <div className={styles.priorityGroup}>
               {PRIORITIES.map((p) => (
@@ -207,6 +239,17 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>起始日期</label>
+            <input
+              className={styles.input}
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            <span className={styles.hintLabel}>未设置或当天开始；未来日期会进入“远期任务”</span>
           </div>
 
           <div className={styles.field}>

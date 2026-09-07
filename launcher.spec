@@ -6,8 +6,26 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('dist', 'dist'),
-        ('scripts', 'scripts'),
+        *[
+            (str(Path('dist') / name), 'dist')
+            for name in [
+                'index.html',
+                'manifest.webmanifest',
+                'registerSW.js',
+                'sw.js',
+                'favicon.svg',
+                'pwa-192x192.svg',
+                'pwa-512x512.svg',
+            ]
+            if (Path('dist') / name).exists()
+        ],
+        *[
+            (str(path), 'dist')
+            for path in Path('dist').glob('workbox-*.js')
+        ],
+        ('dist/assets', 'dist/assets'),
+        ('scripts/polish.py', 'scripts'),
+        ('scripts/.env.example', 'scripts'),
     ],
     hiddenimports=[
         'webview',

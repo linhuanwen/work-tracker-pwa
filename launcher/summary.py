@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-from launcher.ai import _ensure_scripts_path, _resolve_ai_config
+from launcher.ai import _ensure_scripts_path, resolve_ai_config
 
 
 def _summary_prompt(period_type: str, period_label: str, sections: dict) -> str:
@@ -101,8 +101,13 @@ def _summary_doc_filename(period_type: str, key: str) -> tuple[str, str]:
     return folder, filename
 
 
-def generate_summary_doc(data_folder_path: str, period_type: str, key: str, sections: dict) -> str:
+def generate_summary_doc(
+    data_folder_path: str, period_type: str, key: str, sections: dict, ai_config=None
+) -> str:
     """Generate a Word document summary via AI and save it to the shared folder.
+
+    *ai_config* is the optional ``config`` object from the frontend request
+    (设置 → AI 配置)；未提供时回退到 scripts/.env。
 
     Returns the saved file path. Raises an exception on failure.
     """
@@ -115,7 +120,7 @@ def generate_summary_doc(data_folder_path: str, period_type: str, key: str, sect
     except ImportError:
         raise Exception("AI 润色脚本未找到，请确保 scripts/polish.py 存在。")
 
-    config = _resolve_ai_config()
+    config = resolve_ai_config(ai_config)
 
     _, _, _ = _type_label_map()[period_type]
     if period_type == 'week':

@@ -56,10 +56,19 @@ export function useFileSystem(): UseFileSystemReturn {
         });
         dataSourceRef.current = 'backend';
         loadBackendData().then((loaded) => {
-          if (loaded) setData(loaded);
+          if (loaded) {
+            setData(loaded);
+          } else {
+            // 后端尚未关联有效数据时也进入可用状态，设置页仍可配置。
+            setData((prev) => prev ?? createDefaultDataJson());
+          }
         });
       } else {
-        hasStoredHandleCheck().then(setHasHandle);
+        hasStoredHandleCheck().then((has) => {
+          setHasHandle(has);
+          // 未配置共享文件夹时不阻塞使用，先用本地内存数据。
+          if (!has) setData(createDefaultDataJson());
+        });
         fetchLastFolderInfo().then(setLastFolderInfo);
       }
     });
@@ -91,7 +100,8 @@ export function useFileSystem(): UseFileSystemReturn {
 
       let existingData = await readJsonFile(dirHandle, DATA_FILE_NAME);
       if (!existingData) {
-        existingData = createDefaultDataJson();
+        // 若用户先在本地内存中录入了任务，选择共享文件夹时写入这份数据。
+        existingData = data ?? createDefaultDataJson();
         await writeJsonFile(dirHandle, DATA_FILE_NAME, existingData);
       }
 
@@ -104,7 +114,7 @@ export function useFileSystem(): UseFileSystemReturn {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [data]);
 
   const reopenStored = useCallback(async (): Promise<DataJson | null> => {
     setLoading(true);
@@ -119,7 +129,10 @@ export function useFileSystem(): UseFileSystemReturn {
       }
 
       const storedHandle = await getStoredHandle();
-      if (!storedHandle) return null;
+      if (!storedHandle) {
+        setData((prev) => prev ?? createDefaultDataJson());
+        return null;
+      }
 
       const opts: FileSystemHandlePermissionDescriptor = { mode: 'readwrite' };
       let permission = await storedHandle.queryPermission(opts);
@@ -129,6 +142,7 @@ export function useFileSystem(): UseFileSystemReturn {
         if (permission !== 'granted') {
           await clearStoredHandle();
           setHasHandle(false);
+          setData((prev) => prev ?? createDefaultDataJson());
           return null;
         }
       }
@@ -152,6 +166,7 @@ export function useFileSystem(): UseFileSystemReturn {
     } catch (err) {
       const msg = err instanceof Error ? err.message : '无法读取数据文件';
       setError(msg);
+      setData((prev) => prev ?? createDefaultDataJson());
       return null;
     } finally {
       setLoading(false);
@@ -182,7 +197,7 @@ export function useFileSystem(): UseFileSystemReturn {
 
       const dirHandle = dirHandleRef.current;
       if (!dirHandle) {
-        setError('尚未打开文件夹');
+        // 尚未设置共享文件夹：数据仅保留在内存中，不阻塞任务使用。
         return null;
       }
       try {

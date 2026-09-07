@@ -66,6 +66,7 @@ export type Action =
         priority: Priority;
         projectId?: string | null;
         deadline?: string | null;
+        startDate?: string | null;
       };
     }
   | { type: 'TOGGLE_TASK'; payload: { taskId: string } }
@@ -143,6 +144,7 @@ export function dataReducer(state: DataJson, action: Action): DataJson {
         priority: action.payload.priority,
         projectId: action.payload.projectId ?? null,
         deadline: action.payload.deadline ?? null,
+        startDate: action.payload.startDate ?? null,
       });
       return {
         ...state,

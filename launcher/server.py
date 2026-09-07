@@ -86,8 +86,12 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             _send_cors_headers(self, origin)
             self.end_headers()
             state = read_state()
+            # 只暴露“实际生效”的数据文件夹：启动解析失败的残留路径不返回，
+            # 否则前端会误以为已配置（进入后端模式却读不到数据）。
             if get_state().data_folder_path:
                 state["dataFolderPath"] = get_state().data_folder_path
+            else:
+                state.pop("dataFolderPath", None)
             self.wfile.write(json.dumps(state, ensure_ascii=False).encode('utf-8'))
             return
 
@@ -173,7 +177,21 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             body = self.rfile.read(length)
             try:
                 state = json.loads(body)
-                write_state(state)
+                # 数据文件夹必须是已存在的绝对路径；相对路径/不存在时拒绝，
+                # 避免把“共享”这类文件夹名注册成路径导致总结/数据找不到目录。
+                if state.get("dataFolderPath"):
+                    folder = str(state["dataFolderPath"]).strip()
+                    if not folder or not os.path.isabs(folder) or not os.path.isdir(folder):
+                        self._json_ok({
+                            "ok": False,
+                            "error": "文件夹路径无效：请输入已存在的绝对路径（如 D:\\共享文件夹），或点击“选择共享文件夹”。",
+                        }, origin)
+                        return
+                    state["dataFolderPath"] = folder
+                merged_state = {**read_state(), **state}
+                write_state(merged_state)
+                if state.get("dataFolderPath"):
+                    get_state().data_folder_path = state["dataFolderPath"]
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json; charset=utf-8')
                 _send_cors_headers(self, origin)
@@ -297,7 +315,11 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                     return
 
                 saved_path = generate_summary_doc(
-                    get_state().data_folder_path, period_type, key, sections
+                    get_state().data_folder_path,
+                    period_type,
+                    key,
+                    sections,
+                    payload.get('config'),
                 )
                 self._json_ok({"ok": True, "path": saved_path}, origin)
             except Exception as e:
@@ -323,7 +345,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
                     self.wfile.write(json.dumps({"ok": False, "error": "text is empty"}).encode('utf-8'))
                     return
 
-                polished = run_polish(raw_text, archive_type)
+                polished = run_polish(raw_text, archive_type, payload.get('config'))
                 self._json_ok({"ok": True, "polished": polished}, origin)
             except Exception as e:
                 self._json_ok({"ok": False, "error": str(e)}, origin)

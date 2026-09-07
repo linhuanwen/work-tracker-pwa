@@ -1,11 +1,19 @@
 import { useState } from 'react';
-import type { Task } from './types';
+import type { Task, TaskStatus } from './types';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Icon } from './Icon';
 import styles from './UrgentZone.module.css';
 
+const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
+  { value: 'todo', label: '待办' },
+  { value: 'in-progress', label: '进行中' },
+  { value: 'done', label: '已完成' },
+  { value: 'cancelled', label: '已取消' },
+];
+
 interface UrgentZoneProps {
   tasks: Task[];
+  onTransitionStatus?: (taskId: string, newStatus: TaskStatus) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask?: (taskId: string) => void;
   onMoveUp: (taskId: string) => void;
@@ -14,6 +22,7 @@ interface UrgentZoneProps {
 
 export function UrgentZone({
   tasks,
+  onTransitionStatus,
   onEditTask,
   onDeleteTask,
   onMoveUp,
@@ -77,6 +86,26 @@ export function UrgentZone({
                     ))}
                 </div>
               </div>
+
+              <select
+                className={styles.statusSelect}
+                value={task.status}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  const newStatus = e.target.value as TaskStatus;
+                  if (newStatus !== task.status && onTransitionStatus) {
+                    onTransitionStatus(task.id, newStatus);
+                  }
+                }}
+                aria-label="任务状态"
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
 
               {/* Up/down reorder arrows + delete */}
               <div className={styles.arrows}>

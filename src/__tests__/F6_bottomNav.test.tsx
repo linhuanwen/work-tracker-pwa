@@ -250,10 +250,16 @@ import App from '../App';
 // ================================================================
 
 describe('F6 — 接上 BottomNav (App.tsx → 底部导航)', () => {
-  it('BottomNav 渲染了"任务"标签', () => {
+  it('BottomNav 渲染了"进行中"标签', () => {
     render(<App />);
-    // BottomNav should have "任务" tab
-    expect(screen.getByText('任务')).toBeDefined();
+    // BottomNav should have "进行中" tab
+    expect(screen.getByText('进行中')).toBeDefined();
+  });
+
+  it('BottomNav 渲染了"已完成"标签', () => {
+    render(<App />);
+    // BottomNav should have "已完成" tab
+    expect(screen.getByText('已完成')).toBeDefined();
   });
 
   it('BottomNav 渲染了"报表"标签', () => {

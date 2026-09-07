@@ -224,4 +224,28 @@ describe('T4 — 设置页数据迁移', () => {
       payload: expect.any(Object),
     });
   });
+
+  it('覆盖导入时 revision 归位到本地基线，避免自动保存误判冲突', async () => {
+    // 导入文件 revision=5、本地 revision=0：若沿用导入的 5，
+    // 自动保存的 expectedRevision 会与磁盘不一致 → 409 冲突 → 导入内容永远存不上。
+    render(<Settings />);
+    fireEvent.click(screen.getByRole('button', { name: '导入数据文件…' }));
+    const input = screen
+      .getByRole('button', { name: '导入数据文件…' })
+      .parentElement!.querySelector('input')!;
+    fireEvent.change(input, {
+      target: { files: [new File(['{}'], 'backup.json')] },
+    });
+
+    await waitFor(() => screen.getByRole('button', { name: '覆盖导入' }));
+    fireEvent.click(screen.getByRole('button', { name: '覆盖导入' }));
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'SET_DATA',
+      payload: expect.objectContaining({ revision: 0 }),
+    });
+    const payload = mockDispatch.mock.calls[0][0].payload as {
+      lastModified: string;
+    };
+    expect(payload.lastModified).toBe('2026-08-25T00:00:00.000Z');
+  });
 });
