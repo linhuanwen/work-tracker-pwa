@@ -448,7 +448,7 @@ describe('getYearlyTasksByDimension', () => {
     expect(dim.taskSubtasks[idx]).toHaveLength(2);
   });
 
-  it('推进中父任务：年内有子任务完成 → progressRows 父行 + 年内完成子行', () => {
+  it('推进中父任务有已勾子任务 → progressRows 父行 + 全部已勾子行（不做年份归因）', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
@@ -464,47 +464,57 @@ describe('getYearlyTasksByDimension', () => {
           },
           {
             id: 's2',
-            title: '去年步骤',
+            title: '去年步骤', // 完成于上年 → v2 也计入子行（打勾即完成）
             status: 'done',
             completedDate: '2025-12-20',
           },
           { id: 's3', title: '待办步骤', status: 'todo' },
         ],
       }),
+      makeTask({
+        id: '2',
+        title: '旧数据无日期步骤',
+        category: '内部招聘',
+        status: 'todo', // 父任务停在待办也计入
+        subtasks: [{ id: 's4', title: 'x', status: 'done' }],
+      }),
     ];
     const result = getYearlyTasksByDimension(tasks, 2026, defaultCategories);
     const dim = result.find((d) => d.dimension === '项目推进')!;
     expect(dim.taskCount).toBe(0); // 不占用完成计数
-    expect(dim.progressRows).toHaveLength(1);
+    expect(dim.progressRows).toHaveLength(2);
     expect(dim.progressRows[0].title).toBe('跨年推进任务');
     expect(dim.progressRows[0].done).toBe(2);
     expect(dim.progressRows[0].total).toBe(3);
-    // 只展开年度内（按 completedDate 归因）的子任务
-    expect(dim.progressRows[0].subtaskTitles).toEqual(['本年步骤']);
+    expect(dim.progressRows[0].subtaskTitles).toEqual(['本年步骤', '去年步骤']);
+    expect(dim.progressRows[1].title).toBe('旧数据无日期步骤');
+    expect(dim.progressRows[1].subtaskTitles).toEqual(['x']);
   });
 
-  it('推进中父任务无年内完成子任务 → 不产生 progressRows', () => {
+  it('推进中父任务无任何已勾子任务 → 不产生 progressRows', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
         title: '无推进',
         category: '内部招聘',
         status: 'in-progress',
-        subtasks: [
-          {
-            id: 's1',
-            title: '去年步骤',
-            status: 'done',
-            completedDate: '2025-12-20',
-          },
-        ],
+        subtasks: [{ id: 's1', title: 'a', status: 'todo' }],
       }),
+    ];
+    const result = getYearlyTasksByDimension(tasks, 2026, defaultCategories);
+    const dim = result.find((d) => d.dimension === '项目推进')!;
+    expect(dim.progressRows).toEqual([]);
+  });
+
+  it('目标年份早于任务创建年份（createdDate 在年末之后）→ 不产生 progressRows', () => {
+    const tasks: Task[] = [
       makeTask({
-        id: '2',
-        title: '旧数据无日期',
+        id: '1',
+        title: '后年才建的任务',
         category: '内部招聘',
         status: 'in-progress',
-        subtasks: [{ id: 's2', title: 'x', status: 'done' }],
+        createdDate: '2027-02-01',
+        subtasks: [{ id: 's1', title: 'x', status: 'done' }],
       }),
     ];
     const result = getYearlyTasksByDimension(tasks, 2026, defaultCategories);

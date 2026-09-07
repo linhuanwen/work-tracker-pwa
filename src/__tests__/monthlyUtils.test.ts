@@ -655,7 +655,10 @@ describe('isSubtaskDoneInMonth', () => {
 });
 
 describe('getMonthlyNonProjectProgress', () => {
-  it('返回本月有子任务完成的推进中非项目父任务（父行 + 周期内子行）', () => {
+  // v2 呈现规则（2026-09-07）：子任务打勾即完成——不做月份/日期归因，
+  // 父任务停在待办也计入；父行 x/y 与子行 = 全部已勾（快照式）。
+
+  it('返回有已勾子任务的推进中非项目父任务（父行 + 全部已勾子行，含上月/无日期项）', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
@@ -671,34 +674,43 @@ describe('getMonthlyNonProjectProgress', () => {
           },
           {
             id: 's2',
-            title: '本月步骤B',
+            title: '六月步骤B', // 早于本月 → 也计入子行
             status: 'done',
-            completedDate: '2026-07-20',
+            completedDate: '2026-06-20',
           },
           { id: 's3', title: '待办步骤', status: 'todo' },
         ],
       }),
       makeTask({
         id: '2',
-        title: '上月有推进',
+        title: '无日期旧完成项',
         category: '内部招聘',
         status: 'in-progress',
-        subtasks: [
-          {
-            id: 's4',
-            title: '六月步骤',
-            status: 'done',
-            completedDate: '2026-06-10',
-          },
-        ],
+        subtasks: [{ id: 's4', title: '旧步骤', status: 'done' }],
       }),
     ];
-    const result = getMonthlyNonProjectProgress(tasks, 2026, 7);
-    expect(result).toHaveLength(1);
+    const result = getMonthlyNonProjectProgress(tasks);
+    expect(result).toHaveLength(2);
     expect(result[0].title).toBe('非项目推进任务');
     expect(result[0].done).toBe(2);
     expect(result[0].total).toBe(3);
-    expect(result[0].doneTitles).toEqual(['本月步骤A', '本月步骤B']);
+    expect(result[0].doneTitles).toEqual(['本月步骤A', '六月步骤B']);
+    expect(result[1].doneTitles).toEqual(['旧步骤']);
+  });
+
+  it('父任务停在「待办」但有已勾子任务 → 同样返回', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: '1',
+        title: '待办父任务',
+        category: '其他',
+        status: 'todo',
+        subtasks: [{ id: 's1', title: '已勾步骤', status: 'done' }],
+      }),
+    ];
+    const result = getMonthlyNonProjectProgress(tasks);
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe('待办父任务');
   });
 
   it('排除整单完成 / 项目归属 / 已取消任务', () => {
@@ -733,7 +745,20 @@ describe('getMonthlyNonProjectProgress', () => {
         ],
       }),
     ];
-    expect(getMonthlyNonProjectProgress(tasks, 2026, 7)).toEqual([]);
+    expect(getMonthlyNonProjectProgress(tasks)).toEqual([]);
+  });
+
+  it('没有任何已勾子任务的任务不返回', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: '1',
+        title: '全待办',
+        category: '其他',
+        status: 'in-progress',
+        subtasks: [{ id: 's1', title: 'a', status: 'todo' }],
+      }),
+    ];
+    expect(getMonthlyNonProjectProgress(tasks)).toEqual([]);
   });
 });
 

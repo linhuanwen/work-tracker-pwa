@@ -165,7 +165,7 @@ export function getCompletedTasksByCategory(
 // ============================================================
 
 /**
- * 判断子任务是否属于给定周完成：
+ * 判断子任务是否属于给定周完成（仅用于项目推进段按期归因）：
  * 优先用子任务自身的 completedDate；缺失（旧数据）时回退——
  * 父任务整单在本周完成则其完成子任务视为本周完成（子任务必不晚于父任务）。
  */
@@ -187,33 +187,31 @@ export interface NonProjectSubtaskProgressRow {
   category: string;
   total: number;
   done: number;
-  /** 本周完成的子任务标题（旧数据无日期且父任务未整单完成时为空） */
+  /** 全部已勾子任务标题（打勾即完成，不做周期归因；快照式展示） */
   doneTitles: string[];
 }
 
 /**
- * 进行中（非整单完成）且无项目归属的任务，若本周有子任务完成则返回其推进行。
- * 用于「本周完成任务」段中把推进中的父任务挂在分类下作进度说明。
+ * 未整单完成（含待办/进行中）且无项目归属的任务，只要存在已勾子任务即返回其推进行。
+ * 呈现规则（2026-09-07 定稿）：子任务打勾即视为完成，不依赖子任务日期、也不要求
+ * 父任务先改到「进行中」——故父行 x/y 与子行均为当前快照，任务存续期间每期总结都会出现。
  */
 export function getWeeklyNonProjectProgress(
   tasks: Task[],
-  weekKey: string,
 ): NonProjectSubtaskProgressRow[] {
   const rows: NonProjectSubtaskProgressRow[] = [];
   for (const task of tasks) {
     if (task.projectId !== null) continue;
     if (task.status === 'done' || task.status === 'cancelled') continue;
-    const doneTitles = task.subtasks
-      .filter((s) => isSubtaskDoneInWeek(s, task, weekKey))
-      .map((s) => s.title);
-    if (doneTitles.length === 0) continue;
+    const doneSubtasks = task.subtasks.filter((s) => s.status === 'done');
+    if (doneSubtasks.length === 0) continue;
     rows.push({
       id: task.id,
       title: task.title,
       category: task.category,
       total: task.subtasks.length,
-      done: task.subtasks.filter((s) => s.status === 'done').length,
-      doneTitles,
+      done: doneSubtasks.length,
+      doneTitles: doneSubtasks.map((s) => s.title),
     });
   }
   return rows;

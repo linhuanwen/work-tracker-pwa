@@ -45,13 +45,14 @@ function WeeklySummaryInner({ data }: { data: DataJson }) {
   // ---- Generate template content ----
   const generateSummary = useCallback(() => {
     // Section 1: Completed tasks by category
-    // 分类分组语义已扩容：整单完成任务 + 本周有子任务推进的进行中父任务（【推进中】前缀）
+    // 分类分组语义：整单完成任务 + 未整单完成但已有已勾子任务的父任务
+    // （【推进中】前缀，打勾即完成、快照式，不做周期/日期归因）
     const categoryGroups = getCompletedTasksByCategory(
       data.tasks,
       weekKey,
       data.settings.categories,
     );
-    const progressRows = getWeeklyNonProjectProgress(data.tasks, weekKey);
+    const progressRows = getWeeklyNonProjectProgress(data.tasks);
     const progressByCategory = new Map<string, typeof progressRows>();
     for (const row of progressRows) {
       const rows = progressByCategory.get(row.category) ?? [];
@@ -91,7 +92,7 @@ function WeeklySummaryInner({ data }: { data: DataJson }) {
             }
           }
         }
-        // 进行中父任务：父行（x/y 已完成）+ 本周完成子任务子行
+        // 推进中父任务（打勾即完成）：父行（x/y 已完成）+ 全部已勾子任务子行
         for (const row of progressByCategory.get(category) ?? []) {
           doneText += `- 【推进中】${row.title}（${row.done}/${row.total} 已完成）\n`;
           for (const sub of row.doneTitles) {

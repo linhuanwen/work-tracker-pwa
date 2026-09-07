@@ -97,18 +97,14 @@ function MonthlySummaryInner({ data }: { data: DataJson }) {
       quantPieces.length > 0 ? quantPieces.join('\n\n') : '（本月无量化产出）';
 
     // Section 2: 任务/项目推进（原项目进度回顾更名扩容：
-    // 项目推进 + 非项目推进中父任务的子任务推进）
+    // 项目推进（按期归因）+ 非项目未整单完成父任务的已勾子任务快照）
     const projectChanges = getMonthlyProjectProgress(
       data.tasks,
       data.projects,
       year,
       month,
     );
-    const nonProjectRows = getMonthlyNonProjectProgress(
-      data.tasks,
-      year,
-      month,
-    );
+    const nonProjectRows = getMonthlyNonProjectProgress(data.tasks);
     let projectText = '';
     if (projectChanges.length === 0 && nonProjectRows.length === 0) {
       projectText = '（本月无任务或项目子任务推进）';

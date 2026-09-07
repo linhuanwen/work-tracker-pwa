@@ -771,8 +771,10 @@ describe('getCompletedTasksByCategory 完成子任务计数', () => {
 
 describe('getWeeklyNonProjectProgress', () => {
   // 2026-W30 = Mon 7/20 – Fri 7/24
+  // v2 呈现规则（2026-09-07）：子任务打勾即完成——不做周期/日期归因，
+  // 也不要求父任务先改到「进行中」；父行 x/y 与子行 = 全部已勾（快照式）。
 
-  it('返回本周有子任务完成的推进中非项目父任务（父行 + 周期内子行）', () => {
+  it('返回有已勾子任务的推进中非项目父任务（父行 + 全部已勾子行，含早于周期/无日期项）', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
@@ -790,32 +792,43 @@ describe('getWeeklyNonProjectProgress', () => {
             id: 's2',
             title: '单位盖章',
             status: 'done',
-            completedDate: '2026-07-23',
+            completedDate: '2026-07-10', // 早于本周 → 也计入子行
           },
           { id: 's3', title: '上报市局', status: 'todo' },
         ],
       }),
       makeTask({
         id: '2',
-        title: '无推进任务',
+        title: '无日期旧完成项',
         category: '内部招聘',
         status: 'in-progress',
-        subtasks: [
-          {
-            id: 's4',
-            title: '旧完成',
-            status: 'done',
-            completedDate: '2026-07-10',
-          },
-        ],
+        subtasks: [{ id: 's4', title: '旧完成', status: 'done' }],
       }),
     ];
-    const result = getWeeklyNonProjectProgress(tasks, '2026-W30');
-    expect(result).toHaveLength(1);
+    const result = getWeeklyNonProjectProgress(tasks);
+    expect(result).toHaveLength(2);
     expect(result[0].title).toBe('职称材料准备');
     expect(result[0].total).toBe(3);
     expect(result[0].done).toBe(2);
     expect(result[0].doneTitles).toEqual(['清单核对', '单位盖章']);
+    expect(result[1].title).toBe('无日期旧完成项');
+    expect(result[1].doneTitles).toEqual(['旧完成']);
+  });
+
+  it('父任务停在「待办」但有已勾子任务 → 同样返回（用户可能不先改父状态）', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: '1',
+        title: '待办父任务',
+        category: '其他',
+        status: 'todo',
+        subtasks: [{ id: 's1', title: '已勾步骤', status: 'done' }],
+      }),
+    ];
+    const result = getWeeklyNonProjectProgress(tasks);
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe('待办父任务');
+    expect(result[0].doneTitles).toEqual(['已勾步骤']);
   });
 
   it('排除整单完成的父任务（归「本周完成任务」列表）', () => {
@@ -831,7 +844,7 @@ describe('getWeeklyNonProjectProgress', () => {
         ],
       }),
     ];
-    expect(getWeeklyNonProjectProgress(tasks, '2026-W30')).toEqual([]);
+    expect(getWeeklyNonProjectProgress(tasks)).toEqual([]);
   });
 
   it('排除项目归属任务（项目推进在 Section 2 呈现）', () => {
@@ -847,7 +860,7 @@ describe('getWeeklyNonProjectProgress', () => {
         ],
       }),
     ];
-    expect(getWeeklyNonProjectProgress(tasks, '2026-W30')).toEqual([]);
+    expect(getWeeklyNonProjectProgress(tasks)).toEqual([]);
   });
 
   it('排除已取消任务', () => {
@@ -862,19 +875,22 @@ describe('getWeeklyNonProjectProgress', () => {
         ],
       }),
     ];
-    expect(getWeeklyNonProjectProgress(tasks, '2026-W30')).toEqual([]);
+    expect(getWeeklyNonProjectProgress(tasks)).toEqual([]);
   });
 
-  it('推进中父任务仅当有周期内完成子任务时才返回（旧数据无日期 → 不强行归因）', () => {
+  it('没有任何已勾子任务的任务不返回', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        title: '无日期旧子任务',
+        title: '全待办',
         category: '其他',
         status: 'in-progress',
-        subtasks: [{ id: 's1', title: 'a', status: 'done' }],
+        subtasks: [
+          { id: 's1', title: 'a', status: 'todo' },
+          { id: 's2', title: 'b', status: 'todo' },
+        ],
       }),
     ];
-    expect(getWeeklyNonProjectProgress(tasks, '2026-W30')).toEqual([]);
+    expect(getWeeklyNonProjectProgress(tasks)).toEqual([]);
   });
 });

@@ -56,14 +56,14 @@ export function mapCategoryToDimension(category: string): string {
 // S5: 年度维度归纳 (getYearlyTasksByDimension)
 // ============================================================
 
-/** 年内有子任务完成的推进中父任务行 */
+/** 未整单完成（含待办/进行中）且已有已勾子任务的父任务行（快照式） */
 export interface YearProgressRow {
   title: string;
   /** 父任务总子任务数 */
   total: number;
-  /** 父任务已完成子任务数 */
+  /** 父任务已勾子任务数 */
   done: number;
-  /** 年内完成的子任务标题（按归因；旧数据无日期时可为空） */
+  /** 全部已勾子任务标题（打勾即完成，不做年份归因） */
   subtaskTitles: string[];
 }
 
@@ -75,13 +75,13 @@ export interface DimensionSummary {
   taskNotes: string[];
   /** 与 taskTitles 对齐：整单完成任务展开的全部完成子任务标题（无子任务为空数组） */
   taskSubtasks: string[][];
-  /** 推进中父任务（年度内有子任务完成，按年度归因） */
+  /** 推进中父任务（有已勾子任务即单列，快照式） */
   progressRows: YearProgressRow[];
   quantities: Quantity[];
 }
 
 /**
- * 判断子任务是否属于给定年份完成：
+ * 判断子任务是否属于给定年份完成（仅用于整单完成回退与既有调用）：
  * 优先用子任务自身的 completedDate；缺失（旧数据）时回退——
  * 父任务整单在本年完成则其完成子任务视为本年完成（子任务必不晚于父任务）。
  */
@@ -100,9 +100,11 @@ export function isSubtaskDoneInYear(
  * Quantities within each dimension are aggregated by label (same label → sum values).
  * All six dimensions are always returned, even if empty (taskCount = 0).
  *
- * 子任务归入总结（评审定稿呈现规则）：
+ * 子任务归入总结（呈现规则 2026-09-07 定稿）：
  * - 整单完成的任务：任务行下展开其全部完成子任务标题（taskSubtasks 与 taskTitles 对齐）；
- * - 推进中父任务：若年内有子任务完成（按 completedDate 归因），单列 progressRows（父行 + 年内完成子任务子行）。
+ * - 未整单完成（含待办/进行中）的父任务：只要存在已勾子任务即单列 progressRows——
+ *   打勾即完成，不依赖子任务日期；子行 = 全部已勾标题（快照式）。
+ *   仅计入父任务存续期覆盖到的年份（createdDate ≤ 年末且未在年初前整单完成）。
  */
 export function getYearlyTasksByDimension(
   tasks: Task[],
@@ -155,16 +157,21 @@ export function getYearlyTasksByDimension(
       continue;
     }
 
-    // 推进中父任务：年内有子任务完成才单列
-    const yearSubtasks = task.subtasks
-      .filter((s) => isSubtaskDoneInYear(s, task, year))
-      .map((s) => s.title);
-    if (yearSubtasks.length === 0) continue;
+    // 推进中父任务（打勾即完成，快照式）：
+    // 父任务须在目标年份存续——创建不晚于年末；未整单完成的父任务本就无
+    // completedDate，年份归属以其存续期近似，跨年存续的任务在每年报告中都会出现。
+    const createdInOrBeforeYear = task.createdDate
+      ? task.createdDate <= `${year}-12-31`
+      : true;
+    if (!createdInOrBeforeYear) continue;
+
+    const doneSubtasks = task.subtasks.filter((s) => s.status === 'done');
+    if (doneSubtasks.length === 0) continue;
     entry.progressRows.push({
       title: task.title,
       total: task.subtasks.length,
-      done: task.subtasks.filter((s) => s.status === 'done').length,
-      subtaskTitles: yearSubtasks,
+      done: doneSubtasks.length,
+      subtaskTitles: doneSubtasks.map((s) => s.title),
     });
   }
 

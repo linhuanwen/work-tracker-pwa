@@ -9,9 +9,15 @@
 
 - `SubTask.completedDate` 字段 + 写/清语义（勾选 done 记当天、撤销清空）已进 `types.ts` / `taskUtils.ts`；`DATA_VERSION` 仍为 1（可选字段，旧数据无需迁移，Phase B 迁移只做可选性说明即可）。
 - 周报「本周完成任务」分类分组语义扩容（整单完成括注 `（完成子任务 n 项）`、推进中父任务以 `【推进中】（x/y 已完成）` 父行 + 周期内子行挂所属分类）；月报「项目进度回顾」更名「任务/项目推进」（字段键 `projectReview` 不变），量化汇总末尾追加"本月完成子任务 n 项（跨 m 个任务）"；年报维度要点整单完成展开全部完成子任务标题、推进中父任务单列（按年度归因）。归因回退规则同「呈现规则」表。
+- **呈现规则 v2（2026-09-07 用户定稿，取代 v1 的"子任务按期归因"）**：子任务**打勾即视为完成**——不依赖 `completedDate`、也不要求父任务先改到「进行中」（待办/进行中均展示）。父行 x/y = 父任务当前全部已勾数；子行 = **全部已勾子任务标题**（不做周期/年份过滤，快照式——未整单完成父任务存续期间每期总结都会出现）。背景：旧客户端时期勾选的数据无 `completedDate`，按 v1 归因在周/月报中不可见；且用户习惯不改父任务状态。保留项：
+  1. 整单完成任务桶不变（周/月括注计数不展开、年报展开；无日期子任务随父任务整单完成回退计数）。
+  2. 项目推进段（周 Section 2 / 月 Section 2 项目部分）仍按 `completedDate` 按期归因算 `% → %` 进度（`%` 语义必须有周期边界；无项目子任务旧数据场景，Phase B 再评估快照式）。
+  3. 月报量化尾行"本月完成子任务 n 项"仍按真实日期统计——"本月完成"是日期语义，无日期子任务不冒充本月（其完成情况已由 Section 2 父行 x/y 承载）。
+  4. 年报 progressRows 按"任务在目标年份存续"过滤（`createdDate` ≤ 年末），子任务不做年份归因。
 - 与冻结设计的**已知差异**（Phase B/C 落地时再评估）：
   1. `entry.tasks` 仍只收整单完成的任务 id，未按配方规则并入推进中父任务 id —— 保持"已完成任务"列表语义与数据安全；配方 taskIds 并集规则留给 v2 归档按 templateId 桶化时再定。
   2. 年量化行未追加"全年完成子任务 n 项"计数（该段没有任务级量化行可挂）；计数口径由周/月统计行与年度维度展开承担。
+  3. 原「呈现规则」表中"周/月子行仅列周期内完成标题、旧数据无日期不强行归因"等句已被 v2 取代（见上）。
 
 ## Problem Statement
 
@@ -78,7 +84,7 @@ export interface SummaryTemplate {
   /** 稳定 id，命名 <period>-<variant>，如 'week-default'、'week-oa'。一旦发布不可改名（归档按它分桶）。 */
   id: string;
   periodType: PeriodType;
-  name: string;             // '工作周报'
+  name: string; // '工作周报'
   description: string;
   /** 模板默认章节标题前缀，Word 一级标题用，缺省 = 周期名（现状行为） */
   docPrefix?: string;
@@ -89,23 +95,23 @@ export interface SummaryTemplate {
 export interface SummarySection {
   /** 归档存储字段，camelCase；沿用现有字段名保证 v1 数据零丢失 */
   key: string;
-  title: string;            // 界面与 Word "## 标题"
+  title: string; // 界面与 Word "## 标题"
   /** manual = 人工撰写（可 AI 润色）；auto = 可从任务数据一键生成草稿后人工修改 */
   kind: 'manual' | 'auto';
   /** kind='auto' 时引用配方 id（见 summaryRecipes.ts），缺省则无一键生成能力 */
   fill?: string;
-  placeholder: string;      // 空章节引导文案
-  singleLine?: boolean;     // 单行输入（如"一句话总结"）
+  placeholder: string; // 空章节引导文案
+  singleLine?: boolean; // 单行输入（如"一句话总结"）
 }
 
 /** AutoFill 配方：把任务/项目数据转成某章节的草稿文本 */
 export interface AutoFillContext {
   data: DataJson;
-  periodKey: string;        // '2026-W36' | '2026-09' | '2026'
+  periodKey: string; // '2026-W36' | '2026-09' | '2026'
 }
 export interface AutoFillResult {
-  text: string;             // 生成内容（空则用 placeholder）
-  taskIds?: string[];       // 该章节消费的任务 id（并入 entry.tasks 的并集）
+  text: string; // 生成内容（空则用 placeholder）
+  taskIds?: string[]; // 该章节消费的任务 id（并入 entry.tasks 的并集）
 }
 export type AutoFillRecipe = (ctx: AutoFillContext) => AutoFillResult;
 ```
@@ -125,67 +131,67 @@ export type AutoFillRecipe = (ctx: AutoFillContext) => AutoFillResult;
 
 **week-default「工作周报」**（`default`；结构 = 现状，keys 不变 → v1 数据无缝）
 
-| key | title | kind | fill | placeholder |
-|---|---|---|---|---|
-| doneTasks | 本周完成任务 | auto | week.completedByCategory | （本周无完成任务） |
-| projectProgress | 长期项目推进 | auto | week.projectProgress | （本周无项目子任务推进） |
-| nextWeekPlan | 下周计划 | auto | week.planCandidates | （暂无待办任务） |
-| blockers | 需协调事项 | auto | week.blockers | （无需协调事项） |
+| key             | title        | kind | fill                     | placeholder              |
+| --------------- | ------------ | ---- | ------------------------ | ------------------------ |
+| doneTasks       | 本周完成任务 | auto | week.completedByCategory | （本周无完成任务）       |
+| projectProgress | 长期项目推进 | auto | week.projectProgress     | （本周无项目子任务推进） |
+| nextWeekPlan    | 下周计划     | auto | week.planCandidates      | （暂无待办任务）         |
+| blockers        | 需协调事项   | auto | week.blockers            | （无需协调事项）         |
 
 **week-oa「通用周报」**（供 OA/通用口径上报；参考 guaguaguaxia `general_weekly` 精简）
 
-| key | title | kind | fill | placeholder |
-|---|---|---|---|---|
-| doneTasks | 本周工作内容 | auto | week.completedByCategory | （本周无完成任务） |
-| highlights | 工作成果与亮点 | manual | — | 记录成果、亮点数据… |
-| nextWeekPlan | 下周计划 | auto | week.planCandidates | （暂无待办任务） |
+| key          | title          | kind   | fill                     | placeholder         |
+| ------------ | -------------- | ------ | ------------------------ | ------------------- |
+| doneTasks    | 本周工作内容   | auto   | week.completedByCategory | （本周无完成任务）  |
+| highlights   | 工作成果与亮点 | manual | —                        | 记录成果、亮点数据… |
+| nextWeekPlan | 下周计划       | auto   | week.planCandidates      | （暂无待办任务）    |
 
 #### month — 月报（2 套）
 
 **month-default「月度总结」**（`default`；= 现状）
 
-| key | title | kind | fill | placeholder |
-|---|---|---|---|---|
-| quantitativeSummary | 量化汇总表 | auto | month.quantified | （本月无量化产出） |
-| projectReview | 任务/项目推进 | auto | month.projectProgress | （本月无任务或项目子任务推进） |
-| reflection | 月度反思 | manual | — | 记录本月做得好/待改进… |
-| nextMonthFocus | 下月重点 | manual | — | 记录下月工作重点… |
+| key                 | title         | kind   | fill                  | placeholder                    |
+| ------------------- | ------------- | ------ | --------------------- | ------------------------------ |
+| quantitativeSummary | 量化汇总表    | auto   | month.quantified      | （本月无量化产出）             |
+| projectReview       | 任务/项目推进 | auto   | month.projectProgress | （本月无任务或项目子任务推进） |
+| reflection          | 月度反思      | manual | —                     | 记录本月做得好/待改进…         |
+| nextMonthFocus      | 下月重点      | manual | —                     | 记录下月工作重点…              |
 
 > 评审变更：「项目进度回顾」更名扩容为「任务/项目推进」（沿用 `projectReview` 键），内容 = 项目推进 + 非项目推进中任务的子任务推进（见「AutoFill 配方注册表」呈现规则）。旧月份数据仍在该字段下，仅标题语义更新。
 
 **month-oa「通用月度总结」**
 
-| key | title | kind | fill | placeholder |
-|---|---|---|---|---|
-| quantitativeSummary | 量化成果 | auto | month.quantified | （本月无量化产出） |
-| mainWork | 主要工作 | manual | — | 按模块或项目归纳本月主要工作… |
-| problems | 问题与对策 | manual | — | 记录问题与改进措施… |
-| nextMonthFocus | 下月计划 | manual | — | 记录下月计划… |
+| key                 | title      | kind   | fill             | placeholder                   |
+| ------------------- | ---------- | ------ | ---------------- | ----------------------------- |
+| quantitativeSummary | 量化成果   | auto   | month.quantified | （本月无量化产出）            |
+| mainWork            | 主要工作   | manual | —                | 按模块或项目归纳本月主要工作… |
+| problems            | 问题与对策 | manual | —                | 记录问题与改进措施…           |
+| nextMonthFocus      | 下月计划   | manual | —                | 记录下月计划…                 |
 
 #### year — 年报（2 套）
 
 **year-default「年度总结」**（`default`；= 现状 6 维度 + 一句话总结。字段名沿用 v1 的 camelCase）
 
-| key | title | kind | fill | placeholder |
-|---|---|---|---|---|
-| personnelAllocation | 日常工作 | auto | year.byDimension | （该维度暂无任务记录） |
-| internalRecruitment | 项目推进 | auto | year.byDimension | 同上 |
-| rewardDiscipline | 奖惩管理 | auto | year.byDimension | 同上 |
-| performance | 绩效管理 | auto | year.byDimension | 同上 |
-| laborRelations | 劳动关系 | auto | year.byDimension | 同上 |
-| leaderAssigned | 交办事项 | auto | year.byDimension | 同上 |
-| other | 一句话总结 | manual | — | 一句话概括全年工作… |
+| key                 | title                | kind   | fill             | placeholder            |
+| ------------------- | -------------------- | ------ | ---------------- | ---------------------- |
+| personnelAllocation | 日常工作             | auto   | year.byDimension | （该维度暂无任务记录） |
+| internalRecruitment | 项目推进 | auto   | year.byDimension | 同上                   |
+| rewardDiscipline    | 奖惩管理             | auto   | year.byDimension | 同上                   |
+| performance         | 绩效管理             | auto   | year.byDimension | 同上                   |
+| laborRelations      | 劳动关系             | auto   | year.byDimension | 同上                   |
+| leaderAssigned      | 交办事项             | auto   | year.byDimension | 同上                   |
+| other               | 一句话总结           | manual | —                | 一句话概括全年工作…    |
 
 注：`other` 语义从 v1 即"一句话总结"（见 `YearlyReport.tsx` 的 `saveOneLiner` / `autoOneLiner` 逻辑），本期不改语义。
 
 **year-oa「通用年度总结」**（供述职/评审之外的通用场景）
 
-| key | title | kind | fill | placeholder |
-|---|---|---|---|---|
-| mainWork | 年度主要工作 | auto | year.byDimension | （本年暂无完成任务） |
-| achievements | 量化产出 | auto | year.quantified | （本年无量化产出） |
-| problems | 不足与改进 | manual | — | 记录不足与改进计划… |
-| nextYearPlan | 明年计划 | manual | — | 记录明年重点计划… |
+| key          | title        | kind   | fill             | placeholder          |
+| ------------ | ------------ | ------ | ---------------- | -------------------- |
+| mainWork     | 年度主要工作 | auto   | year.byDimension | （本年暂无完成任务） |
+| achievements | 量化产出     | auto   | year.quantified  | （本年无量化产出）   |
+| problems     | 不足与改进   | manual | —                | 记录不足与改进计划…  |
+| nextYearPlan | 明年计划     | manual | —                | 记录明年重点计划…    |
 
 > 参考 guaguaguaxia 的 `hr_weekly`（招聘进展/培训发展/行政事务/员工关怀/下周重点）可作为后续 week 的第三套 preset 候选，本期不引入，避免预设泛滥。
 
@@ -197,11 +203,11 @@ export type AutoFillRecipe = (ctx: AutoFillContext) => AutoFillResult;
 
 子任务被建模为**父任务的具体进度安排**，总结以父任务为行主体，完成子任务悬挂其下：
 
-| 场景 | 周/月报 | 年报 |
-|---|---|---|
-| 父任务本周期**整单完成** | 单行列出：`- title（完成子任务 n 项）`，不展开子行 | 单行 + **逐条展开**该任务全部完成子任务标题（述职要明细） |
-| 父任务**进行中**但本周期有子任务完成 | 主行 `- 【推进中】title（x/y 已完成）` + 子行逐条列出**周期内完成**的子任务标题 | 同样逐条展开（按年度归因），且计入维度要点 |
-| 无子任务或本周期无推进 | 现状行为不变（只统计整单完成） | 现状行为不变 |
+| 场景                                 | 周/月报                                                                         | 年报                                                      |
+| ------------------------------------ | ------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| 父任务本周期**整单完成**             | 单行列出：`- title（完成子任务 n 项）`，不展开子行                              | 单行 + **逐条展开**该任务全部完成子任务标题（述职要明细） |
+| 父任务**进行中**但本周期有子任务完成 | 主行 `- 【推进中】title（x/y 已完成）` + 子行逐条列出**周期内完成**的子任务标题 | 同样逐条展开（按年度归因），且计入维度要点                |
+| 无子任务或本周期无推进               | 现状行为不变（只统计整单完成）                                                  | 现状行为不变                                              |
 
 - 进度比例 `x/y` 为完成子任务数 / 总子任务数；周/月子行只列周期内新完成的（其余折叠为计数），年报子行列全部。
 - 「本周完成任务」的分类分组语义随之扩容为"本周完成任务与推进"：整单完成的任务 + 有子任务推进的进行中父任务都出现在其所属分类分组下（推进条目带 `【推进中】` 前缀）。
@@ -209,16 +215,16 @@ export type AutoFillRecipe = (ctx: AutoFillContext) => AutoFillResult;
 
 ### 配方注册表
 
-| 配方 id | 生成内容 | 数据来源（现状/迁移） |
-|---|---|---|
-| week.completedByCategory | 本周完成任务与推进（分类分组，含推进中父任务 + 周期内完成子任务子行） | `weeklyUtils.getCompletedTasksByCategory` + `formatQuantityText`；新增进行中任务推进查询；`WeeklySummary.tsx:47` 内联排版下沉 |
-| week.projectProgress | 长期项目推进（项目级 X→Y% + 周期内完成子任务子行，真实日期归因） | `weeklyUtils.getProjectProgressChanges`（改为按子任务日期归因，父任务无需整单完成） |
-| week.planCandidates | 下周计划 | `weeklyUtils.getNextWeekPlanCandidates` |
-| week.blockers | 需协调事项 | `weeklyUtils.getCoordinationItems` |
-| month.quantified | 量化汇总表；末尾追加"本月完成子任务 n 项（跨 m 个任务）" | `MonthlySummary.tsx` 量化生成 + `monthlyUtils.aggregateMonthlyQuantities` |
-| month.projectProgress | 任务/项目推进：项目推进（日期归因）+ 非项目推进中任务（父行 + 周期内完成子任务子行） | `monthlyUtils.getMonthlyProjectProgress`（日期归因改造）+ 新增非项目任务查询 |
-| year.byDimension | 六维度归纳：各维度整单完成要点 + 展开子任务明细；推进中父任务单列（父行 + 年度完成子任务子行） | `yearlyUtils.getYearlyTasksByDimension` + `mapCategoryToDimension`（维度查询扩展） |
-| year.quantified | 全年量化聚合；末尾追加"全年完成子任务 n 项" | 新增全年聚合（复用按月量化函数） |
+| 配方 id                  | 生成内容                                                                                       | 数据来源（现状/迁移）                                                                                                         |
+| ------------------------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| week.completedByCategory | 本周完成任务与推进（分类分组，含推进中父任务 + 周期内完成子任务子行）                          | `weeklyUtils.getCompletedTasksByCategory` + `formatQuantityText`；新增进行中任务推进查询；`WeeklySummary.tsx:47` 内联排版下沉 |
+| week.projectProgress     | 长期项目推进（项目级 X→Y% + 周期内完成子任务子行，真实日期归因）                               | `weeklyUtils.getProjectProgressChanges`（改为按子任务日期归因，父任务无需整单完成）                                           |
+| week.planCandidates      | 下周计划                                                                                       | `weeklyUtils.getNextWeekPlanCandidates`                                                                                       |
+| week.blockers            | 需协调事项                                                                                     | `weeklyUtils.getCoordinationItems`                                                                                            |
+| month.quantified         | 量化汇总表；末尾追加"本月完成子任务 n 项（跨 m 个任务）"                                       | `MonthlySummary.tsx` 量化生成 + `monthlyUtils.aggregateMonthlyQuantities`                                                     |
+| month.projectProgress    | 任务/项目推进：项目推进（日期归因）+ 非项目推进中任务（父行 + 周期内完成子任务子行）           | `monthlyUtils.getMonthlyProjectProgress`（日期归因改造）+ 新增非项目任务查询                                                  |
+| year.byDimension         | 六维度归纳：各维度整单完成要点 + 展开子任务明细；推进中父任务单列（父行 + 年度完成子任务子行） | `yearlyUtils.getYearlyTasksByDimension` + `mapCategoryToDimension`（维度查询扩展）                                            |
+| year.quantified          | 全年量化聚合；末尾追加"全年完成子任务 n 项"                                                    | 新增全年聚合（复用按月量化函数）                                                                                              |
 
 > 评审变更：配方语义从"完成任务"扩为"完成任务与子任务推进"。为此须给 `SubTask` 增加完成日期追踪，见「归档数据模型与迁移」第 3 条。
 
@@ -242,12 +248,16 @@ v1 数据形态（现状）：
     "weeks": {
       "2026-W36": {
         "tasks": ["t1"],
-        "summary": { "doneTasks": "…", "projectProgress": "…",
-                     "nextWeekPlan": "…", "blockers": "…" },
-        "aiPolished": false
-      }
-    }
-  }
+        "summary": {
+          "doneTasks": "…",
+          "projectProgress": "…",
+          "nextWeekPlan": "…",
+          "blockers": "…",
+        },
+        "aiPolished": false,
+      },
+    },
+  },
 }
 ```
 
@@ -258,15 +268,20 @@ v2 数据形态（目标）：
   "archives": {
     "weeks": {
       "2026-W36": {
-        "week-default": {                       // ← 迁移时包进周期默认模板 id
+        "week-default": {
+          // ← 迁移时包进周期默认模板 id
           "tasks": ["t1"],
-          "summary": { "doneTasks": "…", "projectProgress": "…",
-                       "nextWeekPlan": "…", "blockers": "…" },
-          "aiPolished": false
-        }
-      }
-    }
-  }
+          "summary": {
+            "doneTasks": "…",
+            "projectProgress": "…",
+            "nextWeekPlan": "…",
+            "blockers": "…",
+          },
+          "aiPolished": false,
+        },
+      },
+    },
+  },
 }
 ```
 
@@ -275,12 +290,13 @@ v2 数据形态（目标）：
 ```ts
 // types.ts v2
 export interface SummaryEntry {
-  tasks: string[];                // 语义不变
+  tasks: string[]; // 语义不变
   summary: Record<string, string>; // 不再按周期硬编码字段 → 由模板 key 集解释
   aiPolished: boolean;
 }
 export type SummaryTemplateId = string;
-export interface Archive {        // 每层加 templateId 分桶
+export interface Archive {
+  // 每层加 templateId 分桶
   weeks: Record<string, Record<SummaryTemplateId, SummaryEntry>>;
   months: Record<string, Record<SummaryTemplateId, SummaryEntry>>;
   years: Record<string, Record<SummaryTemplateId, SummaryEntry>>;
@@ -321,19 +337,19 @@ export interface Settings {
 
 ### 涉及文件清单
 
-| 文件 | 变更 |
-|---|---|
-| `src/summaryTemplates/types.ts` | 新增：Schema |
-| `src/summaryTemplates/presets.ts` | 新增：6 套预设 + 选择器 |
-| `src/summaryTemplates/summaryRecipes.ts` | 新增：配方注册表（从页面下沉） |
-| `src/types.ts` | v2：嵌套归档、SummaryEntry、settings.summaryTemplateIds、`SubTask.completedDate`、DATA_VERSION=2 |
-| `src/taskUtils.ts` / `DataContext.tsx` | 子任务勾选/更新写入与清空 `completedDate`；archive actions 带 templateId；迁移调用链 |
-| `src/WeeklySummary.tsx` / `MonthlySummary.tsx` / `YearlyReport.tsx` | 模板驱动渲染 + 共用生成/导出逻辑，删除内联章节定义；月报节标题「任务/项目推进」 |
-| `src/Reports.tsx` | 占位模板改为活动模板驱动 |
-| `src/Settings.tsx` | 总结模板选择 UI |
-| `src/weeklyUtils.ts` / `monthlyUtils.ts` / `yearlyUtils.ts` | 新增周期内完成子任务过滤/推进中任务查询辅助；项目进度函数改为按子任务日期归因 |
-| 新增通用组件 `SummaryEditor.tsx`（若三页共享度高） | 模板渲染核心，三页作为"周期适配层" |
-| `docs/specs/0001` / `README` | 数据模型章节同步 |
+| 文件                                                                | 变更                                                                                             |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `src/summaryTemplates/types.ts`                                     | 新增：Schema                                                                                     |
+| `src/summaryTemplates/presets.ts`                                   | 新增：6 套预设 + 选择器                                                                          |
+| `src/summaryTemplates/summaryRecipes.ts`                            | 新增：配方注册表（从页面下沉）                                                                   |
+| `src/types.ts`                                                      | v2：嵌套归档、SummaryEntry、settings.summaryTemplateIds、`SubTask.completedDate`、DATA_VERSION=2 |
+| `src/taskUtils.ts` / `DataContext.tsx`                              | 子任务勾选/更新写入与清空 `completedDate`；archive actions 带 templateId；迁移调用链             |
+| `src/WeeklySummary.tsx` / `MonthlySummary.tsx` / `YearlyReport.tsx` | 模板驱动渲染 + 共用生成/导出逻辑，删除内联章节定义；月报节标题「任务/项目推进」                  |
+| `src/Reports.tsx`                                                   | 占位模板改为活动模板驱动                                                                         |
+| `src/Settings.tsx`                                                  | 总结模板选择 UI                                                                                  |
+| `src/weeklyUtils.ts` / `monthlyUtils.ts` / `yearlyUtils.ts`         | 新增周期内完成子任务过滤/推进中任务查询辅助；项目进度函数改为按子任务日期归因                    |
+| 新增通用组件 `SummaryEditor.tsx`（若三页共享度高）                  | 模板渲染核心，三页作为"周期适配层"                                                               |
+| `docs/specs/0001` / `README`                                        | 数据模型章节同步                                                                                 |
 
 ### 实施阶段（每阶段可独立评审/合入）
 

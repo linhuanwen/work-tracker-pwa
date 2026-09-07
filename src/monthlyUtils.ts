@@ -181,7 +181,7 @@ export function getMonthlyProjectProgress(
 // ============================================================
 
 /**
- * 判断子任务是否属于给定月份完成：
+ * 判断子任务是否属于给定月份完成（仅用于项目推进段按期归因与月度统计尾行）：
  * 优先用子任务自身的 completedDate；缺失（旧数据）时回退——
  * 父任务整单在本月完成则其完成子任务视为本月完成（子任务必不晚于父任务）。
  */
@@ -203,33 +203,31 @@ export interface NonProjectSubtaskProgressRow {
   title: string;
   total: number;
   done: number;
-  /** 本月完成的子任务标题（旧数据无日期且父任务未整单完成时为空） */
+  /** 全部已勾子任务标题（打勾即完成，不做周期归因；快照式展示） */
   doneTitles: string[];
 }
 
 /**
- * 进行中（非整单完成）且无项目归属的任务，若本月有子任务完成则返回其推进行，
- * 用于「任务/项目推进」段把推进中的父任务挂在其进度说明之下。
+ * 未整单完成（含待办/进行中）且无项目归属的任务，只要存在已勾子任务即返回其推进行，
+ * 用于「任务/项目推进」段挂进度说明。呈现规则（2026-09-07 定稿）：
+ * 子任务打勾即视为完成，不依赖子任务日期、也不要求父任务先改到「进行中」；
+ * 父行 x/y 与子行均为当前快照，任务存续期间每期总结都会出现。
  */
 export function getMonthlyNonProjectProgress(
   tasks: Task[],
-  year: number,
-  month: number,
 ): NonProjectSubtaskProgressRow[] {
   const rows: NonProjectSubtaskProgressRow[] = [];
   for (const task of tasks) {
     if (task.projectId !== null) continue;
     if (task.status === 'done' || task.status === 'cancelled') continue;
-    const doneTitles = task.subtasks
-      .filter((s) => isSubtaskDoneInMonth(s, task, year, month))
-      .map((s) => s.title);
-    if (doneTitles.length === 0) continue;
+    const doneSubtasks = task.subtasks.filter((s) => s.status === 'done');
+    if (doneSubtasks.length === 0) continue;
     rows.push({
       id: task.id,
       title: task.title,
       total: task.subtasks.length,
-      done: task.subtasks.filter((s) => s.status === 'done').length,
-      doneTitles,
+      done: doneSubtasks.length,
+      doneTitles: doneSubtasks.map((s) => s.title),
     });
   }
   return rows;

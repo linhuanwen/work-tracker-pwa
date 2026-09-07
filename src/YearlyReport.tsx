@@ -95,7 +95,7 @@ function YearlyReportInner({ data }: { data: DataJson }) {
     }
     if (hasProgress) {
       if (text) text += '\n\n';
-      text += '推进中（年度内有子任务完成）：\n';
+      text += '推进中（已勾子步骤为当前完成情况）：\n';
       for (const row of dim.progressRows) {
         text += `- 【推进中】${row.title}（${row.done}/${row.total} 已完成）\n`;
         for (const sub of row.subtaskTitles) {

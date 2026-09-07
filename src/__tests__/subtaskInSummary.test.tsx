@@ -1,11 +1,15 @@
 /**
  * 子任务纳入周/月/年报总结 — 组件级生成内容验证
  *
+ * 呈现规则 v2（2026-09-07 定稿）：子任务打勾即完成——不依赖子任务日期、
+ * 也不要求父任务先改到「进行中」（待办/进行中均可）。父行 x/y = 全部已勾数，
+ * 子行 = 全部已勾子任务标题（快照式，任务存续期间每期总结都会出现）。
+ *
  * 直接挂载三个总结页，点击「生成」后断言归档 entry 的 markdown：
- * - 周报：整单完成任务括注（完成子任务 n 项）；推进中父任务以【推进中】(x/y) 行 + 周期内子行挂在分类下；
- *   项目推进仍走「长期项目推进」段（父任务按子任务日期归因）。
- * - 月报：「任务/项目推进」段合并项目推进与非项目推进行；量化汇总末尾追加完成子任务统计。
- * - 年报：整单完成维度要点展开全部完成子任务标题；推进中父任务单列（按年度归因）。
+ * - 周报：整单完成任务括注（完成子任务 n 项）；未整单完成父任务以【推进中】(x/y) 行 + 全部已勾子行挂在分类下；
+ *   项目推进仍走「长期项目推进」段（按期归因，项目任务不混入该段）。
+ * - 月报：「任务/项目推进」段合并项目推进与非项目推进行；量化汇总末尾统计行仅计有真实日期的本月完成。
+ * - 年报：整单完成维度要点展开全部完成子任务标题；未整单完成父任务单列（含无日期已勾子任务）。
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -69,7 +73,7 @@ const TASK_PROGRESS = {
       id: 's5',
       title: '汇总历史数据',
       status: 'done',
-      completedDate: pastDay, // 早于本周期 → 只入计数不入子行
+      // 旧客户端勾选 → 无 completedDate：v2 打勾即完成，同样计入父行与子行
     },
     { id: 's6', title: '生成评审名册', status: 'todo' },
   ],
@@ -195,16 +199,15 @@ describe('周报：子任务纳入「本周完成任务」', () => {
     expect(doneTasks).toContain(
       '- 绩效考核任务（考核 120 人，完成子任务 2 项）',
     );
-    // 推进中父任务挂在所属分类下：父行 x/y（x=全部已完成，含历史周期）+ 本周完成子行；
-    // 早于本周期的完成子任务只入计数不展开
+    // 推进中父任务挂在所属分类下：父行 x/y（x=全部已勾，含无日期旧项）
+    // + 子行展开全部已勾标题（打勾即完成，不做周期过滤）
     expect(doneTasks).toContain('- 【推进中】职称材料整理（2/3 已完成）');
     expect(doneTasks).toContain('  - 收集学历证明');
-    expect(doneTasks).not.toContain('  - 汇总历史数据');
-    // 项目任务仍归「长期项目推进」段
+    expect(doneTasks).toContain('  - 汇总历史数据');
+    // 项目任务仍归「长期项目推进」段（按期归因）
     expect(doneTasks).not.toContain('考核系统联调');
     expect(projectText).toContain('考核系统改造专项');
     expect(projectText).toContain('  - 完成系统联调');
-    // 项目进度按真实日期归因（父任务未整单完成也计入）
     expect(projectText).toContain('本周完成 1 项子任务');
   });
 });
@@ -222,10 +225,11 @@ describe('月报：任务/项目推进段与子任务统计', () => {
     const quantText = entry.summary.quantitativeSummary as string;
     const projectText = entry.summary.projectReview as string;
 
-    // 量化表 + 重点任务内容（整单完成括注）+ 统计行
+    // 量化表 + 重点任务内容（整单完成括注）+ 统计行（仅计有真实日期的本月完成）
     expect(quantText).toContain('| 绩效管理 | 考核 | 120 人 |');
     expect(quantText).toContain('- 绩效考核任务（完成子任务 2 项）');
-    // t-done(2 项回退) + t-progress(1) + t-project(1) → 跨 3 个任务
+    // t-done(2 项整单回退) + s4(有日期) + s7(项目有日期) → 4 项跨 3 个任务；
+    // s5 无日期不计入「本月完成」统计行（无日期不冒充本月）
     expect(quantText).toContain('本月完成子任务 4 项（跨 3 个任务）');
 
     // 任务/项目推进：项目推进行 + 非项目推进中父任务父行/子行
@@ -235,7 +239,7 @@ describe('月报：任务/项目推进段与子任务统计', () => {
     expect(projectText).toContain('  - 完成系统联调');
     expect(projectText).toContain('- 【推进中】职称材料整理（2/3 已完成）');
     expect(projectText).toContain('  - 收集学历证明');
-    expect(projectText).not.toContain('  - 汇总历史数据');
+    expect(projectText).toContain('  - 汇总历史数据');
   });
 });
 
@@ -248,8 +252,8 @@ describe('年报：维度要点展开子任务、推进中父任务单列', () =
     expect(document.body.textContent).toContain('- 绩效考核任务');
     expect(document.body.textContent).toContain('  - 发布子步一');
     expect(document.body.textContent).toContain('  - 发布子步二');
-    // 内部招聘维度（无整单完成，仅推进）：推进中父任务按年度归因单列，
-    // 年度内完成的子任务全部展开（7 月与本月均属 2026 年）
+    // 内部招聘维度（无整单完成，仅推进）：推进中父任务单列（打勾即完成），
+    // 全部已勾子任务展开——含 7 月完成项与无日期旧项
     expect(document.body.textContent).toContain(
       '- 【推进中】职称材料整理（2/3 已完成）',
     );
