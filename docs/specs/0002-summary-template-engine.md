@@ -1,7 +1,7 @@
 # Spec: 总结模板引擎（Summary Template Engine）
 
 > 编号 0002 · 基于 [guaguaguaxia/weekly_report](https://github.com/guaguaguaxia/weekly_report)（3.2k★，模板 = `{id, name, sections, category, tags}` 可插拔对象）与 SmartBrief 的模板思想，为 0001 的"周小结（四段式模板）/月小结/年度报告"建立一套**数据驱动的模板格式**。
-> 状态：草案，待评审。评审通过前不实施。
+> 状态：评审定稿（含子任务纳入总结的补充需求，见「AutoFill 配方注册表」与「归档数据模型」两节）。实施前仍可提出修改。
 
 ## Problem Statement
 
@@ -137,9 +137,11 @@ export type AutoFillRecipe = (ctx: AutoFillContext) => AutoFillResult;
 | key | title | kind | fill | placeholder |
 |---|---|---|---|---|
 | quantitativeSummary | 量化汇总表 | auto | month.quantified | （本月无量化产出） |
-| projectReview | 项目进度回顾 | auto | month.projectProgress | （本月无项目子任务推进） |
+| projectReview | 任务/项目推进 | auto | month.projectProgress | （本月无任务或项目子任务推进） |
 | reflection | 月度反思 | manual | — | 记录本月做得好/待改进… |
 | nextMonthFocus | 下月重点 | manual | — | 记录下月工作重点… |
+
+> 评审变更：「项目进度回顾」更名扩容为「任务/项目推进」（沿用 `projectReview` 键），内容 = 项目推进 + 非项目推进中任务的子任务推进（见「AutoFill 配方注册表」呈现规则）。旧月份数据仍在该字段下，仅标题语义更新。
 
 **month-oa「通用月度总结」**
 
@@ -179,23 +181,41 @@ export type AutoFillRecipe = (ctx: AutoFillContext) => AutoFillResult;
 
 ### AutoFill 配方注册表
 
-配方统一收敛到一个新模块 `src/summaryTemplates/summaryRecipes.ts`，把**现在散落在三个页面组件里的一键生成内联逻辑**下沉为可注册函数；已存在于 utils 的纯函数直接复用，不在配方里重写：
+配方统一收敛到一个新模块 `src/summaryTemplates/summaryRecipes.ts`，把**现在散落在三个页面组件里的一键生成内联逻辑**下沉为可注册函数；已存在于 utils 的纯函数直接复用，不在配方里重写。
 
-| 配方 id | 现状来源（迁移目标） |
-|---|---|
-| week.completedByCategory | `WeeklySummary.tsx:47` 内联逻辑（按分类分组 + 量化文本 + notes）；utils 层现已有 `getCompletedTasksByCategory`、`formatQuantityText` |
-| week.projectProgress | `weeklyUtils.getProjectProgressChanges` + 现有排版（`WeeklySummary.tsx:73`） |
-| week.planCandidates | `weeklyUtils.getNextWeekPlanCandidates` |
-| week.blockers | `weeklyUtils.getCoordinationItems` |
-| month.quantified | `MonthlySummary.tsx` 量化汇总生成（基于 `monthlyUtils.aggregateMonthlyQuantities`） |
-| month.projectProgress | `MonthlySummary.tsx` 项目进度段落（基于 `monthlyUtils` 现有月内变化函数） |
-| year.byDimension | `yearlyUtils.getYearlyTasksByDimension` + `mapCategoryToDimension`（每维度分别调用，产出"维度 → 要点列表"草稿） |
-| year.quantified | 复用按月量化的全年聚合（新增，替代 YearlyReport 无量化段现状） |
+### 呈现规则（评审定稿）：父任务为主体、子任务为进度说明
+
+子任务被建模为**父任务的具体进度安排**，总结以父任务为行主体，完成子任务悬挂其下：
+
+| 场景 | 周/月报 | 年报 |
+|---|---|---|
+| 父任务本周期**整单完成** | 单行列出：`- title（完成子任务 n 项）`，不展开子行 | 单行 + **逐条展开**该任务全部完成子任务标题（述职要明细） |
+| 父任务**进行中**但本周期有子任务完成 | 主行 `- 【推进中】title（x/y 已完成）` + 子行逐条列出**周期内完成**的子任务标题 | 同样逐条展开（按年度归因），且计入维度要点 |
+| 无子任务或本周期无推进 | 现状行为不变（只统计整单完成） | 现状行为不变 |
+
+- 进度比例 `x/y` 为完成子任务数 / 总子任务数；周/月子行只列周期内新完成的（其余折叠为计数），年报子行列全部。
+- 「本周完成任务」的分类分组语义随之扩容为"本周完成任务与推进"：整单完成的任务 + 有子任务推进的进行中父任务都出现在其所属分类分组下（推进条目带 `【推进中】` 前缀）。
+- 周期归因不再使用"父任务整单完成才计入子任务"的启发式，改用**子任务真实完成日期**过滤，跨周/月推进不再漏报。
+
+### 配方注册表
+
+| 配方 id | 生成内容 | 数据来源（现状/迁移） |
+|---|---|---|
+| week.completedByCategory | 本周完成任务与推进（分类分组，含推进中父任务 + 周期内完成子任务子行） | `weeklyUtils.getCompletedTasksByCategory` + `formatQuantityText`；新增进行中任务推进查询；`WeeklySummary.tsx:47` 内联排版下沉 |
+| week.projectProgress | 长期项目推进（项目级 X→Y% + 周期内完成子任务子行，真实日期归因） | `weeklyUtils.getProjectProgressChanges`（改为按子任务日期归因，父任务无需整单完成） |
+| week.planCandidates | 下周计划 | `weeklyUtils.getNextWeekPlanCandidates` |
+| week.blockers | 需协调事项 | `weeklyUtils.getCoordinationItems` |
+| month.quantified | 量化汇总表；末尾追加"本月完成子任务 n 项（跨 m 个任务）" | `MonthlySummary.tsx` 量化生成 + `monthlyUtils.aggregateMonthlyQuantities` |
+| month.projectProgress | 任务/项目推进：项目推进（日期归因）+ 非项目推进中任务（父行 + 周期内完成子任务子行） | `monthlyUtils.getMonthlyProjectProgress`（日期归因改造）+ 新增非项目任务查询 |
+| year.byDimension | 六维度归纳：各维度整单完成要点 + 展开子任务明细；推进中父任务单列（父行 + 年度完成子任务子行） | `yearlyUtils.getYearlyTasksByDimension` + `mapCategoryToDimension`（维度查询扩展） |
+| year.quantified | 全年量化聚合；末尾追加"全年完成子任务 n 项" | 新增全年聚合（复用按月量化函数） |
+
+> 评审变更：配方语义从"完成任务"扩为"完成任务与子任务推进"。为此须给 `SubTask` 增加完成日期追踪，见「归档数据模型与迁移」第 3 条。
 
 页面行为约定：
 
 - 页面级「从任务数据生成」按钮遍历当前模板 `kind='auto'` 的章节逐一执行配方并**覆写这些章节**；`kind='manual'` 章节一律不动（月报现状已如此，周报从"全量覆盖"收敛为"只覆盖 auto 节"，避免误删手写内容）。
-- 所有配方返回的 `taskIds` 取并集写入 `entry.tasks`（保留现状"归档任务 id 列表"语义）。
+- 所有配方返回的 `taskIds` 取并集写入 `entry.tasks`（含推进中父任务 id）。
 - 空数据时配方返回 `placeholder` 文案（现有 `（本周无完成任务）` 等即 placeholder 的实值）。
 
 ### 归档数据模型与迁移（DATA_VERSION 1 → 2）
@@ -266,6 +286,15 @@ export interface Settings {
 //     { [getDefaultTemplate(period).id]: entry }，逐字段保留原样
 // 校验：validateDataJson 放宽 summary 字段校验为 Record<string,string>；
 //      templateId 分桶 key 非空即可（未知模板 id 由 UI 层回退默认模板，不判数据损坏）
+
+// 评审补充第 3 条：SubTask 完成日期追踪（子任务纳入总结的前提）
+//   interface SubTask { …, completedDate?: string | null }   // 可选，ISO date
+//   写入：勾选 done → 记当天（与 task.completedDate 同语义）；done 撤销回 todo → 清空；
+//         updateSubtask 的 patch.status 变更路径同样处理（TaskEditPanel 也走该路径）
+//   校验：completedDate 可选 string|null；normalize 兜底同 Task
+//   迁移回填（决定旧数据可归因性）：v1→v2 时，status='done' 且无 completedDate 的
+//     子任务：若父任务 status='done' 且 completedDate 有值 → 回填父任务完成日期
+//     （子任务必不晚于父任务完成）；否则留 null（无法追溯，不计入任何周期统计）
 ```
 
 **兼容性要点**：`DATA_VERSION` 自增到 2；v1→v2 迁移是纯包装、无字段语义变化；后端 `launcher/` 不读 `archives`（AI 词文档只收前端拼好的 sections），Python 侧零改动；`launcher/tests`、迁移测试按既有 `T4_settingsDataMigration` 模式补齐。
@@ -287,11 +316,12 @@ export interface Settings {
 | `src/summaryTemplates/types.ts` | 新增：Schema |
 | `src/summaryTemplates/presets.ts` | 新增：6 套预设 + 选择器 |
 | `src/summaryTemplates/summaryRecipes.ts` | 新增：配方注册表（从页面下沉） |
-| `src/types.ts` | v2：嵌套归档、SummaryEntry、settings.summaryTemplateIds、DATA_VERSION=2 |
-| `src/taskUtils.ts` / `DataContext.tsx` | archive actions 带 templateId；迁移调用链 |
-| `src/WeeklySummary.tsx` / `MonthlySummary.tsx` / `YearlyReport.tsx` | 模板驱动渲染 + 共用生成/导出逻辑，删除内联章节定义 |
+| `src/types.ts` | v2：嵌套归档、SummaryEntry、settings.summaryTemplateIds、`SubTask.completedDate`、DATA_VERSION=2 |
+| `src/taskUtils.ts` / `DataContext.tsx` | 子任务勾选/更新写入与清空 `completedDate`；archive actions 带 templateId；迁移调用链 |
+| `src/WeeklySummary.tsx` / `MonthlySummary.tsx` / `YearlyReport.tsx` | 模板驱动渲染 + 共用生成/导出逻辑，删除内联章节定义；月报节标题「任务/项目推进」 |
 | `src/Reports.tsx` | 占位模板改为活动模板驱动 |
 | `src/Settings.tsx` | 总结模板选择 UI |
+| `src/weeklyUtils.ts` / `monthlyUtils.ts` / `yearlyUtils.ts` | 新增周期内完成子任务过滤/推进中任务查询辅助；项目进度函数改为按子任务日期归因 |
 | 新增通用组件 `SummaryEditor.tsx`（若三页共享度高） | 模板渲染核心，三页作为"周期适配层" |
 | `docs/specs/0001` / `README` | 数据模型章节同步 |
 
@@ -305,7 +335,8 @@ export interface Settings {
 ### 测试计划
 
 - **单测**：模板校验（key 唯一、fill 存在、每周期恰一个 default）；presets 与 v1 字段名对照（确保迁移零丢失）；`buildSummarySections`；配方注册表逐一与 utils 结果快照。
-- **迁移测试**：v1 完整 fixtures（周/月/年各若干 entry）→ v2 包装断言；空 archives；手工损坏兜底（同 `T4_settingsDataMigration` 风格）。
+- **日期归因单测**（子任务纳入总结的回归网）：进行中父任务的子任务跨周/月完成均正确归期；整单完成父任务子任务归期；done→todo 撤销后日期清空、不再计入；无 completedDate 的旧子任务不计入。
+- **迁移测试**：v1 完整 fixtures（周/月/年各若干 entry）→ v2 包装断言；子任务完成日期**回填规则**用例（done 父任务带日期 → 子任务回填；done 父任务无日期 / 进行中父任务 → 留 null）；空 archives；手工损坏兜底（同 `T4_settingsDataMigration` 风格）。
 - **组件测试回归**：三个总结页现有行为（生成/保存/润色/导出按钮）在默认模板下与改造前等价 —— 复用 `__tests__` 既有用例作为回归网。
 - **后端**：无改动，`launcher/tests` 不新增（如 /api/summary 有契约测试则补一条"sections 含任意标题键"用例）。
 
