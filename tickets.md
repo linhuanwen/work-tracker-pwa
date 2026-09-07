@@ -78,3 +78,18 @@ Spec: [docs/DESKTOP-SHORTCUT-SPEC.md](docs/DESKTOP-SHORTCUT-SPEC.md)
 | C4 | [#21](https://github.com/linhuanwen/work-tracker-pwa/issues/21) | 子任务行内展示截止/优先级标签 | ✅ 已实现 |
 
 | C5 | [#22](https://github.com/linhuanwen/work-tracker-pwa/issues/22) | React Hooks 顺序清理 | ✅ 已实现 |
+
+---
+
+## 总结模板引擎
+
+Spec: [docs/specs/0002-summary-template-engine.md](docs/specs/0002-summary-template-engine.md)
+
+| Ticket | GitHub                                                          | 标题                            | 依赖 | 状态   |
+| ------ | --------------------------------------------------------------- | ------------------------------- | ---- | ------ |
+| E1     | [#23](https://github.com/linhuanwen/work-tracker-pwa/issues/23) | 模板 Schema 与预设注册表（A）   | 无   | 待开发 |
+| E2     | [#24](https://github.com/linhuanwen/work-tracker-pwa/issues/24) | 归档数据模型 v2 迁移（B）       | E1   | 待开发 |
+| E3     | [#25](https://github.com/linhuanwen/work-tracker-pwa/issues/25) | 三总结页面模板驱动化（C）       | E2   | 待开发 |
+| E4     | [#26](https://github.com/linhuanwen/work-tracker-pwa/issues/26) | 多模板切换与设置入口（D）       | E3   | 待开发 |
+
+依赖链：E1 → E2 → E3 → E4（线性，逐 ticket 合入后移交下个）
