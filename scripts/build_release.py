@@ -22,13 +22,14 @@ ZIP_PATH = ROOT / "release" / "工作清单.zip"
 
 IS_WINDOWS = sys.platform == "win32"
 
-# `.wjl-state.json`、`data.json` 等本地/运行期文件不应进入发布包
+# `.wjl-state.json`、`data.json` 等本地/运行期文件不应进入发布包。
+# 客户端会按日期轮转状态备份（`.wjl-state.json.bak-YYYYMMDD`），按前缀一并排除。
 _EXCLUDE_NAMES = {
-    ".wjl-state.json",
     "data.json",
     "data.json.bak",
     "data.json.corrupt",
 }
+_WJL_STATE_PREFIX = ".wjl-state.json"
 
 
 def run_command(cmd: list[str]) -> None:
@@ -72,7 +73,12 @@ def create_release_zip() -> bool:
                 continue
             rel = file.relative_to(RELEASE_DIR).as_posix()
             # 只排除本地运行状态和真实密钥文件，保留 .env.example 模板
-            if file.name in _EXCLUDE_NAMES or rel.endswith("/.env") or rel == ".env":
+            if (
+                file.name in _EXCLUDE_NAMES
+                or file.name.startswith(_WJL_STATE_PREFIX)
+                or rel.endswith("/.env")
+                or rel == ".env"
+            ):
                 continue
             zf.write(file, arcname=rel)
     return True
