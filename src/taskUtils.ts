@@ -12,9 +12,7 @@ export function filterCancelledTasks(tasks: Task[]): Task[] {
 
 /** 进行中任务：待办 + 进行中，排除已完成/已取消 */
 export function filterOngoingTasks(tasks: Task[]): Task[] {
-  return tasks.filter(
-    (t) => t.status !== 'done' && t.status !== 'cancelled',
-  );
+  return tasks.filter((t) => t.status !== 'done' && t.status !== 'cancelled');
 }
 
 /** 已完成任务：已完成 + 已取消 */
@@ -289,7 +287,29 @@ export function addSubtask(subtasks: SubTask[], title: string): SubTask[] {
   return [...subtasks, newSub];
 }
 
-/** 更新子任务单个或多个字段（返回新数组），id 不存在则返回原数组 */
+/**
+ * 子任务状态变化时维护完成日期（语义与 task.completedDate 对齐）：
+ * 非 done → done 记当天；done → 非 done 清空。
+ */
+export function applySubtaskStatusChange(
+  sub: SubTask,
+  nextStatus: SubTask['status'],
+): SubTask {
+  if (nextStatus === 'done' && sub.status !== 'done') {
+    return {
+      ...sub,
+      status: 'done',
+      completedDate: new Date().toISOString().slice(0, 10),
+    };
+  }
+  if (nextStatus !== 'done' && sub.status === 'done') {
+    return { ...sub, status: nextStatus, completedDate: null };
+  }
+  return { ...sub, status: nextStatus };
+}
+
+/** 更新子任务单个或多个字段（返回新数组），id 不存在则返回原数组。
+ * patch.status 触发 done↔非 done 时同步维护 completedDate（同批其它字段保留）。 */
 export function updateSubtask(
   subtasks: SubTask[],
   id: string,
@@ -298,7 +318,14 @@ export function updateSubtask(
   const idx = subtasks.findIndex((s) => s.id === id);
   if (idx === -1) return subtasks;
   const updated = [...subtasks];
-  updated[idx] = { ...updated[idx], ...patch };
+  const prev = updated[idx];
+  if (patch.status !== undefined && patch.status !== prev.status) {
+    const base = applySubtaskStatusChange(prev, patch.status);
+    const { status: _ignored, completedDate: _date, ...rest } = patch;
+    updated[idx] = { ...base, ...rest };
+    return updated;
+  }
+  updated[idx] = { ...prev, ...patch };
   return updated;
 }
 
@@ -307,10 +334,10 @@ export function toggleSubtask(subtasks: SubTask[], id: string): SubTask[] {
   const idx = subtasks.findIndex((s) => s.id === id);
   if (idx === -1) return subtasks;
   const updated = [...subtasks];
-  updated[idx] = {
-    ...updated[idx],
-    status: updated[idx].status === 'done' ? 'todo' : 'done',
-  };
+  updated[idx] = applySubtaskStatusChange(
+    updated[idx],
+    updated[idx].status === 'done' ? 'todo' : 'done',
+  );
   return updated;
 }
 

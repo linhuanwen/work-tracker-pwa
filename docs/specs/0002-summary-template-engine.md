@@ -3,6 +3,16 @@
 > 编号 0002 · 基于 [guaguaguaxia/weekly_report](https://github.com/guaguaguaxia/weekly_report)（3.2k★，模板 = `{id, name, sections, category, tags}` 可插拔对象）与 SmartBrief 的模板思想，为 0001 的"周小结（四段式模板）/月小结/年度报告"建立一套**数据驱动的模板格式**。
 > 状态：评审定稿（含子任务纳入总结的补充需求，见「AutoFill 配方注册表」与「归档数据模型」两节）。实施前仍可提出修改。
 
+### 落地状态追踪（E1–E4 暂停期，2026-09）
+
+模板引擎（Phase A–D = tickets E1–E4）暂缓开工；**「子任务纳入总结」已按本稿评审定稿规则作为直接改动先行落地**（随桌面客户端更新发布），要点：
+
+- `SubTask.completedDate` 字段 + 写/清语义（勾选 done 记当天、撤销清空）已进 `types.ts` / `taskUtils.ts`；`DATA_VERSION` 仍为 1（可选字段，旧数据无需迁移，Phase B 迁移只做可选性说明即可）。
+- 周报「本周完成任务」分类分组语义扩容（整单完成括注 `（完成子任务 n 项）`、推进中父任务以 `【推进中】（x/y 已完成）` 父行 + 周期内子行挂所属分类）；月报「项目进度回顾」更名「任务/项目推进」（字段键 `projectReview` 不变），量化汇总末尾追加"本月完成子任务 n 项（跨 m 个任务）"；年报维度要点整单完成展开全部完成子任务标题、推进中父任务单列（按年度归因）。归因回退规则同「呈现规则」表。
+- 与冻结设计的**已知差异**（Phase B/C 落地时再评估）：
+  1. `entry.tasks` 仍只收整单完成的任务 id，未按配方规则并入推进中父任务 id —— 保持"已完成任务"列表语义与数据安全；配方 taskIds 并集规则留给 v2 归档按 templateId 桶化时再定。
+  2. 年量化行未追加"全年完成子任务 n 项"计数（该段没有任务级量化行可挂）；计数口径由周/月统计行与年度维度展开承担。
+
 ## Problem Statement
 
 现有周/月/年总结的三套章节结构硬编码在三个页面组件里（`WeeklySummary.tsx` / `MonthlySummary.tsx` / `YearlyReport.tsx`），表现为：

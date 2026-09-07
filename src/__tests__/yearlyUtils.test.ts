@@ -4,6 +4,7 @@ import {
   isDateInYear,
   mapCategoryToDimension,
   getYearlyTasksByDimension,
+  isSubtaskDoneInYear,
   buildMonthlyTrendTable,
   buildYearlyQuantityTable,
   generateYearlyOneLiner,
@@ -403,6 +404,187 @@ describe('getYearlyTasksByDimension', () => {
     const result = getYearlyTasksByDimension([], 2026, defaultCategories);
     expect(result).toHaveLength(6);
     expect(result.every((d) => d.taskCount === 0)).toBe(true);
+  });
+
+  it('整单完成任务：taskSubtasks 与 taskTitles 对齐，展开全部完成子任务标题', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: '1',
+        title: '招聘公告发布',
+        category: '内部招聘',
+        status: 'done',
+        completedDate: '2026-03-15',
+        subtasks: [
+          {
+            id: 's1',
+            title: '岗位需求确认',
+            status: 'done',
+            completedDate: '2026-03-01',
+          },
+          {
+            id: 's2',
+            title: '公告撰写',
+            status: 'done',
+            completedDate: '2026-03-10',
+          },
+          { id: 's3', title: '多渠道发布', status: 'todo' },
+        ],
+      }),
+      makeTask({
+        id: '2',
+        title: '面试组织',
+        category: '内部招聘',
+        status: 'done',
+        completedDate: '2026-04-20',
+      }),
+    ];
+    const result = getYearlyTasksByDimension(tasks, 2026, defaultCategories);
+    const dim = result.find((d) => d.dimension === '项目推进')!;
+    expect(dim.taskSubtasks).toHaveLength(dim.taskTitles.length);
+    const idx = dim.taskTitles.indexOf('招聘公告发布');
+    expect(dim.taskSubtasks[idx]).toEqual(['岗位需求确认', '公告撰写']);
+    expect(dim.taskSubtasks[dim.taskTitles.indexOf('面试组织')]).toEqual([]);
+    // 整单完成任务的子任务全部展开（即使完成于不同日期）
+    expect(dim.taskSubtasks[idx]).toHaveLength(2);
+  });
+
+  it('推进中父任务：年内有子任务完成 → progressRows 父行 + 年内完成子行', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: '1',
+        title: '跨年推进任务',
+        category: '内部招聘',
+        status: 'in-progress',
+        subtasks: [
+          {
+            id: 's1',
+            title: '本年步骤',
+            status: 'done',
+            completedDate: '2026-05-10',
+          },
+          {
+            id: 's2',
+            title: '去年步骤',
+            status: 'done',
+            completedDate: '2025-12-20',
+          },
+          { id: 's3', title: '待办步骤', status: 'todo' },
+        ],
+      }),
+    ];
+    const result = getYearlyTasksByDimension(tasks, 2026, defaultCategories);
+    const dim = result.find((d) => d.dimension === '项目推进')!;
+    expect(dim.taskCount).toBe(0); // 不占用完成计数
+    expect(dim.progressRows).toHaveLength(1);
+    expect(dim.progressRows[0].title).toBe('跨年推进任务');
+    expect(dim.progressRows[0].done).toBe(2);
+    expect(dim.progressRows[0].total).toBe(3);
+    // 只展开年度内（按 completedDate 归因）的子任务
+    expect(dim.progressRows[0].subtaskTitles).toEqual(['本年步骤']);
+  });
+
+  it('推进中父任务无年内完成子任务 → 不产生 progressRows', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: '1',
+        title: '无推进',
+        category: '内部招聘',
+        status: 'in-progress',
+        subtasks: [
+          {
+            id: 's1',
+            title: '去年步骤',
+            status: 'done',
+            completedDate: '2025-12-20',
+          },
+        ],
+      }),
+      makeTask({
+        id: '2',
+        title: '旧数据无日期',
+        category: '内部招聘',
+        status: 'in-progress',
+        subtasks: [{ id: 's2', title: 'x', status: 'done' }],
+      }),
+    ];
+    const result = getYearlyTasksByDimension(tasks, 2026, defaultCategories);
+    const dim = result.find((d) => d.dimension === '项目推进')!;
+    expect(dim.progressRows).toEqual([]);
+  });
+
+  it('推进中任务不影响量化聚合（quantities 仅来自整单完成）', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: '1',
+        title: '完成',
+        category: '内部招聘',
+        status: 'done',
+        completedDate: '2026-03-15',
+        quantities: [{ label: '审查', value: 10, unit: '人次' }],
+      }),
+      makeTask({
+        id: '2',
+        title: '推进中',
+        category: '内部招聘',
+        status: 'in-progress',
+        quantities: [{ label: '审查', value: 99, unit: '人次' }],
+        subtasks: [
+          {
+            id: 's1',
+            title: '本年步骤',
+            status: 'done',
+            completedDate: '2026-05-10',
+          },
+        ],
+      }),
+    ];
+    const result = getYearlyTasksByDimension(tasks, 2026, defaultCategories);
+    const dim = result.find((d) => d.dimension === '项目推进')!;
+    expect(dim.quantities).toHaveLength(1);
+    expect(dim.quantities[0].value).toBe(10);
+  });
+});
+
+describe('isSubtaskDoneInYear', () => {
+  const parent = (over: Partial<Task> = {}): Task =>
+    makeTask({ status: 'in-progress', ...over });
+
+  it('按子任务 completedDate 判断年份', () => {
+    const sub = {
+      id: 's1',
+      title: 'x',
+      status: 'done' as const,
+      completedDate: '2026-07-22',
+    };
+    expect(isSubtaskDoneInYear(sub, parent(), 2026)).toBe(true);
+    expect(
+      isSubtaskDoneInYear(
+        { ...sub, completedDate: '2025-07-22' },
+        parent(),
+        2026,
+      ),
+    ).toBe(false);
+  });
+
+  it('todo 子任务不计入', () => {
+    const sub = {
+      id: 's1',
+      title: 'x',
+      status: 'todo' as const,
+      completedDate: '2026-07-22',
+    };
+    expect(isSubtaskDoneInYear(sub, parent(), 2026)).toBe(false);
+  });
+
+  it('旧数据缺日期：父任务整单在本年完成 → 回退计入', () => {
+    const p = makeTask({ status: 'done', completedDate: '2026-06-15' });
+    const sub = { id: 's1', title: 'x', status: 'done' as const };
+    expect(isSubtaskDoneInYear(sub, p, 2026)).toBe(true);
+  });
+
+  it('推进中父任务 + 子任务缺日期 → 不强行归因', () => {
+    const sub = { id: 's1', title: 'x', status: 'done' as const };
+    expect(isSubtaskDoneInYear(sub, parent(), 2026)).toBe(false);
   });
 });
 

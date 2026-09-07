@@ -56,30 +56,59 @@ export function mapCategoryToDimension(category: string): string {
 // S5: 年度维度归纳 (getYearlyTasksByDimension)
 // ============================================================
 
+/** 年内有子任务完成的推进中父任务行 */
+export interface YearProgressRow {
+  title: string;
+  /** 父任务总子任务数 */
+  total: number;
+  /** 父任务已完成子任务数 */
+  done: number;
+  /** 年内完成的子任务标题（按归因；旧数据无日期时可为空） */
+  subtaskTitles: string[];
+}
+
 export interface DimensionSummary {
   dimension: string;
   taskCount: number;
   taskTitles: string[];
   /** 与 taskTitles 对齐的任务具体内容（无内容为空字符串） */
   taskNotes: string[];
+  /** 与 taskTitles 对齐：整单完成任务展开的全部完成子任务标题（无子任务为空数组） */
+  taskSubtasks: string[][];
+  /** 推进中父任务（年度内有子任务完成，按年度归因） */
+  progressRows: YearProgressRow[];
   quantities: Quantity[];
+}
+
+/**
+ * 判断子任务是否属于给定年份完成：
+ * 优先用子任务自身的 completedDate；缺失（旧数据）时回退——
+ * 父任务整单在本年完成则其完成子任务视为本年完成（子任务必不晚于父任务）。
+ */
+export function isSubtaskDoneInYear(
+  sub: { status: 'todo' | 'done'; completedDate?: string | null },
+  parent: Task,
+  year: number,
+): boolean {
+  if (sub.status !== 'done') return false;
+  if (sub.completedDate) return isDateInYear(sub.completedDate, year);
+  return parent.status === 'done' && isDateInYear(parent.completedDate, year);
 }
 
 /**
  * Group all completed (done) tasks in the target year by six dimensions.
  * Quantities within each dimension are aggregated by label (same label → sum values).
  * All six dimensions are always returned, even if empty (taskCount = 0).
+ *
+ * 子任务归入总结（评审定稿呈现规则）：
+ * - 整单完成的任务：任务行下展开其全部完成子任务标题（taskSubtasks 与 taskTitles 对齐）；
+ * - 推进中父任务：若年内有子任务完成（按 completedDate 归因），单列 progressRows（父行 + 年内完成子任务子行）。
  */
 export function getYearlyTasksByDimension(
   tasks: Task[],
   year: number,
   _categories: string[],
 ): DimensionSummary[] {
-  // Filter done tasks in the target year
-  const yearTasks = tasks.filter(
-    (t) => t.status === 'done' && isDateInYear(t.completedDate, year),
-  );
-
   // Initialize all six dimensions
   const dimMap: Record<string, DimensionSummary> = {};
   for (const dim of YEARLY_DIMENSIONS) {
@@ -88,29 +117,55 @@ export function getYearlyTasksByDimension(
       taskCount: 0,
       taskTitles: [],
       taskNotes: [],
+      taskSubtasks: [],
+      progressRows: [],
       quantities: [],
     };
   }
 
-  // Group tasks by dimension
-  for (const task of yearTasks) {
+  for (const task of tasks) {
+    if (task.status === 'cancelled') continue;
     const dim = mapCategoryToDimension(task.category);
     const entry = dimMap[dim];
     if (!entry) continue; // should not happen given our mapping
 
-    entry.taskCount += 1;
-    entry.taskTitles.push(task.title);
-    entry.taskNotes.push(task.notes.trim());
+    if (task.status === 'done') {
+      // Only done-in-year tasks belong to the completed task list
+      if (!isDateInYear(task.completedDate, year)) continue;
+      entry.taskCount += 1;
+      entry.taskTitles.push(task.title);
+      entry.taskNotes.push(task.notes.trim());
+      entry.taskSubtasks.push(
+        task.subtasks.filter((s) => s.status === 'done').map((s) => s.title),
+      );
 
-    // Aggregate quantities
-    for (const q of task.quantities) {
-      const existing = entry.quantities.find((eq) => eq.label === q.label);
-      if (existing) {
-        existing.value += q.value;
-      } else {
-        entry.quantities.push({ label: q.label, value: q.value, unit: q.unit });
+      // Aggregate quantities
+      for (const q of task.quantities) {
+        const existing = entry.quantities.find((eq) => eq.label === q.label);
+        if (existing) {
+          existing.value += q.value;
+        } else {
+          entry.quantities.push({
+            label: q.label,
+            value: q.value,
+            unit: q.unit,
+          });
+        }
       }
+      continue;
     }
+
+    // 推进中父任务：年内有子任务完成才单列
+    const yearSubtasks = task.subtasks
+      .filter((s) => isSubtaskDoneInYear(s, task, year))
+      .map((s) => s.title);
+    if (yearSubtasks.length === 0) continue;
+    entry.progressRows.push({
+      title: task.title,
+      total: task.subtasks.length,
+      done: task.subtasks.filter((s) => s.status === 'done').length,
+      subtaskTitles: yearSubtasks,
+    });
   }
 
   return YEARLY_DIMENSIONS.map((dim) => dimMap[dim]);

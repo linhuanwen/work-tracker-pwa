@@ -24,6 +24,8 @@ export interface SubTask {
   id: string;
   title: string;
   status: 'todo' | 'done';
+  /** 完成日期（ISO date）：勾选 done 记录当天、撤销回 todo 时清空。旧数据可能缺失 */
+  completedDate?: string | null;
   /** 与父任务保持一致的可选扩展字段 */
   notes?: string;
   deadline?: string | null;

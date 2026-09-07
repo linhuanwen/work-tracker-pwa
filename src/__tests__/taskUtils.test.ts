@@ -16,6 +16,7 @@ import {
   getProgressColor,
   addSubtask,
   updateSubtask,
+  applySubtaskStatusChange,
   toggleSubtask,
   deleteSubtask,
   calcProjectProgress,
@@ -797,6 +798,120 @@ describe('updateSubtask', () => {
   it('returns same array if id not found', () => {
     const subtasks: SubTask[] = [];
     expect(updateSubtask(subtasks, 'missing', { title: 'x' })).toBe(subtasks);
+  });
+});
+
+// ============================================================
+// SubTask.completedDate 生命周期（子任务纳入周期总结的前提）
+// ============================================================
+
+describe('applySubtaskStatusChange', () => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  it('非 done → done 记完成日期为当天', () => {
+    const sub: SubTask = { id: 's1', title: '步骤', status: 'todo' };
+    const result = applySubtaskStatusChange(sub, 'done');
+    expect(result.status).toBe('done');
+    expect(result.completedDate).toBe(today);
+  });
+
+  it('done → 非 done 清空完成日期', () => {
+    const sub: SubTask = {
+      id: 's1',
+      title: '步骤',
+      status: 'done',
+      completedDate: '2026-07-15',
+    };
+    const result = applySubtaskStatusChange(sub, 'todo');
+    expect(result.status).toBe('todo');
+    expect(result.completedDate).toBeNull();
+  });
+
+  it('状态不变时保留既有完成日期', () => {
+    const sub: SubTask = {
+      id: 's1',
+      title: '步骤',
+      status: 'done',
+      completedDate: '2026-07-15',
+    };
+    const result = applySubtaskStatusChange(sub, 'done');
+    expect(result.completedDate).toBe('2026-07-15');
+  });
+
+  it('返回新对象（不可变）', () => {
+    const sub: SubTask = { id: 's1', title: '步骤', status: 'todo' };
+    expect(applySubtaskStatusChange(sub, 'done')).not.toBe(sub);
+  });
+});
+
+describe('toggleSubtask 完成日期语义', () => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  it('勾选 done 记当天，撤销回 todo 时清空', () => {
+    const todo: SubTask = { id: 's1', title: 'a', status: 'todo' };
+    const checked = toggleSubtask([todo], 's1')[0];
+    expect(checked.status).toBe('done');
+    expect(checked.completedDate).toBe(today);
+    const undone = toggleSubtask([checked], 's1')[0];
+    expect(undone.status).toBe('todo');
+    expect(undone.completedDate).toBeNull();
+  });
+
+  it('不影响其它子任务的日期', () => {
+    const subs: SubTask[] = [
+      { id: 's1', title: 'a', status: 'todo' },
+      {
+        id: 's2',
+        title: 'b',
+        status: 'done',
+        completedDate: '2026-07-01',
+      },
+    ];
+    const result = toggleSubtask(subs, 's1');
+    expect(result[1].completedDate).toBe('2026-07-01');
+  });
+});
+
+describe('updateSubtask 状态切换与字段保留', () => {
+  const today = new Date().toISOString().slice(0, 10);
+
+  it('patch.status 变化时同步维护日期且保留同批其它字段', () => {
+    const subs: SubTask[] = [{ id: 's1', title: 'a', status: 'todo' }];
+    const result = updateSubtask(subs, 's1', {
+      status: 'done',
+      notes: '附带备注',
+      priority: 'urgent',
+    });
+    expect(result[0].status).toBe('done');
+    expect(result[0].completedDate).toBe(today);
+    expect(result[0].notes).toBe('附带备注');
+    expect(result[0].priority).toBe('urgent');
+  });
+
+  it('显式传 completedDate 不覆盖自动维护的日期', () => {
+    const subs: SubTask[] = [{ id: 's1', title: 'a', status: 'todo' }];
+    const result = updateSubtask(subs, 's1', {
+      status: 'done',
+      completedDate: '1999-01-01',
+    });
+    expect(result[0].completedDate).toBe(today);
+  });
+
+  it('无状态变化时保留原 completedDate', () => {
+    const subs: SubTask[] = [
+      { id: 's1', title: 'a', status: 'done', completedDate: '2026-07-15' },
+    ];
+    const result = updateSubtask(subs, 's1', { title: 'b' });
+    expect(result[0].completedDate).toBe('2026-07-15');
+  });
+
+  it('patch.status 与当前状态相同时走普通更新', () => {
+    const subs: SubTask[] = [
+      { id: 's1', title: 'a', status: 'done', completedDate: '2026-07-15' },
+    ];
+    const result = updateSubtask(subs, 's1', { status: 'done', notes: 'x' });
+    expect(result[0].completedDate).toBe('2026-07-15');
+    expect(result[0].notes).toBe('x');
   });
 });
 

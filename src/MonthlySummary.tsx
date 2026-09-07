@@ -12,6 +12,8 @@ import {
   getAdjacentMonth,
   aggregateMonthlyQuantities,
   getMonthlyProjectProgress,
+  getMonthlyNonProjectProgress,
+  getMonthlySubtaskStats,
   getNextMonthFocusCandidates,
 } from './monthlyUtils';
 import styles from './MonthlySummary.module.css';
@@ -57,45 +59,80 @@ function MonthlySummaryInner({ data }: { data: DataJson }) {
 
     // Section 1: Quantitative summary table
     const quantities = aggregateMonthlyQuantities(data.tasks, year, month);
-    let quantText = '';
-    if (quantities.length === 0) {
-      quantText = '（本月无量化产出）';
-    } else {
-      quantText = '| 分类 | 指标 | 合计 |\n|------|------|------|\n';
-      for (const q of quantities) {
-        quantText += `| ${q.category} | ${q.label} | ${q.value} ${q.unit} |\n`;
-      }
+    const quantPieces: string[] = [];
+    if (quantities.length > 0) {
+      quantPieces.push(
+        '| 分类 | 指标 | 合计 |\n|------|------|------|\n' +
+          quantities
+            .map((q) => `| ${q.category} | ${q.label} | ${q.value} ${q.unit} |`)
+            .join('\n'),
+      );
     }
 
-    // Section 1 追加：重点任务内容（标题 + 具体内容）
+    // Section 1 追加：重点任务内容（标题 + 具体内容；整单完成任务括注完成子任务计数）
     const notedTasks = monthDoneTasks.filter((t) => t.notes.trim());
     if (notedTasks.length > 0) {
-      quantText += '\n重点任务内容：\n';
+      const notedLines = ['重点任务内容：'];
       for (const t of notedTasks) {
-        quantText += `- ${t.title}\n  具体内容：${t.notes.trim()}\n`;
+        const doneSubCount = t.subtasks.filter(
+          (s) => s.status === 'done',
+        ).length;
+        const annotation =
+          doneSubCount > 0 ? `（完成子任务 ${doneSubCount} 项）` : '';
+        notedLines.push(`- ${t.title}${annotation}`);
+        notedLines.push(`  具体内容：${t.notes.trim()}`);
       }
-      quantText = quantText.trim();
+      quantPieces.push(notedLines.join('\n'));
     }
 
-    // Section 2: Project progress review
+    // Section 1 末尾：本月完成子任务统计（跨全部任务，含项目内推进）
+    const subStats = getMonthlySubtaskStats(data.tasks, year, month);
+    if (subStats.doneCount > 0) {
+      quantPieces.push(
+        `本月完成子任务 ${subStats.doneCount} 项（跨 ${subStats.taskCount} 个任务）`,
+      );
+    }
+
+    const quantText =
+      quantPieces.length > 0 ? quantPieces.join('\n\n') : '（本月无量化产出）';
+
+    // Section 2: 任务/项目推进（原项目进度回顾更名扩容：
+    // 项目推进 + 非项目推进中父任务的子任务推进）
     const projectChanges = getMonthlyProjectProgress(
       data.tasks,
       data.projects,
       year,
       month,
     );
+    const nonProjectRows = getMonthlyNonProjectProgress(
+      data.tasks,
+      year,
+      month,
+    );
     let projectText = '';
-    if (projectChanges.length === 0) {
-      projectText = '（本月无项目子任务推进）';
+    if (projectChanges.length === 0 && nonProjectRows.length === 0) {
+      projectText = '（本月无任务或项目子任务推进）';
     } else {
+      const lines: string[] = [];
       for (const p of projectChanges) {
-        projectText += `${p.projectTitle}  ${p.beforePercent}% → ${p.afterPercent}%，本月完成 ${p.completedThisWeek.length} 项子任务\n`;
+        lines.push(
+          `${p.projectTitle}  ${p.beforePercent}% → ${p.afterPercent}%，本月完成 ${p.completedThisWeek.length} 项子任务`,
+        );
         for (const sub of p.completedThisWeek) {
-          projectText += `  - ${sub}\n`;
+          lines.push(`  - ${sub}`);
         }
-        projectText += '\n';
+        lines.push('');
       }
-      projectText = projectText.trim();
+      for (const row of nonProjectRows) {
+        lines.push(
+          `- 【推进中】${row.title}（${row.done}/${row.total} 已完成）`,
+        );
+        for (const sub of row.doneTitles) {
+          lines.push(`  - ${sub}`);
+        }
+        lines.push('');
+      }
+      projectText = lines.join('\n').trim();
     }
 
     // Section 3: Monthly reflection (always empty for manual input)
@@ -182,7 +219,7 @@ function MonthlySummaryInner({ data }: { data: DataJson }) {
     try {
       const sections = {
         量化汇总表: existingEntry.summary.quantitativeSummary,
-        项目进度回顾: existingEntry.summary.projectReview,
+        '任务/项目推进': existingEntry.summary.projectReview,
         月度反思: existingEntry.summary.reflection,
         下月重点: existingEntry.summary.nextMonthFocus,
       };
@@ -405,10 +442,10 @@ function MonthlySummaryInner({ data }: { data: DataJson }) {
             />
           </div>
 
-          {/* Section 2: 项目进度回顾 */}
+          {/* Section 2: 任务/项目推进（原项目进度回顾，更名扩容） */}
           <div className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h3 className={styles.sectionTitle}>二、项目进度回顾</h3>
+              <h3 className={styles.sectionTitle}>二、任务/项目推进</h3>
               <button
                 className={styles.aiBtn}
                 onClick={() =>

@@ -62,7 +62,7 @@ export function Reports({ disabled = false }: { disabled?: boolean }) {
           doneTasks.length > 0
             ? `本月完成任务 ${doneTasks.length} 项`
             : '（暂无）',
-        项目回顾: '（暂无）',
+        '任务/项目推进': '（暂无）',
         反思与下月重点: '（暂无）',
       };
     }
@@ -121,7 +121,7 @@ export function Reports({ disabled = false }: { disabled?: boolean }) {
           key,
           sections: {
             量化汇总表: entry.summary.quantitativeSummary,
-            项目进度回顾: entry.summary.projectReview,
+            '任务/项目推进': entry.summary.projectReview,
             月度反思: entry.summary.reflection,
             下月重点: entry.summary.nextMonthFocus,
           },

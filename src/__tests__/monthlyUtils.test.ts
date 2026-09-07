@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { Task, Project } from '../types';
+import type { Task, Project, SubTask } from '../types';
 import {
   isDateInMonth,
   getMonthKey,
@@ -7,6 +7,9 @@ import {
   getAdjacentMonth,
   aggregateMonthlyQuantities,
   getMonthlyProjectProgress,
+  isSubtaskDoneInMonth,
+  getMonthlyNonProjectProgress,
+  getMonthlySubtaskStats,
   getNextMonthFocusCandidates,
 } from '../monthlyUtils';
 
@@ -532,6 +535,258 @@ describe('getMonthlyProjectProgress', () => {
     const result = getMonthlyProjectProgress(tasks, projects, 2026, 7);
     expect(result[0].beforePercent).toBe(0);
     expect(result[0].afterPercent).toBe(50);
+  });
+
+  it('按子任务自身日期归因：推进中项目任务的完成子任务也计入本月', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: 't1',
+        projectId: 'p-1',
+        title: '推进中任务',
+        category: '绩效管理',
+        status: 'in-progress',
+        subtasks: [
+          {
+            id: 's1',
+            title: '本月完成步骤',
+            status: 'done',
+            completedDate: '2026-07-18',
+          },
+          {
+            id: 's2',
+            title: '上月完成步骤',
+            status: 'done',
+            completedDate: '2026-06-20',
+          },
+        ],
+      }),
+    ];
+    const projects: Project[] = [
+      makeProject({ id: 'p-1', title: '跨月项目', category: '绩效管理' }),
+    ];
+    const result = getMonthlyProjectProgress(tasks, projects, 2026, 7);
+    expect(result).toHaveLength(1);
+    expect(result[0].completedThisWeek).toEqual(['本月完成步骤']);
+    expect(result[0].doneSubtasks).toBe(2);
+    expect(result[0].beforePercent).toBe(50); // 6月已 1/2
+    expect(result[0].afterPercent).toBe(100);
+  });
+
+  it('子任务有日期但父任务非本月完成时不再靠父任务启发式重复计入', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: 't1',
+        projectId: 'p-1',
+        title: '任务',
+        category: '绩效管理',
+        status: 'done',
+        completedDate: '2026-08-01',
+        subtasks: [
+          // 7 月完成但父任务 8 月才整单完成 → 只算 7 月
+          {
+            id: 's1',
+            title: '七月初步骤',
+            status: 'done',
+            completedDate: '2026-07-05',
+          },
+        ],
+      }),
+    ];
+    const projects: Project[] = [
+      makeProject({ id: 'p-1', title: '项目Y', category: '绩效管理' }),
+    ];
+    const result = getMonthlyProjectProgress(tasks, projects, 2026, 7);
+    expect(result[0].completedThisWeek).toEqual(['七月初步骤']);
+  });
+});
+
+// ============================================================
+// S2+: 子任务月度归因 & 非项目任务推进
+// ============================================================
+
+describe('isSubtaskDoneInMonth', () => {
+  const parent = (over: Partial<Task> = {}): Task =>
+    makeTask({ status: 'in-progress', ...over });
+
+  it('按子任务 completedDate 判断月份', () => {
+    const sub: SubTask = {
+      id: 's1',
+      title: 'x',
+      status: 'done',
+      completedDate: '2026-07-22',
+    };
+    expect(isSubtaskDoneInMonth(sub, parent(), 2026, 7)).toBe(true);
+    expect(
+      isSubtaskDoneInMonth(
+        { ...sub, completedDate: '2026-08-01' },
+        parent(),
+        2026,
+        7,
+      ),
+    ).toBe(false);
+  });
+
+  it('todo 子任务不计入', () => {
+    const sub: SubTask = {
+      id: 's1',
+      title: 'x',
+      status: 'todo',
+      completedDate: '2026-07-22',
+    };
+    expect(isSubtaskDoneInMonth(sub, parent(), 2026, 7)).toBe(false);
+  });
+
+  it('旧数据缺日期：父任务整单在本月完成 → 回退计入', () => {
+    const p = makeTask({ status: 'done', completedDate: '2026-07-15' });
+    const sub: SubTask = { id: 's1', title: 'x', status: 'done' };
+    expect(isSubtaskDoneInMonth(sub, p, 2026, 7)).toBe(true);
+  });
+
+  it('旧数据缺日期：父任务整单在其他月完成 → 不计入', () => {
+    const p = makeTask({ status: 'done', completedDate: '2026-06-15' });
+    const sub: SubTask = { id: 's1', title: 'x', status: 'done' };
+    expect(isSubtaskDoneInMonth(sub, p, 2026, 7)).toBe(false);
+  });
+
+  it('推进中父任务 + 子任务缺日期 → 不强行归因', () => {
+    const sub: SubTask = { id: 's1', title: 'x', status: 'done' };
+    expect(isSubtaskDoneInMonth(sub, parent(), 2026, 7)).toBe(false);
+  });
+});
+
+describe('getMonthlyNonProjectProgress', () => {
+  it('返回本月有子任务完成的推进中非项目父任务（父行 + 周期内子行）', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: '1',
+        title: '非项目推进任务',
+        category: '内部招聘',
+        status: 'in-progress',
+        subtasks: [
+          {
+            id: 's1',
+            title: '本月步骤A',
+            status: 'done',
+            completedDate: '2026-07-10',
+          },
+          {
+            id: 's2',
+            title: '本月步骤B',
+            status: 'done',
+            completedDate: '2026-07-20',
+          },
+          { id: 's3', title: '待办步骤', status: 'todo' },
+        ],
+      }),
+      makeTask({
+        id: '2',
+        title: '上月有推进',
+        category: '内部招聘',
+        status: 'in-progress',
+        subtasks: [
+          {
+            id: 's4',
+            title: '六月步骤',
+            status: 'done',
+            completedDate: '2026-06-10',
+          },
+        ],
+      }),
+    ];
+    const result = getMonthlyNonProjectProgress(tasks, 2026, 7);
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe('非项目推进任务');
+    expect(result[0].done).toBe(2);
+    expect(result[0].total).toBe(3);
+    expect(result[0].doneTitles).toEqual(['本月步骤A', '本月步骤B']);
+  });
+
+  it('排除整单完成 / 项目归属 / 已取消任务', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: '1',
+        title: '已完成',
+        category: '其他',
+        status: 'done',
+        completedDate: '2026-07-15',
+        subtasks: [
+          { id: 's1', title: 'a', status: 'done', completedDate: '2026-07-10' },
+        ],
+      }),
+      makeTask({
+        id: '2',
+        projectId: 'p-1',
+        title: '项目任务',
+        category: '其他',
+        status: 'in-progress',
+        subtasks: [
+          { id: 's2', title: 'a', status: 'done', completedDate: '2026-07-10' },
+        ],
+      }),
+      makeTask({
+        id: '3',
+        title: '已取消',
+        category: '其他',
+        status: 'cancelled',
+        subtasks: [
+          { id: 's3', title: 'a', status: 'done', completedDate: '2026-07-10' },
+        ],
+      }),
+    ];
+    expect(getMonthlyNonProjectProgress(tasks, 2026, 7)).toEqual([]);
+  });
+});
+
+describe('getMonthlySubtaskStats', () => {
+  it('统计本月完成子任务数（含整单完成回退与推进中日期归因）', () => {
+    const tasks: Task[] = [
+      // 整单完成（旧数据缺日期 → 回退本月）
+      makeTask({
+        id: '1',
+        title: '已完成任务',
+        status: 'done',
+        completedDate: '2026-07-15',
+        subtasks: [
+          { id: 's1', title: 'a', status: 'done' },
+          { id: 's2', title: 'b', status: 'done' },
+        ],
+      }),
+      // 推进中（日期归因本月 1 项）
+      makeTask({
+        id: '2',
+        title: '推进中',
+        status: 'in-progress',
+        subtasks: [
+          { id: 's3', title: 'c', status: 'done', completedDate: '2026-07-05' },
+          { id: 's4', title: 'd', status: 'done', completedDate: '2026-06-05' },
+        ],
+      }),
+      // 上月整单完成 → 不计
+      makeTask({
+        id: '3',
+        title: '上月任务',
+        status: 'done',
+        completedDate: '2026-06-20',
+        subtasks: [{ id: 's5', title: 'e', status: 'done' }],
+      }),
+    ];
+    const stats = getMonthlySubtaskStats(tasks, 2026, 7);
+    expect(stats).toEqual({ doneCount: 3, taskCount: 2 });
+  });
+
+  it('本月无完成子任务时返回 0', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: '1',
+        title: '待办',
+        status: 'todo',
+        subtasks: [{ id: 's1', title: 'a', status: 'todo' }],
+      }),
+    ];
+    expect(getMonthlySubtaskStats(tasks, 2026, 7)).toEqual({
+      doneCount: 0,
+      taskCount: 0,
+    });
   });
 });
 

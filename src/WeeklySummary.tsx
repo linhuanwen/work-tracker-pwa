@@ -12,6 +12,7 @@ import {
   getProjectProgressChanges,
   getNextWeekPlanCandidates,
   getCoordinationItems,
+  getWeeklyNonProjectProgress,
 } from './weeklyUtils';
 import { createTask } from './taskUtils';
 import { aiConfigPayload } from './aiConfig';
@@ -44,24 +45,57 @@ function WeeklySummaryInner({ data }: { data: DataJson }) {
   // ---- Generate template content ----
   const generateSummary = useCallback(() => {
     // Section 1: Completed tasks by category
+    // 分类分组语义已扩容：整单完成任务 + 本周有子任务推进的进行中父任务（【推进中】前缀）
     const categoryGroups = getCompletedTasksByCategory(
       data.tasks,
       weekKey,
       data.settings.categories,
     );
+    const progressRows = getWeeklyNonProjectProgress(data.tasks, weekKey);
+    const progressByCategory = new Map<string, typeof progressRows>();
+    for (const row of progressRows) {
+      const rows = progressByCategory.get(row.category) ?? [];
+      rows.push(row);
+      progressByCategory.set(row.category, rows);
+    }
+    // 分类顺序沿用 settings.categories；只有推进（无整单完成）的分类补在末尾
+    const covered = new Set(categoryGroups.map((g) => g.category));
+    const orderedCategories = [
+      ...categoryGroups.map((g) => g.category),
+      ...progressRows.map((r) => r.category).filter((c) => !covered.has(c)),
+    ];
     let doneText = '';
-    if (categoryGroups.length === 0) {
-      doneText = '（本周无完成任务）';
+    if (orderedCategories.length === 0) {
+      doneText = '（本周无完成任务与推进）';
     } else {
-      for (const group of categoryGroups) {
-        doneText += `【${group.category}】\n`;
-        for (const item of group.tasks) {
-          const line = item.quantityText
-            ? `- ${item.title}（${item.quantityText}）\n`
-            : `- ${item.title}\n`;
-          doneText += line;
-          if (item.notes) {
-            doneText += `  具体内容：${item.notes}\n`;
+      for (const category of orderedCategories) {
+        doneText += `【${category}】\n`;
+        const group = categoryGroups.find((g) => g.category === category);
+        if (group) {
+          for (const item of group.tasks) {
+            // 整单完成任务：括注量化产出与完成子任务计数（不展开子行）
+            const annotation = [
+              item.quantityText,
+              item.doneSubtaskCount > 0
+                ? `完成子任务 ${item.doneSubtaskCount} 项`
+                : '',
+            ]
+              .filter(Boolean)
+              .join('，');
+            const line = annotation
+              ? `- ${item.title}（${annotation}）\n`
+              : `- ${item.title}\n`;
+            doneText += line;
+            if (item.notes) {
+              doneText += `  具体内容：${item.notes}\n`;
+            }
+          }
+        }
+        // 进行中父任务：父行（x/y 已完成）+ 本周完成子任务子行
+        for (const row of progressByCategory.get(category) ?? []) {
+          doneText += `- 【推进中】${row.title}（${row.done}/${row.total} 已完成）\n`;
+          for (const sub of row.doneTitles) {
+            doneText += `  - ${sub}\n`;
           }
         }
         doneText += '\n';

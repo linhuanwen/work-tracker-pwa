@@ -64,23 +64,45 @@ function YearlyReportInner({ data }: { data: DataJson }) {
 
   /** Build auto-generated text for a dimension */
   const buildAutoText = (dim: (typeof dimensionData)[number]): string => {
-    if (dim.taskCount === 0) return '（本年度该维度无完成任务）';
-
-    let text = `全年共 ${dim.taskCount} 项任务`;
-    if (dim.quantities.length > 0) {
-      const parts = dim.quantities.map(
-        (q) => `${q.label} ${q.value} ${q.unit}`,
-      );
-      text += `，量化产出：${parts.join('，')}`;
+    const hasDone = dim.taskCount > 0;
+    const hasProgress = dim.progressRows.length > 0;
+    if (!hasDone && !hasProgress) {
+      return '（本年度该维度无完成任务）';
     }
-    text += '\n\n任务列表：\n';
-    dim.taskTitles.forEach((title, i) => {
-      text += `- ${title}\n`;
-      const notes = dim.taskNotes[i];
-      if (notes) {
-        text += `  具体内容：${notes}\n`;
+
+    let text = '';
+    if (hasDone) {
+      text += `全年共 ${dim.taskCount} 项任务`;
+      if (dim.quantities.length > 0) {
+        const parts = dim.quantities.map(
+          (q) => `${q.label} ${q.value} ${q.unit}`,
+        );
+        text += `，量化产出：${parts.join('，')}`;
       }
-    });
+      text += '\n\n任务列表：\n';
+      dim.taskTitles.forEach((title, i) => {
+        text += `- ${title}\n`;
+        const notes = dim.taskNotes[i];
+        if (notes) {
+          text += `  具体内容：${notes}\n`;
+        }
+        // 整单完成任务：逐条展开其完成子任务标题（述职要明细）
+        for (const sub of dim.taskSubtasks[i]) {
+          text += `  - ${sub}\n`;
+        }
+      });
+      text = text.trimEnd();
+    }
+    if (hasProgress) {
+      if (text) text += '\n\n';
+      text += '推进中（年度内有子任务完成）：\n';
+      for (const row of dim.progressRows) {
+        text += `- 【推进中】${row.title}（${row.done}/${row.total} 已完成）\n`;
+        for (const sub of row.subtaskTitles) {
+          text += `  - ${sub}\n`;
+        }
+      }
+    }
     return text.trim();
   };
 
@@ -346,7 +368,8 @@ function YearlyReportInner({ data }: { data: DataJson }) {
           {dimensionData.map((dim, idx) => {
             const field = dimToField(dim.dimension);
             const keypointText = existingEntry.summary[field] || '';
-            const isEmpty = dim.taskCount === 0;
+            const isEmpty =
+              dim.taskCount === 0 && dim.progressRows.length === 0;
 
             return (
               <div

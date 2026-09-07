@@ -1,4 +1,4 @@
-import type { Task, Project } from './types';
+import type { SubTask, Task, Project } from './types';
 
 // ============================================================
 // Week math utilities
@@ -105,7 +105,13 @@ export function formatQuantityText(task: Task): string {
 
 export interface CategoryTaskGroup {
   category: string;
-  tasks: { title: string; quantityText: string; notes: string }[];
+  tasks: {
+    title: string;
+    quantityText: string;
+    notes: string;
+    /** 该任务当前已完成的子任务数（整单完成时用于括注计数） */
+    doneSubtaskCount: number;
+  }[];
 }
 
 /**
@@ -124,7 +130,12 @@ export function getCompletedTasksByCategory(
 
   const grouped: Record<
     string,
-    { title: string; quantityText: string; notes: string }[]
+    {
+      title: string;
+      quantityText: string;
+      notes: string;
+      doneSubtaskCount: number;
+    }[]
   > = {};
   for (const task of completed) {
     if (!grouped[task.category]) {
@@ -134,6 +145,7 @@ export function getCompletedTasksByCategory(
       title: task.title,
       quantityText: formatQuantityText(task),
       notes: task.notes.trim(),
+      doneSubtaskCount: task.subtasks.filter((s) => s.status === 'done').length,
     });
   }
 
@@ -146,6 +158,65 @@ export function getCompletedTasksByCategory(
   }
 
   return result;
+}
+
+// ============================================================
+// Section 1+: 子任务周期归因 & 非项目任务推进
+// ============================================================
+
+/**
+ * 判断子任务是否属于给定周完成：
+ * 优先用子任务自身的 completedDate；缺失（旧数据）时回退——
+ * 父任务整单在本周完成则其完成子任务视为本周完成（子任务必不晚于父任务）。
+ */
+export function isSubtaskDoneInWeek(
+  sub: SubTask,
+  parent: Task,
+  weekKey: string,
+): boolean {
+  if (sub.status !== 'done') return false;
+  if (sub.completedDate) return isDateInWeek(sub.completedDate, weekKey);
+  return (
+    parent.status === 'done' && isDateInWeek(parent.completedDate, weekKey)
+  );
+}
+
+export interface NonProjectSubtaskProgressRow {
+  id: string;
+  title: string;
+  category: string;
+  total: number;
+  done: number;
+  /** 本周完成的子任务标题（旧数据无日期且父任务未整单完成时为空） */
+  doneTitles: string[];
+}
+
+/**
+ * 进行中（非整单完成）且无项目归属的任务，若本周有子任务完成则返回其推进行。
+ * 用于「本周完成任务」段中把推进中的父任务挂在分类下作进度说明。
+ */
+export function getWeeklyNonProjectProgress(
+  tasks: Task[],
+  weekKey: string,
+): NonProjectSubtaskProgressRow[] {
+  const rows: NonProjectSubtaskProgressRow[] = [];
+  for (const task of tasks) {
+    if (task.projectId !== null) continue;
+    if (task.status === 'done' || task.status === 'cancelled') continue;
+    const doneTitles = task.subtasks
+      .filter((s) => isSubtaskDoneInWeek(s, task, weekKey))
+      .map((s) => s.title);
+    if (doneTitles.length === 0) continue;
+    rows.push({
+      id: task.id,
+      title: task.title,
+      category: task.category,
+      total: task.subtasks.length,
+      done: task.subtasks.filter((s) => s.status === 'done').length,
+      doneTitles,
+    });
+  }
+  return rows;
 }
 
 // ============================================================
@@ -178,7 +249,9 @@ export function getProjectProgressChanges(
       (t) => t.projectId === project.id && t.status !== 'cancelled',
     );
 
-    // Collect all subtasks and identify which were done this week
+    // Collect all subtasks and identify which were done this week.
+    // 归因规则：优先子任务自身 completedDate；旧数据缺失时回退为
+    // "父任务整单在本周完成 → 其完成子任务视为本周完成"。
     const completedThisWeek: string[] = [];
     let allDone = 0;
     let allTotal = 0;
@@ -189,13 +262,8 @@ export function getProjectProgressChanges(
         if (sub.status === 'done') {
           allDone += 1;
         }
-      }
-      // If this task was completed this week, its done subtasks are "completed this week"
-      if (task.status === 'done' && isDateInWeek(task.completedDate, weekKey)) {
-        for (const sub of task.subtasks) {
-          if (sub.status === 'done') {
-            completedThisWeek.push(sub.title);
-          }
+        if (isSubtaskDoneInWeek(sub, task, weekKey)) {
+          completedThisWeek.push(sub.title);
         }
       }
     }

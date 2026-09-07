@@ -1,4 +1,4 @@
-import type { Task, Project } from './types';
+import type { SubTask, Task, Project } from './types';
 
 // ============================================================
 // Month math utilities
@@ -105,7 +105,7 @@ export function aggregateMonthlyQuantities(
 }
 
 // ============================================================
-// S2: 项目进度回顾 (getMonthlyProjectProgress)
+// S2: 任务/项目推进 (getMonthlyProjectProgress)
 // ============================================================
 
 export interface MonthlyProjectChange {
@@ -121,7 +121,6 @@ export interface MonthlyProjectChange {
 /**
  * Find projects that had subtasks completed in the target month.
  * Calculates progress change (before month → after month) based on subtask counts.
- * Only considers tasks that were completed (status 'done') in the target month.
  */
 export function getMonthlyProjectProgress(
   tasks: Task[],
@@ -136,7 +135,9 @@ export function getMonthlyProjectProgress(
       (t) => t.projectId === project.id && t.status !== 'cancelled',
     );
 
-    // Count all subtasks across all project tasks
+    // Count all subtasks across all project tasks.
+    // 归因规则：优先子任务自身 completedDate；旧数据缺失时回退为
+    // "父任务整单在本月完成 → 其完成子任务视为本月完成"。
     let allDone = 0;
     let allTotal = 0;
     const completedThisMonth: string[] = [];
@@ -147,16 +148,8 @@ export function getMonthlyProjectProgress(
         if (sub.status === 'done') {
           allDone += 1;
         }
-      }
-      // If this task was completed this month, its done subtasks are "completed this month"
-      if (
-        task.status === 'done' &&
-        isDateInMonth(task.completedDate, year, month)
-      ) {
-        for (const sub of task.subtasks) {
-          if (sub.status === 'done') {
-            completedThisMonth.push(sub.title);
-          }
+        if (isSubtaskDoneInMonth(sub, task, year, month)) {
+          completedThisMonth.push(sub.title);
         }
       }
     }
@@ -181,6 +174,86 @@ export function getMonthlyProjectProgress(
   }
 
   return results;
+}
+
+// ============================================================
+// S2+: 子任务月度归因 & 非项目任务推进
+// ============================================================
+
+/**
+ * 判断子任务是否属于给定月份完成：
+ * 优先用子任务自身的 completedDate；缺失（旧数据）时回退——
+ * 父任务整单在本月完成则其完成子任务视为本月完成（子任务必不晚于父任务）。
+ */
+export function isSubtaskDoneInMonth(
+  sub: SubTask,
+  parent: Task,
+  year: number,
+  month: number,
+): boolean {
+  if (sub.status !== 'done') return false;
+  if (sub.completedDate) return isDateInMonth(sub.completedDate, year, month);
+  return (
+    parent.status === 'done' && isDateInMonth(parent.completedDate, year, month)
+  );
+}
+
+export interface NonProjectSubtaskProgressRow {
+  id: string;
+  title: string;
+  total: number;
+  done: number;
+  /** 本月完成的子任务标题（旧数据无日期且父任务未整单完成时为空） */
+  doneTitles: string[];
+}
+
+/**
+ * 进行中（非整单完成）且无项目归属的任务，若本月有子任务完成则返回其推进行，
+ * 用于「任务/项目推进」段把推进中的父任务挂在其进度说明之下。
+ */
+export function getMonthlyNonProjectProgress(
+  tasks: Task[],
+  year: number,
+  month: number,
+): NonProjectSubtaskProgressRow[] {
+  const rows: NonProjectSubtaskProgressRow[] = [];
+  for (const task of tasks) {
+    if (task.projectId !== null) continue;
+    if (task.status === 'done' || task.status === 'cancelled') continue;
+    const doneTitles = task.subtasks
+      .filter((s) => isSubtaskDoneInMonth(s, task, year, month))
+      .map((s) => s.title);
+    if (doneTitles.length === 0) continue;
+    rows.push({
+      id: task.id,
+      title: task.title,
+      total: task.subtasks.length,
+      done: task.subtasks.filter((s) => s.status === 'done').length,
+      doneTitles,
+    });
+  }
+  return rows;
+}
+
+/** 本月完成子任务统计（全部非取消任务），用于量化汇总末尾的计数行。 */
+export function getMonthlySubtaskStats(
+  tasks: Task[],
+  year: number,
+  month: number,
+): { doneCount: number; taskCount: number } {
+  let doneCount = 0;
+  let taskCount = 0;
+  for (const task of tasks) {
+    if (task.status === 'cancelled') continue;
+    const n = task.subtasks.filter((s) =>
+      isSubtaskDoneInMonth(s, task, year, month),
+    ).length;
+    if (n > 0) {
+      doneCount += n;
+      taskCount += 1;
+    }
+  }
+  return { doneCount, taskCount };
 }
 
 // ============================================================
