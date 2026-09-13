@@ -1,0 +1,790 @@
+{
+  "version": 1,
+  "revision": 0,
+  "lastModified": "2026-09-13T22:45:12.333846+08:00",
+  "settings": {
+    "weeklySummaryDay": 5,
+    "monthlySummaryDay": 28,
+    "aiPolishFlag": false,
+    "categories": [
+      "日常工作",
+      "项目推进",
+      "协作沟通",
+      "会议培训",
+      "临时交办",
+      "其他"
+    ]
+  },
+  "projects": [
+    {
+      "id": "p-onboarding",
+      "title": "新版入职流程落地",
+      "category": "项目推进",
+      "status": "in-progress",
+      "startDate": "2026-07-02",
+      "targetDate": "2026-10-22",
+      "notes": "梳理现状 → 出方案 → 试点 → 全量上线",
+      "subtaskCount": {
+        "total": 5,
+        "done": 3
+      }
+    },
+    {
+      "id": "p-quarterly",
+      "title": "季度数据看板建设",
+      "category": "日常工作",
+      "status": "in-progress",
+      "startDate": "2026-05-03",
+      "targetDate": "2026-09-27",
+      "notes": "把每月手工统计改成自动汇总",
+      "subtaskCount": {
+        "total": 4,
+        "done": 3
+      }
+    },
+    {
+      "id": "p-archive",
+      "title": "年度资料归档专项",
+      "category": "其他",
+      "status": "completed",
+      "startDate": "2026-01-03",
+      "targetDate": "2026-06-02",
+      "notes": "完成纸质与电子档双轨归档",
+      "subtaskCount": {
+        "total": 3,
+        "done": 3
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t-1",
+      "projectId": "p-onboarding",
+      "title": "新版入职流程方案评审",
+      "category": "项目推进",
+      "priority": "urgent",
+      "status": "done",
+      "createdDate": "2026-09-05",
+      "updatedDate": "2026-09-07",
+      "deadline": "2026-09-07",
+      "startDate": null,
+      "completedDate": "2026-09-07",
+      "quantities": [
+        {
+          "label": "评审意见",
+          "value": 12,
+          "unit": "条"
+        }
+      ],
+      "subtasks": [],
+      "notes": "评审通过，2 条意见待回填",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-2",
+      "projectId": "p-quarterly",
+      "title": "季度数据看板字段对齐",
+      "category": "日常工作",
+      "priority": "important",
+      "status": "done",
+      "createdDate": "2026-09-02",
+      "updatedDate": "2026-09-08",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-09-08",
+      "quantities": [
+        {
+          "label": "对齐字段",
+          "value": 26,
+          "unit": "个"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-3",
+      "projectId": null,
+      "title": "跨部门协调会（试点部门）",
+      "category": "协作沟通",
+      "priority": "important",
+      "status": "done",
+      "createdDate": "2026-09-07",
+      "updatedDate": "2026-09-09",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-09-09",
+      "quantities": [
+        {
+          "label": "参会方",
+          "value": 4,
+          "unit": "个"
+        }
+      ],
+      "subtasks": [],
+      "notes": "确定试点范围与时间表",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-4",
+      "projectId": null,
+      "title": "月度例会会议纪要",
+      "category": "会议培训",
+      "priority": "normal",
+      "status": "done",
+      "createdDate": "2026-09-07",
+      "updatedDate": "2026-09-09",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-09-09",
+      "quantities": [
+        {
+          "label": "纪要",
+          "value": 1,
+          "unit": "份"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-5",
+      "projectId": null,
+      "title": "临时交办：汇总上半年台账",
+      "category": "临时交办",
+      "priority": "urgent",
+      "status": "done",
+      "createdDate": "2026-09-08",
+      "updatedDate": "2026-09-10",
+      "deadline": "2026-09-10",
+      "startDate": null,
+      "completedDate": "2026-09-10",
+      "quantities": [
+        {
+          "label": "汇总条目",
+          "value": 138,
+          "unit": "条"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": true,
+      "isCrossYear": false,
+      "isBlocked": false,
+      "leaderSource": "分管负责人",
+      "leaderAssignedDate": "2026-09-08",
+      "leaderDeadline": "2026-09-10"
+    },
+    {
+      "id": "t-6",
+      "projectId": "p-onboarding",
+      "title": "入职流程试点上线",
+      "category": "项目推进",
+      "priority": "important",
+      "status": "in-progress",
+      "createdDate": "2026-08-08",
+      "updatedDate": "2026-08-08",
+      "deadline": "2026-09-28",
+      "startDate": "2026-08-08",
+      "completedDate": null,
+      "quantities": [],
+      "subtasks": [
+        {
+          "id": "s-1",
+          "title": "现状流程梳理",
+          "status": "done",
+          "completedDate": "2026-08-17"
+        },
+        {
+          "id": "s-2",
+          "title": "方案初稿",
+          "status": "done",
+          "completedDate": "2026-08-24"
+        },
+        {
+          "id": "s-3",
+          "title": "试点范围确认",
+          "status": "done",
+          "completedDate": "2026-09-07"
+        },
+        {
+          "id": "s-4",
+          "title": "试点培训",
+          "status": "todo"
+        },
+        {
+          "id": "s-5",
+          "title": "反馈收集与修订",
+          "status": "todo"
+        }
+      ],
+      "notes": "先跑一个部门，收集反馈再推广",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-7",
+      "projectId": "p-quarterly",
+      "title": "看板自动化脚本",
+      "category": "日常工作",
+      "priority": "normal",
+      "status": "in-progress",
+      "createdDate": "2026-07-24",
+      "updatedDate": "2026-07-24",
+      "deadline": "2026-09-21",
+      "startDate": "2026-07-24",
+      "completedDate": null,
+      "quantities": [],
+      "subtasks": [
+        {
+          "id": "s-6",
+          "title": "字段口径确认",
+          "status": "done",
+          "completedDate": "2026-08-08"
+        },
+        {
+          "id": "s-7",
+          "title": "取数逻辑编写",
+          "status": "done",
+          "completedDate": "2026-08-28"
+        },
+        {
+          "id": "s-8",
+          "title": "模板排版",
+          "status": "done",
+          "completedDate": "2026-09-08"
+        },
+        {
+          "id": "s-9",
+          "title": "试跑与校验",
+          "status": "todo"
+        }
+      ],
+      "notes": "每月手工汇总改为一键生成",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-8",
+      "projectId": null,
+      "title": "培训材料更新",
+      "category": "会议培训",
+      "priority": "normal",
+      "status": "in-progress",
+      "createdDate": "2026-08-18",
+      "updatedDate": "2026-08-18",
+      "deadline": null,
+      "startDate": "2026-08-18",
+      "completedDate": null,
+      "quantities": [],
+      "subtasks": [
+        {
+          "id": "s-10",
+          "title": "大纲调整",
+          "status": "done",
+          "completedDate": "2026-08-31"
+        },
+        {
+          "id": "s-11",
+          "title": "案例补充",
+          "status": "todo"
+        }
+      ],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-9",
+      "projectId": null,
+      "title": "与财务核对季度数据",
+      "category": "协作沟通",
+      "priority": "important",
+      "status": "in-progress",
+      "createdDate": "2026-09-04",
+      "updatedDate": "2026-09-04",
+      "deadline": "2026-09-17",
+      "startDate": "2026-09-04",
+      "completedDate": null,
+      "quantities": [],
+      "subtasks": [],
+      "notes": "等对方提供口径说明",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": true
+    },
+    {
+      "id": "t-10",
+      "projectId": null,
+      "title": "试点部门培训排期",
+      "category": "会议培训",
+      "priority": "normal",
+      "status": "todo",
+      "createdDate": "2026-09-07",
+      "updatedDate": "2026-09-07",
+      "deadline": "2026-09-12",
+      "startDate": null,
+      "completedDate": null,
+      "quantities": [],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-11",
+      "projectId": null,
+      "title": "季度总结数据校验",
+      "category": "日常工作",
+      "priority": "normal",
+      "status": "todo",
+      "createdDate": "2026-09-07",
+      "updatedDate": "2026-09-07",
+      "deadline": "2026-09-19",
+      "startDate": null,
+      "completedDate": null,
+      "quantities": [],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-12",
+      "projectId": null,
+      "title": "年度目标对齐会准备",
+      "category": "协作沟通",
+      "priority": "important",
+      "status": "todo",
+      "createdDate": "2026-09-06",
+      "updatedDate": "2026-09-06",
+      "deadline": "2026-09-25",
+      "startDate": null,
+      "completedDate": null,
+      "quantities": [],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-13",
+      "projectId": null,
+      "title": "跨年：下一年度资料归档计划",
+      "category": "其他",
+      "priority": "normal",
+      "status": "todo",
+      "createdDate": "2026-08-28",
+      "updatedDate": "2026-08-28",
+      "deadline": "2027-03-31",
+      "startDate": null,
+      "completedDate": null,
+      "quantities": [],
+      "subtasks": [],
+      "notes": "跨年任务，临近再提醒",
+      "isLeaderAssigned": false,
+      "isCrossYear": true,
+      "isBlocked": false,
+      "hibernateUntil": "2027-02-01"
+    },
+    {
+      "id": "t-14",
+      "projectId": null,
+      "title": "临时交办：明天前提交排查清单",
+      "category": "临时交办",
+      "priority": "urgent",
+      "status": "todo",
+      "createdDate": "2026-09-13",
+      "updatedDate": "2026-09-13",
+      "deadline": "2026-09-14",
+      "startDate": null,
+      "completedDate": null,
+      "quantities": [],
+      "subtasks": [],
+      "notes": "等对方确认排查范围后即可提交",
+      "isLeaderAssigned": true,
+      "isCrossYear": false,
+      "isBlocked": false,
+      "leaderSource": "分管负责人",
+      "leaderAssignedDate": "2026-09-13",
+      "leaderDeadline": "2026-09-14"
+    },
+    {
+      "id": "t-h1",
+      "projectId": null,
+      "title": "月度数据汇总",
+      "category": "日常工作",
+      "priority": "normal",
+      "status": "done",
+      "createdDate": "2025-12-30",
+      "updatedDate": "2026-01-05",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-01-05",
+      "quantities": [
+        {
+          "label": "汇总报表",
+          "value": 6,
+          "unit": "份"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-h2",
+      "projectId": null,
+      "title": "流程文档修订",
+      "category": "日常工作",
+      "priority": "normal",
+      "status": "done",
+      "createdDate": "2026-02-06",
+      "updatedDate": "2026-02-12",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-02-12",
+      "quantities": [
+        {
+          "label": "修订文档",
+          "value": 4,
+          "unit": "份"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-h3",
+      "projectId": null,
+      "title": "需求评审会",
+      "category": "项目推进",
+      "priority": "normal",
+      "status": "done",
+      "createdDate": "2026-02-14",
+      "updatedDate": "2026-02-20",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-02-20",
+      "quantities": [
+        {
+          "label": "评审需求",
+          "value": 18,
+          "unit": "项"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-h4",
+      "projectId": null,
+      "title": "跨部门对接",
+      "category": "协作沟通",
+      "priority": "normal",
+      "status": "done",
+      "createdDate": "2026-03-02",
+      "updatedDate": "2026-03-08",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-03-08",
+      "quantities": [
+        {
+          "label": "对接事项",
+          "value": 9,
+          "unit": "项"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-h5",
+      "projectId": null,
+      "title": "季度培训组织",
+      "category": "会议培训",
+      "priority": "normal",
+      "status": "done",
+      "createdDate": "2026-03-12",
+      "updatedDate": "2026-03-18",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-03-18",
+      "quantities": [
+        {
+          "label": "参训人员",
+          "value": 46,
+          "unit": "人"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-h6",
+      "projectId": null,
+      "title": "档案清点",
+      "category": "其他",
+      "priority": "normal",
+      "status": "done",
+      "createdDate": "2026-04-04",
+      "updatedDate": "2026-04-10",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-04-10",
+      "quantities": [
+        {
+          "label": "清点档案",
+          "value": 320,
+          "unit": "份"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-h7",
+      "projectId": null,
+      "title": "年度资料归档",
+      "category": "其他",
+      "priority": "normal",
+      "status": "done",
+      "createdDate": "2026-05-09",
+      "updatedDate": "2026-05-15",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-05-15",
+      "quantities": [
+        {
+          "label": "归档卷宗",
+          "value": 96,
+          "unit": "卷"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-h8",
+      "projectId": null,
+      "title": "半年度总结撰写",
+      "category": "日常工作",
+      "priority": "normal",
+      "status": "done",
+      "createdDate": "2026-06-18",
+      "updatedDate": "2026-06-24",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-06-24",
+      "quantities": [
+        {
+          "label": "总结报告",
+          "value": 1,
+          "unit": "份"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-h9",
+      "projectId": null,
+      "title": "外部对接协调",
+      "category": "协作沟通",
+      "priority": "normal",
+      "status": "done",
+      "createdDate": "2026-06-30",
+      "updatedDate": "2026-07-06",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-07-06",
+      "quantities": [
+        {
+          "label": "协调事项",
+          "value": 7,
+          "unit": "项"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-h10",
+      "projectId": null,
+      "title": "新人带教答疑",
+      "category": "会议培训",
+      "priority": "normal",
+      "status": "done",
+      "createdDate": "2026-07-16",
+      "updatedDate": "2026-07-22",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-07-22",
+      "quantities": [
+        {
+          "label": "答疑次数",
+          "value": 14,
+          "unit": "次"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-h11",
+      "projectId": null,
+      "title": "半年台账整理",
+      "category": "日常工作",
+      "priority": "normal",
+      "status": "done",
+      "createdDate": "2026-08-03",
+      "updatedDate": "2026-08-09",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-08-09",
+      "quantities": [
+        {
+          "label": "台账条目",
+          "value": 138,
+          "unit": "条"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    },
+    {
+      "id": "t-h12",
+      "projectId": null,
+      "title": "临时交办：专项排查",
+      "category": "临时交办",
+      "priority": "normal",
+      "status": "done",
+      "createdDate": "2026-08-13",
+      "updatedDate": "2026-08-19",
+      "deadline": null,
+      "startDate": null,
+      "completedDate": "2026-08-19",
+      "quantities": [
+        {
+          "label": "排查对象",
+          "value": 52,
+          "unit": "项"
+        }
+      ],
+      "subtasks": [],
+      "notes": "",
+      "isLeaderAssigned": false,
+      "isCrossYear": false,
+      "isBlocked": false
+    }
+  ],
+  "archives": {
+    "weeks": {
+      "2026-W37": {
+        "tasks": [
+          "t-1",
+          "t-2",
+          "t-3",
+          "t-4",
+          "t-5"
+        ],
+        "summary": {
+          "doneTasks": "【本周完成任务】\n- [项目推进] 新版入职流程方案评审：已完成评审意见 12 条。\n- [日常工作] 季度数据看板字段对齐：已完成字段 26 个。\n- [协作沟通] 跨部门协调会（试点部门）：已完成参会方 4 个。\n- [会议培训] 月度例会会议纪要：已完成纪要 1 份。\n- [临时交办] 临时交办：汇总上半年台账：已完成汇总条目 138 条。\n\n【进行中】\n- [项目推进] 入职流程试点上线：已完成现状流程梳理、方案初稿、试点范围确认，待开展：试点培训、反馈收集与修订。\n- [日常工作] 看板自动化脚本：已完成字段口径确认、取数逻辑编写、模板排版，待开展：试跑与校验。",
+          "projectProgress": "新版入职流程落地：进度 40% → 60%，本周完成 1 项子任务（试点范围确认）。\n季度数据看板建设：进度 50% → 75%，本周完成 1 项子任务（模板排版）。",
+          "nextWeekPlan": "- 试点部门培训排期\n- 季度总结数据校验\n- 与财务核对季度数据",
+          "blockers": "与财务核对季度数据：等待对方提供口径说明。"
+        },
+        "aiPolished": false
+      }
+    },
+    "months": {
+      "2026-09": {
+        "tasks": [
+          "t-1",
+          "t-2",
+          "t-3",
+          "t-4",
+          "t-5",
+          "t-h12"
+        ],
+        "summary": {
+          "quantitativeSummary": "| 分类 | 指标 | 数量 |\n| --- | --- | --- |\n| 日常工作 | 对齐字段 | 26 个 |\n| 项目推进 | 评审意见 | 12 条 |\n| 协作沟通 | 参会方 | 4 个 |\n| 会议培训 | 纪要 | 1 份 |\n| 临时交办 | 汇总条目 | 138 条 |\n\n本月完成子任务 4 项（跨 3 个任务）",
+          "projectReview": "新版入职流程落地：进度 40% → 60%，本月完成 1 项子任务（试点范围确认）。\n看板自动化脚本：进行中，3/4 子步骤已完成（字段口径确认、取数逻辑编写、模板排版）。",
+          "reflection": "本月推进节奏正常；跨部门数据口径沟通仍是最耗时环节，下月提前发起。",
+          "nextMonthFocus": "完成试点培训与反馈修订，数据看板试跑上线。"
+        },
+        "aiPolished": false
+      }
+    },
+    "years": {
+      "2026": {
+        "tasks": [
+          "t-h1",
+          "t-h2",
+          "t-h3",
+          "t-h7",
+          "t-h8",
+          "t-h11"
+        ],
+        "summary": {
+          "personnelAllocation": "月度数据汇总：已完成，汇总报表 6 份。\n流程文档修订：已完成，修订文档 4 份。\n半年台账整理：已完成，台账条目 138 条。",
+          "internalRecruitment": "需求评审会：已完成，评审需求 18 项。\n新版入职流程落地：进行中，3/5 子步骤已完成（现状流程梳理、方案初稿、试点范围确认）。",
+          "rewardDiscipline": "跨部门对接：已完成，对接事项 9 项。",
+          "performance": "季度培训组织：已完成，参训人员 46 人。\n新人带教答疑：已完成，答疑次数 14 次。",
+          "laborRelations": "外部对接协调：已完成，协调事项 7 项。",
+          "leaderAssigned": "临时交办：专项排查：已完成，排查对象 52 项。",
+          "other": "全年聚焦流程提效，把手工统计逐步替换为自动汇总。"
+        },
+        "aiPolished": false
+      }
+    }
+  }
+}
