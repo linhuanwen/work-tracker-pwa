@@ -10,6 +10,11 @@ export default tseslint.config(
       'release/**',
       'node_modules/**',
       '共享/**',
+      // 工具缓存目录：不应被 lint 扫描（被独占占用的缓存目录会让 eslint 直接 EPERM 退出）
+      '.pytest_cache/**',
+      '.ruff_cache/**',
+      'scripts/.pytest_cache/**',
+      'backups/**',
     ],
   },
   js.configs.recommended,

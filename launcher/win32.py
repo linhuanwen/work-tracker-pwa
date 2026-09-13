@@ -10,11 +10,11 @@ import sys
 import time
 
 from launcher.constants import (
+    GWL_EXSTYLE,
     HTCAPTION,
     SPI_GETWORKAREA,
     SW_HIDE,
     SW_MAXIMIZE,
-    SW_MINIMIZE,
     SW_RESTORE,
     SWP_NOACTIVATE,
     SWP_NOMOVE,
@@ -23,6 +23,8 @@ from launcher.constants import (
     WINDOW_MIN_WIDTH,
     WINDOW_TITLE,
     WM_NCLBUTTONDOWN,
+    WS_EX_APPWINDOW,
+    WS_EX_TOOLWINDOW,
 )
 from launcher.state import get_state
 
@@ -224,6 +226,8 @@ def find_and_store_hwnd():
             state.window_hwnd = hwnd
             if state.debug_mode:
                 print(f"[*] 窗口句柄已捕获 (HWND={hwnd})")
+            # 只留托盘：窗口不进任务栏（TOOLWINDOW 样式 + 删除已出现的按钮）。
+            remove_from_taskbar(hwnd)
             # 启动布局与前端 /api/window 探针解耦：拿到 HWND 后立即停靠右缘，
             # 不依赖前端加载时机（避免不同分辨率/性能机器上出现窗口停在左侧）。
             dock_right()
@@ -309,13 +313,117 @@ def start_drag_window() -> bool:
     user32.SendMessageW(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, lparam)
     return True
 
-def minimize_window() -> bool:
-    """Minimize the window to the taskbar."""
-    hwnd = _find_hwnd()
+class _GUID(ctypes.Structure):
+    """COM GUID（用于 ITaskbarList COM 调用）。"""
+
+    _fields_ = [
+        ("Data1", ctypes.c_ulong),
+        ("Data2", ctypes.c_ushort),
+        ("Data3", ctypes.c_ushort),
+        ("Data4", ctypes.c_ubyte * 8),
+    ]
+
+
+# CLSID_TaskbarList / IID_ITaskbarList
+_TASKBARLIST_CLSID = _GUID(
+    0x56FDF344, 0xFD6D, 0x11D0, (0x95, 0x8A, 0x00, 0x60, 0x97, 0xC9, 0xA0, 0x90)
+)
+_ITASKBARLIST_IID = _GUID(
+    0x56FDF342, 0xFD6D, 0x11D0, (0x95, 0x8A, 0x00, 0x60, 0x97, 0xC9, 0xA0, 0x90)
+)
+
+
+def _get_window_ex_style(hwnd: int) -> int:
+    """读取窗口扩展样式（GetWindowLongPtrW，32 位回退 GetWindowLongW）。"""
+    getter = getattr(user32, "GetWindowLongPtrW", None) or getattr(
+        user32, "GetWindowLongW", None
+    )
+    return getter(hwnd, GWL_EXSTYLE) or 0
+
+
+def _set_window_ex_style(hwnd: int, style: int) -> None:
+    """写入窗口扩展样式。"""
+    setter = getattr(user32, "SetWindowLongPtrW", None) or getattr(
+        user32, "SetWindowLongW", None
+    )
+    setter(hwnd, GWL_EXSTYLE, style)
+
+
+def _taskbar_delete_tab(hwnd: int) -> None:
+    """ITaskbarList::DeleteTab — 立即移除已出现的任务栏按钮（失败静默）。
+
+    设置 WS_EX_TOOLWINDOW 之后任务栏不会再重建按钮，但启动瞬间可能已经
+    登记了一个按钮；DeleteTab 把它直接删掉，避免隐藏/重显窗口造成闪烁。
+    """
+    if sys.platform != "win32":
+        return
+    initialized = False
+    try:
+        from ctypes import (
+            POINTER,
+            WINFUNCTYPE,
+            byref,
+            c_long,
+            c_ulong,
+            c_void_p,
+            windll,
+        )
+
+        ole32 = windll.ole32
+        initialized = ole32.CoInitialize(None) == 0  # S_OK；S_FALSE=已初始化过
+        obj = c_void_p()
+        hr = ole32.CoCreateInstance(
+            byref(_TASKBARLIST_CLSID),
+            None,
+            1,  # CLSCTX_INPROC_SERVER
+            byref(_ITASKBARLIST_IID),
+            byref(obj),
+        )
+        if hr == 0 and obj.value:
+            vtbl = ctypes.cast(obj, POINTER(POINTER(c_void_p))).contents
+            hr_init = WINFUNCTYPE(c_long, c_void_p)(vtbl[3])      # HrInit
+            delete_tab = WINFUNCTYPE(c_long, c_void_p, c_void_p)(vtbl[5])  # DeleteTab
+            release = WINFUNCTYPE(c_ulong, c_void_p)(vtbl[2])     # IUnknown::Release
+            try:
+                if hr_init(obj) == 0:
+                    delete_tab(obj, hwnd)
+            finally:
+                release(obj)
+    except Exception:
+        pass
+    finally:
+        if initialized:
+            try:
+                ctypes.windll.ole32.CoUninitialize()
+            except Exception:
+                pass
+
+
+def remove_from_taskbar(hwnd: int | None = None) -> bool:
+    """让窗口不出现在任务栏，常驻入口只在右下角系统托盘。
+
+    做法：给窗口加上 WS_EX_TOOLWINDOW 并去掉 WS_EX_APPWINDOW，
+    任务栏从此不再登记该窗口（隐藏/重显、资源管理器重启后也不会回来）；
+    对启动瞬间可能已经出现的任务栏按钮，再调 ITaskbarList::DeleteTab
+    立即移除，无需隐藏/重显窗口，不会闪烁。
+    """
+    hwnd = hwnd or _find_hwnd()
     if not hwnd:
         return False
-    user32.ShowWindow(hwnd, SW_MINIMIZE)
+    try:
+        current = _get_window_ex_style(hwnd)
+        new_style = (current | WS_EX_TOOLWINDOW) & ~WS_EX_APPWINDOW
+        if new_style != current:
+            _set_window_ex_style(hwnd, new_style)
+    except Exception:
+        return False
+    _taskbar_delete_tab(hwnd)
     return True
+
+
+def minimize_window() -> bool:
+    """最小化：窗口不进任务栏，最小化等同隐藏到系统托盘。"""
+    return hide_window()
 
 
 def toggle_maximize_window() -> tuple[bool, bool]:

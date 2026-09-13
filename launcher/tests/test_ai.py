@@ -29,7 +29,7 @@ def test_request_config_applies_defaults_for_missing_fields(tmp_scripts_dir):
     config = resolve_ai_config({"api_key": " sk-ui "})
     assert config["api_key"] == "sk-ui"
     assert config["endpoint"] == "https://api.deepseek.com"
-    assert config["model"] == "deepseek-chat"
+    assert config["model"] == "deepseek-v4-flash"
 
 
 def test_request_config_without_key_falls_back_to_env(tmp_scripts_dir):

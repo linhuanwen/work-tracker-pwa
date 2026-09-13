@@ -100,8 +100,8 @@ def _default_data_dict() -> dict:
             "monthlySummaryDay": 28,
             "aiPolishFlag": False,
             "categories": [
-                "人员调配", "内部招聘", "奖惩管理", "绩效管理",
-                "劳动关系", "交办事项", "其他",
+                "日常工作", "项目推进", "协作沟通",
+                "会议培训", "临时交办", "其他",
             ],
         },
         "projects": [],

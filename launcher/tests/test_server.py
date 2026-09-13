@@ -118,7 +118,7 @@ def test_api_state_accepts_existing_absolute_data_folder(tmp_path, monkeypatch):
 def test_api_state_get_hides_invalid_stale_data_folder(tmp_path, monkeypatch):
     # 启动时解析失败（相对路径/目录不存在）的残留配置，GET 不应再暴露，
     # 否则前端会误以为已配置并进入后端模式却读不到数据。
-    from launcher.state_persistence import read_state, write_state
+    from launcher.state_persistence import write_state
 
     monkeypatch.setattr(
         "launcher.state_persistence.get_state_path",

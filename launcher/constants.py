@@ -47,6 +47,11 @@ SPI_GETWORKAREA = 0x0030
 WM_NCLBUTTONDOWN = 0x00A1
 HTCAPTION = 2
 
+# 窗口扩展样式相关（用于让窗口不进任务栏、只留系统托盘）
+GWL_EXSTYLE = -20
+WS_EX_APPWINDOW = 0x00040000   # 强制出现在任务栏
+WS_EX_TOOLWINDOW = 0x00000080  # 工具窗口：不显示在任务栏和 Alt+Tab
+
 # 自动快照保留数量
 BACKUP_COUNT = 5
 BACKUP_BASENAME = "data.json.bak"

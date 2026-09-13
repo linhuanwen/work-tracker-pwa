@@ -1,39 +1,21 @@
 #!/usr/bin/env python3
-"""AI 生成总结 Word 文档。"""
+"""生成总结 Word 文档。
+
+自 2026-09-07 起为「所见即所得」：把小结页面各节内容原样排版成 .docx，
+不再经过 AI 改写（AI 改写曾多次丢失子步骤、错置状态；润色保留在页面
+「请求润色」按钮，属导出的可选前置步骤，不在此处发生）。
+"""
 
 from pathlib import Path
 
-from launcher.ai import _ensure_scripts_path, resolve_ai_config
-
-
-def _summary_prompt(period_type: str, period_label: str, sections: dict) -> str:
-    """Build a prompt asking the AI to produce a formal summary document."""
-    section_lines = []
-    for title, text in sections.items():
-        section_lines.append(f"## {title}\n{text}\n")
-    body = "\n".join(section_lines)
-
-    return f"""你是一位资深文书助理。请根据以下{period_label}的工作材料，生成一份正式、简洁、结构化的工作总结 Word 文档内容。
-
-## 写作要求
-1. **文风**：正式、简洁、符合正式工作报告规范。
-2. **用数据说话**：保留并突出量化产出和具体数据。
-3. **避免口语化**：删除"搞定了""推进了一下"等日常表达。
-4. **避免情绪化**：不添加"极大地""非常"等主观修饰词。
-5. **结构化**：使用 Markdown 标题（# 一级标题、## 二级标题）和项目符号列表组织内容。
-6. **不编造**：不增加原文没有的信息，不删除原文已有的事实。
-
-## 输出格式
-只输出 Markdown 格式的文档正文，不要添加任何解释、标记或前缀。第一行应为一级标题，例如"{period_label}工作总结"。
-
-## 原始材料
-{body}
-
-请开始生成："""
-
 
 def _markdown_to_docx(markdown_text: str, output_path: str) -> None:
-    """Convert simple Markdown to a .docx file (Chinese-friendly)."""
+    """Convert simple Markdown to a .docx file (Chinese-friendly).
+
+    Supports #/##/### headings, ``- ``/``* `` bullets, ``1. `` numbered
+    lists, and ``| ... |`` pipe tables (separator row dropped, first data
+    row bolded as header). 小结页面正文按此规则原样排版，不做内容改写。
+    """
     import re
 
     from docx import Document
@@ -52,8 +34,11 @@ def _markdown_to_docx(markdown_text: str, output_path: str) -> None:
     sections.left_margin = Inches(0.7)
     sections.right_margin = Inches(0.7)
 
-    for raw_line in markdown_text.splitlines():
-        line = raw_line.rstrip()
+    lines = markdown_text.splitlines()
+    i = 0
+    while i < len(lines):
+        line = lines[i].rstrip()
+        i += 1
         if not line.strip():
             continue
         stripped = line.lstrip()
@@ -64,6 +49,38 @@ def _markdown_to_docx(markdown_text: str, output_path: str) -> None:
             doc.add_heading(stripped[3:], level=2)
         elif stripped.startswith('### '):
             doc.add_heading(stripped[4:], level=3)
+        elif stripped.startswith('|'):
+            # Collect consecutive pipe-table rows and convert to a Word table.
+            rows = [stripped]
+            while i < len(lines) and lines[i].lstrip().startswith('|'):
+                rows.append(lines[i].lstrip())
+                i += 1
+            data_rows: list[list[str]] = []
+            had_separator = False
+            for row in rows:
+                cells = [
+                    c.strip().replace('**', '')
+                    for c in row.strip().strip('|').split('|')
+                ]
+                if all(re.fullmatch(r':?-{2,}:?', c) for c in cells):
+                    had_separator = True
+                    continue
+                data_rows.append(cells)
+            if data_rows:
+                ncols = max(len(r) for r in data_rows)
+                table = doc.add_table(rows=len(data_rows), cols=ncols)
+                table.style = 'Table Grid'
+                for ri, cells in enumerate(data_rows):
+                    for ci in range(ncols):
+                        table.cell(ri, ci).text = (
+                            cells[ci] if ci < len(cells) else ''
+                        )
+                # First data row is the header when a separator row existed.
+                if had_separator:
+                    for ci in range(ncols):
+                        runs = table.cell(0, ci).paragraphs[0].runs
+                        if runs:
+                            runs[0].bold = True
         elif stripped.startswith(('- ', '* ')):
             doc.add_paragraph(stripped[2:], style='List Bullet')
         elif re.match(r'^\d+\.\s', stripped):
@@ -104,25 +121,20 @@ def _summary_doc_filename(period_type: str, key: str) -> tuple[str, str]:
 def generate_summary_doc(
     data_folder_path: str, period_type: str, key: str, sections: dict, ai_config=None
 ) -> str:
-    """Generate a Word document summary via AI and save it to the shared folder.
+    """把小结合成 Word 文档并保存到共享文件夹。
 
-    *ai_config* is the optional ``config`` object from the frontend request
-    (设置 → AI 配置)；未提供时回退到 scripts/.env。
+    所见即所得：docx 与传入 sections 逐节、逐行一致——节标题转二级标题，
+    正文行原样转段落，量化汇总表的 ``| ... |`` 行还原为 Word 表格。
+    不调用 AI，故不存在句式走样、子步骤丢失或状态错位问题。
+
+    *ai_config* 仅为兼容前端请求保留（历史遗留，不再使用）。
 
     Returns the saved file path. Raises an exception on failure.
     """
     if not data_folder_path:
         raise Exception("未配置数据文件夹，无法保存总结文档。")
 
-    _ensure_scripts_path()
-    try:
-        from polish import call_ai_api
-    except ImportError:
-        raise Exception("AI 润色脚本未找到，请确保 scripts/polish.py 存在。")
-
-    config = resolve_ai_config(ai_config)
-
-    _, _, _ = _type_label_map()[period_type]
+    _ = _type_label_map()[period_type]
     if period_type == 'week':
         year, week = key.split('-W')
         full_label = f"{year}年第{int(week)}周"
@@ -132,8 +144,16 @@ def generate_summary_doc(
     else:
         full_label = f"{key}年度"
 
-    prompt = _summary_prompt(period_type, full_label, sections)
-    markdown = call_ai_api(prompt, config)
+    # 一级标题 + 每节一个二级标题（空节省略），正文原样保留
+    lines = [f"# {full_label}工作总结", ""]
+    for title, text in sections.items():
+        text = (text or "").strip()
+        if not text:
+            continue
+        lines.append(f"## {title}")
+        lines.append(text)
+        lines.append("")
+    markdown = "\n".join(lines)
 
     folder_name, filename = _summary_doc_filename(period_type, key)
     output_dir = Path(data_folder_path) / folder_name

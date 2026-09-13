@@ -1,18 +1,10 @@
 import { useState, useCallback } from 'react';
-import type { SubTask, Priority, Quantity } from './types';
+import type { SubTask, Quantity } from './types';
 import { Icon } from './Icon';
-import { formatDate } from './taskUtils';
 import styles from './SubtaskEditor.module.css';
-
-const PRIORITIES: { value: Priority; label: string }[] = [
-  { value: 'urgent', label: '紧急' },
-  { value: 'important', label: '重要' },
-  { value: 'normal', label: '日常' },
-];
 
 interface SubtaskEditorProps {
   subtasks: SubTask[];
-  categories?: string[];
   onAdd: (title: string) => void;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
@@ -21,7 +13,6 @@ interface SubtaskEditorProps {
 
 export function SubtaskEditor({
   subtasks,
-  categories,
   onAdd,
   onToggle,
   onDelete,
@@ -100,10 +91,7 @@ export function SubtaskEditor({
         <ul className={styles.subtaskList}>
           {subtasks.map((sub) => {
             const expanded = expandedId === sub.id;
-            const priority = sub.priority ?? 'normal';
             const quantities = sub.quantities ?? [];
-            const deadline = sub.deadline ?? '';
-            const category = sub.category ?? '';
 
             return (
               <li key={sub.id} className={styles.subtaskItem}>
@@ -133,19 +121,6 @@ export function SubtaskEditor({
                   >
                     {sub.title}
                   </span>
-                  {sub.deadline && (
-                    <span className={styles.subtaskDeadline}>
-                      {formatDate(sub.deadline)}
-                    </span>
-                  )}
-                  {priority !== 'normal' && (
-                    <span
-                      className={`${styles.subtaskPriority} ${priority === 'urgent' ? styles.subtaskPriorityUrgent : ''}`}
-                    >
-                      {PRIORITIES.find((p) => p.value === priority)?.label ??
-                        '重要'}
-                    </span>
-                  )}
                   <button
                     type="button"
                     className={styles.expandBtn}
@@ -196,60 +171,6 @@ export function SubtaskEditor({
                         placeholder="添加具体内容…"
                       />
                     </label>
-
-                    <div className={styles.detailsRow}>
-                      <label className={styles.detailsLabel}>
-                        截止日期
-                        <input
-                          className={styles.detailsInput}
-                          type="date"
-                          value={deadline}
-                          onChange={(e) =>
-                            onUpdate(sub.id, {
-                              deadline: e.target.value || null,
-                            })
-                          }
-                        />
-                      </label>
-
-                      <label className={styles.detailsLabel}>
-                        优先级
-                        <select
-                          className={styles.detailsInput}
-                          value={priority}
-                          onChange={(e) =>
-                            onUpdate(sub.id, {
-                              priority: e.target.value as Priority,
-                            })
-                          }
-                        >
-                          {PRIORITIES.map((p) => (
-                            <option key={p.value} value={p.value}>
-                              {p.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </div>
-
-                    {categories && (
-                      <label className={styles.detailsLabel}>
-                        分类
-                        <select
-                          className={styles.detailsInput}
-                          value={category}
-                          onChange={(e) =>
-                            onUpdate(sub.id, { category: e.target.value })
-                          }
-                        >
-                          {categories.map((c) => (
-                            <option key={c} value={c}>
-                              {c}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    )}
 
                     <div className={styles.detailsLabel}>
                       <span>量化产出</span>

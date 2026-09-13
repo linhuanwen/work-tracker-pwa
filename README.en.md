@@ -76,12 +76,12 @@ python scripts/check_all.py   # full gate: typecheck + lint + format + tests + r
 
 ## Requirements
 
-| Requirement         | Notes                                                     |
-| ------------------- | --------------------------------------------------------- |
-| OS                  | Windows 10+ / Windows 11                                  |
-| Browser (PWA mode)  | Recent Chrome or Edge                                     |
-| WebView2 Runtime    | Bundled on Windows 11; may need install on Windows 10     |
-| Python (optional)   | 3.11+, only for running from source or using AI polish    |
+| Requirement        | Notes                                                  |
+| ------------------ | ------------------------------------------------------ |
+| OS                 | Windows 10+ / Windows 11                               |
+| Browser (PWA mode) | Recent Chrome or Edge                                  |
+| WebView2 Runtime   | Bundled on Windows 11; may need install on Windows 10  |
+| Python (optional)  | 3.11+, only for running from source or using AI polish |
 
 ## Documentation
 

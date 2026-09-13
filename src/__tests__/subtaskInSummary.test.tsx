@@ -1,15 +1,13 @@
 /**
  * 子任务纳入周/月/年报总结 — 组件级生成内容验证
  *
- * 呈现规则 v2（2026-09-07 定稿）：子任务打勾即完成——不依赖子任务日期、
- * 也不要求父任务先改到「进行中」（待办/进行中均可）。父行 x/y = 全部已勾数，
- * 子行 = 全部已勾子任务标题（快照式，任务存续期间每期总结都会出现）。
- *
- * 直接挂载三个总结页，点击「生成」后断言归档 entry 的 markdown：
- * - 周报：整单完成任务括注（完成子任务 n 项）；未整单完成父任务以【推进中】(x/y) 行 + 全部已勾子行挂在分类下；
- *   项目推进仍走「长期项目推进」段（按期归因，项目任务不混入该段）。
- * - 月报：「任务/项目推进」段合并项目推进与非项目推进行；量化汇总末尾统计行仅计有真实日期的本月完成。
- * - 年报：整单完成维度要点展开全部完成子任务标题；未整单完成父任务单列（含无日期已勾子任务）。
+ * 呈现规则（2026-09-08）：
+ * - 周报第一段 = 【本周完成任务】+【进行中】两小节：
+ *   本周完成任务逐行展示（有已勾子任务时行内列出已完成子步骤）；
+ *   进行中 = 待办/进行中任务（含项目任务），已勾子任务 = 已完成、未勾 = 待开展（快照式）；
+ *   远期任务（起始日期晚于本周末）不纳入周表，从其起始周起进入总结。
+ * - 月报：「任务/项目推进」段项目与非项目均逐句；量化汇总末尾统计行仅计有真实日期的本月完成。
+ * - 年报：维度要点内整单完成任务与推进父任务均逐句（含无日期已勾子任务）。
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -26,7 +24,18 @@ vi.mock('../aiConfig', () => ({
 }));
 
 // ---- 固定 today，构造与本机一致但静态的归档 key 无关的样本 ----
-const today = new Date().toISOString().slice(0, 10);
+/**
+ * 夹具用的「今天」：回退到最近的周一~周五工作日。
+ * 周/月报按 ISO 周（周一~周五）归期，直接用周六/周日的日期做夹具会让
+ * 「本周完成任务」「本周完成子任务」整体落空（该用例曾在周末必红）。
+ */
+const today = (() => {
+  const d = new Date();
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+})();
 const pastDay = new Date(Date.now() - 40 * 86400000).toISOString().slice(0, 10);
 
 const TASK_DONE = {
@@ -181,12 +190,12 @@ import { YearlyReport } from '../YearlyReport';
 const findDispatch = (type: string) =>
   mockDispatch.mock.calls.map((c) => c[0]).find((a) => a && a.type === type);
 
-describe('周报：子任务纳入「本周完成任务」', () => {
+describe('周报：【本周完成任务】+【进行中】成行（带分类前缀）', () => {
   beforeEach(() => {
     mockDispatch.mockClear();
   });
 
-  it('整单完成括注计数；推进中父任务父行 + 周期内子行；项目任务不混入该段', () => {
+  it('本周完成任务逐行 `- [分类] 标题`（有已勾子任务则行内展示）；进行中任务展示已完成/待开展子任务', () => {
     render(<WeeklySummary />);
     fireEvent.click(screen.getByText('生成本周小结'));
 
@@ -194,30 +203,31 @@ describe('周报：子任务纳入「本周完成任务」', () => {
     const doneTasks = entry.summary.doneTasks as string;
     const projectText = entry.summary.projectProgress as string;
 
-    // 整单完成：title +（量化，完成子任务 2 项），不展开子行
-    expect(doneTasks).toContain('【绩效管理】');
+    // 本周完成任务：无已勾子任务 → 裸标题行；有已勾子任务 → 行内展示已完成
     expect(doneTasks).toContain(
-      '- 绩效考核任务（考核 120 人，完成子任务 2 项）',
+      '【本周完成任务】\n- [绩效管理] 绩效考核任务：已完成发布子步一、发布子步二。',
     );
-    // 推进中父任务挂在所属分类下：父行 x/y（x=全部已勾，含无日期旧项）
-    // + 子行展开全部已勾标题（打勾即完成，不做周期过滤）
-    expect(doneTasks).toContain('- 【推进中】职称材料整理（2/3 已完成）');
-    expect(doneTasks).toContain('  - 收集学历证明');
-    expect(doneTasks).toContain('  - 汇总历史数据');
-    // 项目任务仍归「长期项目推进」段（按期归因）
-    expect(doneTasks).not.toContain('考核系统联调');
-    expect(projectText).toContain('考核系统改造专项');
-    expect(projectText).toContain('  - 完成系统联调');
-    expect(projectText).toContain('本周完成 1 项子任务');
+    // 进行中：已勾子任务 = 已完成，未勾 = 待开展（快照式）
+    expect(doneTasks).toContain(
+      '【进行中】\n- [内部招聘] 职称材料整理：已完成收集学历证明、汇总历史数据，待开展：生成评审名册。',
+    );
+    // 涉及子任务完成的项目任务同样纳入第一段进行中列表
+    expect(doneTasks).toContain(
+      '- [内部招聘] 考核系统联调：已完成完成系统联调。',
+    );
+    // 「长期项目推进」段保留项目进度百分比表述
+    expect(projectText).toContain(
+      '考核系统改造专项：进度 0% → 100%，本周完成 1 项子任务（完成系统联调）。',
+    );
   });
 });
 
-describe('月报：任务/项目推进段与子任务统计', () => {
+describe('月报：任务/项目推进段成句与子任务统计', () => {
   beforeEach(() => {
     mockDispatch.mockClear();
   });
 
-  it('合并项目推进与非项目推进行；量化末尾追加完成子任务统计', () => {
+  it('合并项目推进与非项目推进行（均逐句）；量化末尾追加完成子任务统计', () => {
     render(<MonthlySummary />);
     fireEvent.click(screen.getByText('生成本月小结'));
 
@@ -225,42 +235,47 @@ describe('月报：任务/项目推进段与子任务统计', () => {
     const quantText = entry.summary.quantitativeSummary as string;
     const projectText = entry.summary.projectReview as string;
 
-    // 量化表 + 重点任务内容（整单完成括注）+ 统计行（仅计有真实日期的本月完成）
+    // 量化表 + 重点任务内容（整单完成句内联子步骤）+ 统计行（仅计有真实日期的本月完成）
     expect(quantText).toContain('| 绩效管理 | 考核 | 120 人 |');
-    expect(quantText).toContain('- 绩效考核任务（完成子任务 2 项）');
+    expect(quantText).toContain('重点任务内容：');
+    expect(quantText).toContain(
+      '绩效考核任务：已完成，完成子步骤 2/3 项（「发布子步一」「发布子步二」），具体内容：覆盖发布与复审两阶段。',
+    );
     // t-done(2 项整单回退) + s4(有日期) + s7(项目有日期) → 4 项跨 3 个任务；
     // s5 无日期不计入「本月完成」统计行（无日期不冒充本月）
     expect(quantText).toContain('本月完成子任务 4 项（跨 3 个任务）');
 
-    // 任务/项目推进：项目推进行 + 非项目推进中父任务父行/子行
+    // 任务/项目推进：项目推进行 + 非项目推进中父任务行（均逐句、无分类）
     expect(projectText).toContain(
-      '考核系统改造专项  0% → 100%，本月完成 1 项子任务',
+      '考核系统改造专项：进度 0% → 100%，本月完成 1 项子任务（完成系统联调）。',
     );
-    expect(projectText).toContain('  - 完成系统联调');
-    expect(projectText).toContain('- 【推进中】职称材料整理（2/3 已完成）');
-    expect(projectText).toContain('  - 收集学历证明');
-    expect(projectText).toContain('  - 汇总历史数据');
+    expect(projectText).toContain(
+      '职称材料整理：进行中，2/3 子步骤已完成（收集学历证明、汇总历史数据）。',
+    );
+    expect(projectText).not.toContain('【');
   });
 });
 
-describe('年报：维度要点展开子任务、推进中父任务单列', () => {
-  it('自动要点文本包含整单完成子任务展开与推进中父任务行', () => {
+describe('年报：维度要点成句（整单完成 + 推进中单列）', () => {
+  it('自动要点文本按任务成句：整单完成句内联子步骤；推进父任务进行中句', () => {
     render(<YearlyReport />);
 
-    // 绩效管理维度（整单完成）：任务行下展开全部完成子任务标题
+    // 绩效管理维度（整单完成）：完成句内联全部完成子任务标题（x<y 用计数式）
     expect(document.body.textContent).toContain('全年共 1 项任务');
-    expect(document.body.textContent).toContain('- 绩效考核任务');
-    expect(document.body.textContent).toContain('  - 发布子步一');
-    expect(document.body.textContent).toContain('  - 发布子步二');
-    // 内部招聘维度（无整单完成，仅推进）：推进中父任务单列（打勾即完成），
-    // 全部已勾子任务展开——含 7 月完成项与无日期旧项
     expect(document.body.textContent).toContain(
-      '- 【推进中】职称材料整理（2/3 已完成）',
+      '绩效考核任务：已完成，完成子步骤 2/3 项（「发布子步一」「发布子步二」），具体内容：覆盖发布与复审两阶段。',
     );
-    expect(document.body.textContent).toContain('  - 收集学历证明');
-    expect(document.body.textContent).toContain('  - 汇总历史数据');
+    // 项目推进维度（无整单完成，仅推进）：推进父任务进行中句
+    // （打勾即完成，含 7 月完成项与无日期旧项）
     expect(document.body.textContent).toContain(
-      '- 【推进中】考核系统联调（1/1 已完成）',
+      '职称材料整理：进行中，2/3 子步骤已完成（收集学历证明、汇总历史数据）。',
     );
+    expect(document.body.textContent).toContain(
+      '考核系统联调：进行中，1/1 子步骤已完成（完成系统联调）。',
+    );
+    expect(document.body.textContent).toContain(
+      '推进中（已勾子步骤为当前完成情况）：',
+    );
+    expect(document.body.textContent).not.toContain('- 【推进中】');
   });
 });

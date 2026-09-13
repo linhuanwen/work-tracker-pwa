@@ -12,8 +12,13 @@ import {
   getProjectProgressChanges,
   getNextWeekPlanCandidates,
   getCoordinationItems,
-  getWeeklyNonProjectProgress,
+  getWeeklyOngoingTasks,
 } from './weeklyUtils';
+import {
+  formatCompletedTaskLine,
+  formatOngoingTaskLine,
+  formatProjectProgressSentence,
+} from './summarySentences';
 import { createTask } from './taskUtils';
 import { aiConfigPayload } from './aiConfig';
 import styles from './WeeklySummary.module.css';
@@ -44,69 +49,60 @@ function WeeklySummaryInner({ data }: { data: DataJson }) {
 
   // ---- Generate template content ----
   const generateSummary = useCallback(() => {
-    // Section 1: Completed tasks by category
-    // 分类分组语义：整单完成任务 + 未整单完成但已有已勾子任务的父任务
-    // （【推进中】前缀，打勾即完成、快照式，不做周期/日期归因）
+    const { end } = getWeekDateRange(weekKey);
+    // 远期任务（起始日期晚于本周结束日）不纳入周表总结，从其起始周起进入
+    const reportTasks = data.tasks.filter(
+      (t) => !t.startDate || t.startDate <= end,
+    );
+
+    // Section 1: 【本周完成任务】+【进行中】
+    // - 本周完成任务：整单完成且本周完成的任务，逐行 `- [分类] 标题`
+    // - 进行中：待办/进行中的任务，有子任务则展示已完成/待开展（打勾=已完成，未勾=待开展）
     const categoryGroups = getCompletedTasksByCategory(
-      data.tasks,
+      reportTasks,
       weekKey,
       data.settings.categories,
     );
-    const progressRows = getWeeklyNonProjectProgress(data.tasks);
-    const progressByCategory = new Map<string, typeof progressRows>();
-    for (const row of progressRows) {
-      const rows = progressByCategory.get(row.category) ?? [];
-      rows.push(row);
-      progressByCategory.set(row.category, rows);
+    const doneLines: string[] = [];
+    for (const group of categoryGroups) {
+      for (const item of group.tasks) {
+        doneLines.push(
+          formatCompletedTaskLine({
+            category: group.category,
+            title: item.title,
+            doneSubtaskTitles: item.doneSubtaskTitles,
+          }),
+        );
+      }
     }
-    // 分类顺序沿用 settings.categories；只有推进（无整单完成）的分类补在末尾
-    const covered = new Set(categoryGroups.map((g) => g.category));
-    const orderedCategories = [
-      ...categoryGroups.map((g) => g.category),
-      ...progressRows.map((r) => r.category).filter((c) => !covered.has(c)),
-    ];
+
+    const progressRows = getWeeklyOngoingTasks(reportTasks, end);
+    const ongoingLines = progressRows.map((row) =>
+      formatOngoingTaskLine({
+        category: row.category,
+        title: row.title,
+        doneTitles: row.doneTitles,
+        todoTitles: row.todoTitles,
+      }),
+    );
+
+    const blocks: string[] = [];
+    if (doneLines.length > 0) {
+      blocks.push(`【本周完成任务】\n${doneLines.join('\n')}`);
+    }
+    if (ongoingLines.length > 0) {
+      blocks.push(`【进行中】\n${ongoingLines.join('\n')}`);
+    }
     let doneText = '';
-    if (orderedCategories.length === 0) {
+    if (blocks.length === 0) {
       doneText = '（本周无完成任务与推进）';
     } else {
-      for (const category of orderedCategories) {
-        doneText += `【${category}】\n`;
-        const group = categoryGroups.find((g) => g.category === category);
-        if (group) {
-          for (const item of group.tasks) {
-            // 整单完成任务：括注量化产出与完成子任务计数（不展开子行）
-            const annotation = [
-              item.quantityText,
-              item.doneSubtaskCount > 0
-                ? `完成子任务 ${item.doneSubtaskCount} 项`
-                : '',
-            ]
-              .filter(Boolean)
-              .join('，');
-            const line = annotation
-              ? `- ${item.title}（${annotation}）\n`
-              : `- ${item.title}\n`;
-            doneText += line;
-            if (item.notes) {
-              doneText += `  具体内容：${item.notes}\n`;
-            }
-          }
-        }
-        // 推进中父任务（打勾即完成）：父行（x/y 已完成）+ 全部已勾子任务子行
-        for (const row of progressByCategory.get(category) ?? []) {
-          doneText += `- 【推进中】${row.title}（${row.done}/${row.total} 已完成）\n`;
-          for (const sub of row.doneTitles) {
-            doneText += `  - ${sub}\n`;
-          }
-        }
-        doneText += '\n';
-      }
-      doneText = doneText.trim();
+      doneText = blocks.join('\n\n');
     }
 
     // Section 2: Project progress
     const projectChanges = getProjectProgressChanges(
-      data.tasks,
+      reportTasks,
       data.projects,
       weekKey,
     );
@@ -114,14 +110,17 @@ function WeeklySummaryInner({ data }: { data: DataJson }) {
     if (projectChanges.length === 0) {
       projectText = '（本周无项目子任务推进）';
     } else {
-      for (const p of projectChanges) {
-        projectText += `${p.projectTitle}  ${p.beforePercent}% → ${p.afterPercent}%，本周完成 ${p.completedThisWeek.length} 项子任务\n`;
-        for (const sub of p.completedThisWeek) {
-          projectText += `  - ${sub}\n`;
-        }
-        projectText += '\n';
-      }
-      projectText = projectText.trim();
+      projectText = projectChanges
+        .map((p) =>
+          formatProjectProgressSentence({
+            projectTitle: p.projectTitle,
+            beforePercent: p.beforePercent,
+            afterPercent: p.afterPercent,
+            periodLabel: '本周',
+            completedTitles: p.completedThisWeek,
+          }),
+        )
+        .join('\n');
     }
 
     // Section 3: Next week plan
@@ -150,7 +149,7 @@ function WeeklySummaryInner({ data }: { data: DataJson }) {
     }
 
     // Collect task IDs for completed tasks this week
-    const completedTaskIds = data.tasks
+    const completedTaskIds = reportTasks
       .filter((t) => t.status === 'done')
       .filter((t) => {
         const { start, end } = getWeekDateRange(weekKey);

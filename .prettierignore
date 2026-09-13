@@ -4,3 +4,9 @@ release/
 node_modules/
 共享/
 *.ico
+# 本地备份与工具缓存目录（不参与格式化检查）
+backups/
+.pytest_cache/
+.ruff_cache/
+# 生成物：示例数据由 scripts/make_demo_data.py 产出，格式以其输出为准
+demo/data.json

@@ -173,13 +173,15 @@ function generateId(): string {
 
 export function createTask(input: CreateTaskInput): Task {
   const today = new Date().toISOString().slice(0, 10);
+  // 默认状态：新建任务为「进行中」；设置了未来起始日期的远期任务默认「待办」
+  const isFutureTask = !!input.startDate && input.startDate > today;
   return {
     id: generateId(),
     projectId: input.projectId ?? null,
     title: input.title,
     category: input.category,
     priority: input.priority,
-    status: 'todo',
+    status: isFutureTask ? 'todo' : 'in-progress',
     createdDate: today,
     updatedDate: today,
     deadline: input.deadline ?? null,
@@ -280,8 +282,6 @@ export function addSubtask(subtasks: SubTask[], title: string): SubTask[] {
     title: title.trim(),
     status: 'todo',
     notes: '',
-    deadline: null,
-    priority: 'normal',
     quantities: [],
   };
   return [...subtasks, newSub];

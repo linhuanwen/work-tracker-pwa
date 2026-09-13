@@ -26,12 +26,10 @@ export interface SubTask {
   status: 'todo' | 'done';
   /** 完成日期（ISO date）：勾选 done 记录当天、撤销回 todo 时清空。旧数据可能缺失 */
   completedDate?: string | null;
-  /** 与父任务保持一致的可选扩展字段 */
+  /** 具体内容（可选项） */
   notes?: string;
-  deadline?: string | null;
-  priority?: Priority;
+  /** 量化产出（可选项） */
   quantities?: Quantity[];
-  category?: string;
 }
 
 /** 任务 */
@@ -157,13 +155,16 @@ export interface DataJson {
 /** data.json 当前 schema 版本。升级 schema 时递增，并在 migrateDataJson 中补迁移逻辑。 */
 export const DATA_VERSION = 1;
 
+/**
+ * 新装应用的默认任务分类（可在设置页随时改）。
+ * 采用通用职场分类：与年报表六个维度一一对应，见 yearlyUtils.mapCategoryToDimension。
+ */
 export const DEFAULT_CATEGORIES: string[] = [
-  '人员调配',
-  '内部招聘',
-  '奖惩管理',
-  '绩效管理',
-  '劳动关系',
-  '交办事项',
+  '日常工作',
+  '项目推进',
+  '协作沟通',
+  '会议培训',
+  '临时交办',
   '其他',
 ];
 

@@ -1,3 +1,5 @@
+import pytest
+
 from launcher.state import get_state
 from launcher.win32 import (
     dock_right,
@@ -8,6 +10,14 @@ from launcher.win32 import (
     resize_window,
     toggle_maximize_window,
 )
+
+
+@pytest.fixture(autouse=True)
+def no_real_com_delete_tab(monkeypatch):
+    """测试中避免真实 ITaskbarList COM 调用（只验证调用本身）。"""
+    from launcher import win32
+
+    monkeypatch.setattr(win32, "_taskbar_delete_tab", lambda hwnd: None)
 
 
 def test_get_min_window_size(mock_user32):
@@ -26,7 +36,8 @@ def test_resize_window_calls_setwindowpos(mock_user32):
 def test_minimize_window(mock_user32):
     get_state().window_hwnd = 12345
     assert minimize_window() is True
-    mock_user32.ShowWindow.assert_called_with(12345, 6)
+    # 任务栏无图标：最小化等同隐藏到托盘（SW_HIDE）
+    mock_user32.ShowWindow.assert_called_with(12345, 0)
 
 
 def test_toggle_maximize_window(mock_user32):
@@ -60,6 +71,66 @@ def test_find_and_store_hwnd_docks_right_immediately(mock_user32):
     state = get_state()
     assert state.window_hwnd == 12345
     assert state.docked is True
+
+
+def test_remove_from_taskbar_sets_toolwindow_and_clears_appwindow(
+    monkeypatch, mock_user32
+):
+    """移除任务栏：加 WS_EX_TOOLWINDOW、去 WS_EX_APPWINDOW，并删除已有按钮。"""
+    from launcher import win32
+    from launcher.constants import GWL_EXSTYLE, WS_EX_APPWINDOW, WS_EX_TOOLWINDOW
+
+    get_state().window_hwnd = 12345
+    mock_user32.GetWindowLongPtrW.return_value = WS_EX_APPWINDOW  # 0x40000
+    deleted = []
+    monkeypatch.setattr(win32, "_taskbar_delete_tab", lambda hwnd: deleted.append(hwnd))
+
+    assert win32.remove_from_taskbar() is True
+    mock_user32.SetWindowLongPtrW.assert_called_once_with(
+        12345, GWL_EXSTYLE, WS_EX_TOOLWINDOW
+    )
+    assert deleted == [12345]
+
+
+def test_remove_from_taskbar_skips_setter_when_style_already_ok(
+    monkeypatch, mock_user32
+):
+    """样式已经是 TOOLWINDOW 时不重复写，但仍删除已有按钮。"""
+    from launcher import win32
+    from launcher.constants import WS_EX_TOOLWINDOW
+
+    get_state().window_hwnd = 12345
+    mock_user32.GetWindowLongPtrW.return_value = WS_EX_TOOLWINDOW
+    deleted = []
+    monkeypatch.setattr(win32, "_taskbar_delete_tab", lambda hwnd: deleted.append(hwnd))
+
+    assert win32.remove_from_taskbar() is True
+    mock_user32.SetWindowLongPtrW.assert_not_called()
+    assert deleted == [12345]
+
+
+def test_remove_from_taskbar_without_hwnd_returns_false(mock_user32):
+    from launcher import win32
+
+    mock_user32.FindWindowW.return_value = 0
+    assert win32.remove_from_taskbar() is False
+
+
+def test_find_and_store_hwnd_removes_from_taskbar(monkeypatch, mock_user32):
+    """拿到 HWND 后应立即从任务栏移除，只留托盘常驻入口。"""
+    from launcher import win32
+    from launcher.win32 import find_and_store_hwnd
+
+    removed = []
+    monkeypatch.setattr(
+        win32, "remove_from_taskbar", lambda hwnd: removed.append(hwnd) or True
+    )
+
+    find_and_store_hwnd()
+    state = get_state()
+    assert state.window_hwnd == 12345
+    assert state.docked is True
+    assert removed == [12345]
 
 
 def test_move_resize_window_keeps_right_edge_on_any_workarea(monkeypatch, mock_user32):

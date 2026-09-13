@@ -88,7 +88,9 @@ describe('AddTaskForm — direct full form', () => {
     const card = screen.getByText('添加新任务').closest('[role="button"]');
     fireEvent.click(card!);
 
-    const input = screen.getByPlaceholderText('输入新任务…') as HTMLInputElement;
+    const input = screen.getByPlaceholderText(
+      '输入新任务…',
+    ) as HTMLInputElement;
     fireEvent.change(input, { target: { value: '测试任务' } });
     fireEvent.click(screen.getByText('添加'));
 
@@ -110,7 +112,9 @@ describe('AddTaskForm — direct full form', () => {
     const card = screen.getByText('添加新任务').closest('[role="button"]');
     fireEvent.click(card!);
 
-    const input = screen.getByPlaceholderText('输入新任务…') as HTMLInputElement;
+    const input = screen.getByPlaceholderText(
+      '输入新任务…',
+    ) as HTMLInputElement;
     fireEvent.change(input, { target: { value: '带日期的任务' } });
 
     const start = screen.getByLabelText('起始日期') as HTMLInputElement;
@@ -138,7 +142,9 @@ describe('AddTaskForm — direct full form', () => {
     const card = screen.getByText('添加新任务').closest('[role="button"]');
     fireEvent.click(card!);
 
-    const input = screen.getByPlaceholderText('输入新任务…') as HTMLInputElement;
+    const input = screen.getByPlaceholderText(
+      '输入新任务…',
+    ) as HTMLInputElement;
     fireEvent.change(input, { target: { value: '待取消' } });
     fireEvent.click(screen.getByText('取消'));
 

@@ -50,12 +50,11 @@ const VALID_SETTINGS: Settings = {
   monthlySummaryDay: 28,
   aiPolishFlag: false,
   categories: [
-    '人员调配',
-    '内部招聘',
-    '奖惩管理',
-    '绩效管理',
-    '劳动关系',
-    '交办事项',
+    '日常工作',
+    '项目推进',
+    '协作沟通',
+    '会议培训',
+    '临时交办',
     '其他',
   ],
 };
@@ -149,13 +148,13 @@ describe('DataJson types — compile-time + runtime validation', () => {
 });
 
 describe('createDefaultDataJson', () => {
-  it('returns a valid DataJson with 7 preset categories', () => {
+  it('returns a valid DataJson with 6 preset categories', () => {
     const data = createDefaultDataJson();
     const result = validateDataJson(data);
     expect(result.valid).toBe(true);
     expect(data.version).toBe(1);
-    expect(data.settings.categories).toHaveLength(7);
-    expect(data.settings.categories).toContain('交办事项');
+    expect(data.settings.categories).toHaveLength(6);
+    expect(data.settings.categories).toContain('临时交办');
     expect(data.tasks).toHaveLength(0);
     expect(data.projects).toHaveLength(0);
   });

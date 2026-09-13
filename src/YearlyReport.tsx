@@ -12,22 +12,31 @@ import {
 } from './yearlyUtils';
 import { useHashRoute } from './useHashRoute';
 import { aiConfigPayload } from './aiConfig';
+import {
+  formatDoneTaskSentence,
+  formatOngoingTaskSentence,
+} from './summarySentences';
 import styles from './YearlyReport.module.css';
 
-/** Map a dimension to the corresponding YearEntry summary field */
+/**
+ * Map a dimension to the corresponding YearEntry summary field.
+ *
+ * 维度显示名可自由调整（见 `yearlyUtils.YEARLY_DIMENSIONS`）；这里的归档字段名
+ * 是历史存储契约，**一旦发布不可改名**——改它会读不出既有 data.json 的年报内容。
+ */
 function dimToField(dim: string): keyof YearEntry['summary'] {
   switch (dim) {
     case '日常工作':
       return 'personnelAllocation';
     case '项目推进':
       return 'internalRecruitment';
-    case '奖惩管理':
+    case '协作沟通':
       return 'rewardDiscipline';
-    case '绩效管理':
+    case '会议培训':
       return 'performance';
-    case '劳动关系':
+    case '临时交办':
       return 'laborRelations';
-    case '交办事项':
+    case '其他事务':
       return 'leaderAssigned';
     default:
       return 'other';
@@ -70,6 +79,8 @@ function YearlyReportInner({ data }: { data: DataJson }) {
       return '（本年度该维度无完成任务）';
     }
 
+    // 句式 v3：维度块内逐任务成句（去分类、内容并入句中），
+    // 整单完成任务句内联展示其全部完成子步骤标题。
     let text = '';
     if (hasDone) {
       text += `全年共 ${dim.taskCount} 项任务`;
@@ -81,15 +92,12 @@ function YearlyReportInner({ data }: { data: DataJson }) {
       }
       text += '\n\n任务列表：\n';
       dim.taskTitles.forEach((title, i) => {
-        text += `- ${title}\n`;
-        const notes = dim.taskNotes[i];
-        if (notes) {
-          text += `  具体内容：${notes}\n`;
-        }
-        // 整单完成任务：逐条展开其完成子任务标题（述职要明细）
-        for (const sub of dim.taskSubtasks[i]) {
-          text += `  - ${sub}\n`;
-        }
+        text += `${formatDoneTaskSentence({
+          title,
+          notes: dim.taskNotes[i],
+          doneSubtaskTitles: dim.taskSubtasks[i],
+          subtaskTotal: dim.taskSubtaskTotals[i],
+        })}\n`;
       });
       text = text.trimEnd();
     }
@@ -97,11 +105,14 @@ function YearlyReportInner({ data }: { data: DataJson }) {
       if (text) text += '\n\n';
       text += '推进中（已勾子步骤为当前完成情况）：\n';
       for (const row of dim.progressRows) {
-        text += `- 【推进中】${row.title}（${row.done}/${row.total} 已完成）\n`;
-        for (const sub of row.subtaskTitles) {
-          text += `  - ${sub}\n`;
-        }
+        text += `${formatOngoingTaskSentence({
+          title: row.title,
+          done: row.done,
+          total: row.total,
+          doneTitles: row.subtaskTitles,
+        })}\n`;
       }
+      text = text.trimEnd();
     }
     return text.trim();
   };

@@ -6,7 +6,11 @@
  */
 
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+
+const { mockReopenStored } = vi.hoisted(() => ({
+  mockReopenStored: vi.fn(),
+}));
 
 // ---- Polyfills ----
 beforeAll(() => {
@@ -47,6 +51,7 @@ vi.mock('../Reports.module.css', () => ({
     tabActive: 'tabActive',
     actions: 'actions',
     actionBtn: 'actionBtn',
+    weekHint: 'weekHint',
     preview: 'preview',
     section: 'section',
     sectionTitle: 'sectionTitle',
@@ -190,7 +195,7 @@ vi.mock('../useFileSystem', () => ({
           createdDate: '2026-07-01',
           updatedDate: '2026-07-15',
           deadline: null,
-          completedDate: '2026-07-15',
+          completedDate: '2026-07-22',
           quantities: [],
           subtasks: [],
           notes: '',
@@ -210,7 +215,10 @@ vi.mock('../useFileSystem', () => ({
           deadline: null,
           completedDate: null,
           quantities: [],
-          subtasks: [],
+          subtasks: [
+            { id: 's1', title: '步骤一', status: 'done' },
+            { id: 's2', title: '步骤二', status: 'todo' },
+          ],
           notes: '',
           isLeaderAssigned: false,
           isCrossYear: false,
@@ -224,7 +232,7 @@ vi.mock('../useFileSystem', () => ({
     loading: false,
     error: null,
     hasStoredHandle: true,
-    reopenStored: vi.fn().mockResolvedValue(null),
+    reopenStored: mockReopenStored,
     lastFolderInfo: null,
   }),
 }));
@@ -247,6 +255,9 @@ import App from '../App';
 describe('F5 — 接上 Reports 报表页 (App.tsx /reports)', () => {
   beforeEach(() => {
     mockNavigate.mockClear();
+    mockSaveData.mockClear();
+    mockReopenStored.mockReset();
+    mockReopenStored.mockResolvedValue(null);
   });
 
   it('访问 /reports 时渲染 Reports 组件（不是主页任务列表）', () => {
@@ -273,5 +284,84 @@ describe('F5 — 接上 Reports 报表页 (App.tsx /reports)', () => {
     render(<App />);
     const exportBtn = screen.queryByText('导出 CSV');
     expect(exportBtn).toBeNull();
+  });
+
+  it('周报列表按【本周完成任务】+【进行中】两小节展示，按举例格式成行', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-23T10:00:00')); // W30: 7/20-7/24
+    try {
+      render(<App />);
+      // 本周完成任务：`- [分类] 标题` 逐行
+      expect(screen.getByText('【本周完成任务】')).toBeDefined();
+      expect(screen.getByText('- [人力资源] 完成任务A')).toBeDefined();
+      // 进行中：已完成 + 待开展 子任务列表
+      expect(screen.getByText('【进行中】')).toBeDefined();
+      expect(
+        screen.getByText(
+          '- [培训] 进行中任务B：已完成步骤一，待开展：步骤二。',
+        ),
+      ).toBeDefined();
+      // 不再出现 下周计划 / 需协调事项
+      expect(screen.queryByText('【下周计划】')).toBeNull();
+      expect(screen.queryByText('【需协调事项】')).toBeNull();
+      // 显示当周统计范围，帮助判断归属
+      expect(screen.getByText('当周统计范围：7月20日 - 7月24日')).toBeDefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('点击「更新」重读磁盘数据并刷新报表列表内容', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date('2026-07-23T10:00:00')); // W30: 7/20-7/24
+    try {
+      const freshData = {
+        version: 1,
+        lastModified: '2026-07-23T01:00:00.000Z',
+        settings: {
+          weeklySummaryDay: 5,
+          monthlySummaryDay: 28,
+          aiPolishFlag: false,
+          categories: ['人力资源', '培训', '招聘', '绩效', '其他'],
+        },
+        projects: [],
+        tasks: [
+          {
+            id: 't-9',
+            projectId: null,
+            title: '最新完成任务X',
+            category: '人力资源',
+            priority: 'normal',
+            status: 'done',
+            createdDate: '2026-07-10',
+            updatedDate: '2026-07-22',
+            deadline: null,
+            completedDate: '2026-07-22',
+            quantities: [],
+            subtasks: [],
+            notes: '',
+            isLeaderAssigned: false,
+            isCrossYear: false,
+            isBlocked: false,
+          },
+        ],
+        archives: { weeks: {}, months: {}, years: {} },
+      };
+      mockReopenStored.mockResolvedValue(freshData);
+
+      render(<App />);
+      // 初始列表没有该任务
+      expect(screen.queryByText('- [人力资源] 最新完成任务X')).toBeNull();
+
+      fireEvent.click(screen.getByText('更新'));
+
+      // 重读完成后列表显示磁盘上的最新任务
+      expect(
+        await screen.findByText('- [人力资源] 最新完成任务X'),
+      ).toBeDefined();
+      expect(mockReopenStored).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

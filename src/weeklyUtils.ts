@@ -111,6 +111,10 @@ export interface CategoryTaskGroup {
     notes: string;
     /** 该任务当前已完成的子任务数（整单完成时用于括注计数） */
     doneSubtaskCount: number;
+    /** 该任务已勾子任务标题（句式 v3：整单完成句内联展示） */
+    doneSubtaskTitles: string[];
+    /** 该任务子任务总数（部分完成时句内输出「完成子步骤 x/y 项」） */
+    subtaskTotal: number;
   }[];
 }
 
@@ -135,6 +139,8 @@ export function getCompletedTasksByCategory(
       quantityText: string;
       notes: string;
       doneSubtaskCount: number;
+      doneSubtaskTitles: string[];
+      subtaskTotal: number;
     }[]
   > = {};
   for (const task of completed) {
@@ -146,6 +152,10 @@ export function getCompletedTasksByCategory(
       quantityText: formatQuantityText(task),
       notes: task.notes.trim(),
       doneSubtaskCount: task.subtasks.filter((s) => s.status === 'done').length,
+      doneSubtaskTitles: task.subtasks
+        .filter((s) => s.status === 'done')
+        .map((s) => s.title),
+      subtaskTotal: task.subtasks.length,
     });
   }
 
@@ -181,37 +191,44 @@ export function isSubtaskDoneInWeek(
   );
 }
 
-export interface NonProjectSubtaskProgressRow {
+export interface WeeklyOngoingTaskRow {
   id: string;
   title: string;
   category: string;
-  total: number;
-  done: number;
-  /** 全部已勾子任务标题（打勾即完成，不做周期归因；快照式展示） */
+  /** 已勾子任务标题（打勾即完成，快照式） */
   doneTitles: string[];
+  /** 未勾子任务标题（待开展） */
+  todoTitles: string[];
 }
 
 /**
- * 未整单完成（含待办/进行中）且无项目归属的任务，只要存在已勾子任务即返回其推进行。
- * 呈现规则（2026-09-07 定稿）：子任务打勾即视为完成，不依赖子任务日期、也不要求
- * 父任务先改到「进行中」——故父行 x/y 与子行均为当前快照，任务存续期间每期总结都会出现。
+ * 未整单完成（待办/进行中）且有子任务的任务（含项目任务），返回其进行行。
+ * 呈现规则（2026-09-08 定稿）：
+ * - 已勾子任务 = 已完成，未勾子任务 = 待开展，两者均展示（快照式）；
+ * - 项目任务同样纳入列表（不做项目/非项目区分）；
+ * - 远期任务（startDate 晚于本周结束日）不纳入周表，从其起始周起进入；
+ * - 整单完成/已取消任务不在此段（完成归「本周完成任务」）。
  */
-export function getWeeklyNonProjectProgress(
+export function getWeeklyOngoingTasks(
   tasks: Task[],
-): NonProjectSubtaskProgressRow[] {
-  const rows: NonProjectSubtaskProgressRow[] = [];
+  weekEnd: string,
+): WeeklyOngoingTaskRow[] {
+  const rows: WeeklyOngoingTaskRow[] = [];
   for (const task of tasks) {
-    if (task.projectId !== null) continue;
     if (task.status === 'done' || task.status === 'cancelled') continue;
-    const doneSubtasks = task.subtasks.filter((s) => s.status === 'done');
-    if (doneSubtasks.length === 0) continue;
+    // 远期任务：起始日期晚于本周末，尚未进入周报总结
+    if (task.startDate && task.startDate > weekEnd) continue;
+    if (task.subtasks.length === 0) continue;
     rows.push({
       id: task.id,
       title: task.title,
       category: task.category,
-      total: task.subtasks.length,
-      done: doneSubtasks.length,
-      doneTitles: doneSubtasks.map((s) => s.title),
+      doneTitles: task.subtasks
+        .filter((s) => s.status === 'done')
+        .map((s) => s.title),
+      todoTitles: task.subtasks
+        .filter((s) => s.status !== 'done')
+        .map((s) => s.title),
     });
   }
   return rows;

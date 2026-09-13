@@ -38,7 +38,7 @@ def sample_data():
             "weeklySummaryDay": 5,
             "monthlySummaryDay": 28,
             "aiPolishFlag": True,
-            "categories": ["人员调配", "内部招聘", "奖惩管理"],
+            "categories": ["日常工作", "项目推进", "协作沟通"],
         },
         "projects": [],
         "tasks": [],
@@ -46,7 +46,7 @@ def sample_data():
             "weeks": {
                 "2026-W28": {
                     "tasks": ["task-1"],
-                    "summary": "本周完成了3项人员调配工作，推进了内部招聘流程。",
+                    "summary": "本周完成了 3 项日常事务，推进了项目节点。",
                     "aiPolished": False,
                 },
                 "2026-W29": {
@@ -63,7 +63,7 @@ def sample_data():
             "months": {
                 "2026-07": {
                     "tasks": ["task-3", "task-4"],
-                    "summary": "本月完成内部招聘2人，处理劳动合同续签5份。",
+                    "summary": "本月完成项目节点 2 项，处理协作事项 5 件。",
                     "aiPolished": False,
                 },
             },
@@ -167,8 +167,8 @@ class TestBuildPolishPrompt:
     """S2 — Generate AI prompt with 正式工作报告文风 template."""
 
     def test_includes_summary_text(self):
-        prompt = polish.build_polish_prompt("完成了3项人员调配工作。")
-        assert "完成了3项人员调配工作。" in prompt
+        prompt = polish.build_polish_prompt("完成了 3 项日常事务。")
+        assert "完成了 3 项日常事务。" in prompt
 
     def test_includes_style_requirements(self):
         prompt = polish.build_polish_prompt("任意文本")
@@ -291,10 +291,10 @@ class TestApplyPolish:
     def test_updates_summary_and_flags_for_week(self, sample_data):
         item = {"type": "week", "key": "2026-W28"}
 
-        polish.apply_polish(sample_data, item, "【润色后】本周完成人员调配3项。")
+        polish.apply_polish(sample_data, item, "【润色后】本周完成日常事务 3 项。")
 
         entry = sample_data["archives"]["weeks"]["2026-W28"]
-        assert entry["summary"] == "【润色后】本周完成人员调配3项。"
+        assert entry["summary"] == "【润色后】本周完成日常事务 3 项。"
         assert entry["aiPolished"] is True
 
     def test_updates_summary_and_flags_for_month(self, sample_data):

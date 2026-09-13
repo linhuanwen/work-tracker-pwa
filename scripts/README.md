@@ -32,7 +32,7 @@ python -c "import requests; print('OK')"
 ```env
 AI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 AI_ENDPOINT=https://api.deepseek.com
-AI_MODEL=deepseek-chat
+AI_MODEL=deepseek-v4-flash
 ```
 
 ### 通义千问（阿里云 DashScope）
@@ -51,7 +51,7 @@ AI_MODEL=qwen-turbo
 | ------------- | ---- | ----------------------------------------------------- |
 | `AI_API_KEY`  | ✅   | API 密钥，从 DeepSeek 开放平台或阿里云 DashScope 获取 |
 | `AI_ENDPOINT` | ❌   | API 基础 URL，默认为 DeepSeek                         |
-| `AI_MODEL`    | ❌   | 模型名称，默认为 `deepseek-chat`                      |
+| `AI_MODEL`    | ❌   | 模型名称，默认为 `deepseek-v4-flash`                  |
 
 ## 运行方式
 
@@ -78,15 +78,15 @@ python polish.py "D:/WPS Cloud/WorkJournal/data.json"
 
 ```
 📡 API 端点: https://api.deepseek.com
-🧠 模型:     deepseek-chat
+🧠 模型:     deepseek-v4-flash
 
 📋 找到 3 条待润色的小结：
 
   [1] 周报 | 2026-W28
-      本周完成了3项人员调配工作，推进了内部招聘流程。
+      本周完成了 3 项日常事务，推进了项目节点。
 
   [2] 月报 | 2026-07
-      本月完成内部招聘2人，处理劳动合同续签5份。
+      本月完成项目节点 2 项，处理协作事项 5 件。
 
   [3] 年报 | 2026
       全年围绕各工作模块开展工作，重点推进日常工作优化。
@@ -96,7 +96,7 @@ python polish.py "D:/WPS Cloud/WorkJournal/data.json"
 ──────────────────────────────────────────────────
 [1/3] 正在润色 周报 2026-W28…
   ✅ 润色完成
-  预览: 本周完成人员调配3项，持续推进内部招聘流程。
+  预览: 本周完成日常事务 3 项，持续推进项目节点。
 
 ...
 

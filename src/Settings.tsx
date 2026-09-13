@@ -67,9 +67,11 @@ export function Settings() {
   // 选择共享文件夹：桌面版走 pywebview 原生目录选择并把绝对路径注册给后端
   // （data.json 与总结文档都保存在所选文件夹）；纯浏览器退回 FSA 句柄方式。
   const chooseDataFolder = async () => {
-    const pw = (window as unknown as {
-      pywebview?: { api?: { pick_folder?: () => Promise<string | null> } };
-    }).pywebview;
+    const pw = (
+      window as unknown as {
+        pywebview?: { api?: { pick_folder?: () => Promise<string | null> } };
+      }
+    ).pywebview;
     const pickFolder = pw?.api?.pick_folder;
 
     if (typeof pickFolder === 'function') {
@@ -368,7 +370,9 @@ export function Settings() {
           {isDesktopWindow && (
             <>
               <br />
-              桌面版点“选择共享文件夹”会打开系统目录选择框并<strong>自动保存绝对路径</strong>；data.json 与生成的总结文档（周报/月报/年报 子目录）都保存在所选文件夹。
+              桌面版点“选择共享文件夹”会打开系统目录选择框并
+              <strong>自动保存绝对路径</strong>；data.json
+              与生成的总结文档（周报/月报/年报 子目录）都保存在所选文件夹。
             </>
           )}
         </p>
@@ -376,7 +380,7 @@ export function Settings() {
         <div className={styles.folderRow}>
           <span className={styles.folderPath}>
             {backendMode
-              ? backendFolderPath ?? '已配置'
+              ? (backendFolderPath ?? '已配置')
               : lastFolderInfo?.folderName
                 ? `已选择：${lastFolderInfo.folderName}`
                 : '尚未设置'}
@@ -386,7 +390,11 @@ export function Settings() {
             onClick={chooseDataFolder}
             disabled={folderLoading}
           >
-            {folderLoading ? '加载中…' : hasStoredHandle || backendMode ? '更改共享文件夹' : '选择共享文件夹'}
+            {folderLoading
+              ? '加载中…'
+              : hasStoredHandle || backendMode
+                ? '更改共享文件夹'
+                : '选择共享文件夹'}
           </button>
         </div>
 
@@ -578,8 +586,9 @@ export function Settings() {
         </button>
         <p className={styles.aiHint}>
           配置仅保存在本机浏览器存储中，不会写入共享的 data.json。
-          保存后立即生效：桌面端与浏览器端的「AI 润色」和「生成总结文档」都会使用此处配置。
-          若未填写 API Key，则回退读取可执行文件旁的 scripts/.env。
+          保存后立即生效：桌面端与浏览器端的「AI
+          润色」和「生成总结文档」都会使用此处配置。 若未填写 API
+          Key，则回退读取可执行文件旁的 scripts/.env。
         </p>
       </section>
 

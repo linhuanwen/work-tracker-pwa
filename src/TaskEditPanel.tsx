@@ -249,7 +249,9 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
-            <span className={styles.hintLabel}>未设置或当天开始；未来日期会进入“远期任务”</span>
+            <span className={styles.hintLabel}>
+              未设置或当天开始；未来日期会进入“远期任务”
+            </span>
           </div>
 
           <div className={styles.field}>
@@ -388,7 +390,6 @@ export function TaskEditPanel({ task, onClose }: TaskEditPanelProps) {
         <div className={styles.section}>
           <SubtaskEditor
             subtasks={subtasks}
-            categories={categories}
             onAdd={(title) => setSubtasks(addSubtask(subtasks, title))}
             onToggle={(id) =>
               setSubtasks(

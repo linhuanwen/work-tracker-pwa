@@ -8,7 +8,7 @@ import {
   formatQuantityText,
   getCompletedTasksByCategory,
   isSubtaskDoneInWeek,
-  getWeeklyNonProjectProgress,
+  getWeeklyOngoingTasks,
   getProjectProgressChanges,
   getNextWeekPlanCandidates,
   getCoordinationItems,
@@ -769,32 +769,34 @@ describe('getCompletedTasksByCategory 完成子任务计数', () => {
   });
 });
 
-describe('getWeeklyNonProjectProgress', () => {
+describe('getWeeklyOngoingTasks', () => {
   // 2026-W30 = Mon 7/20 – Fri 7/24
-  // v2 呈现规则（2026-09-07）：子任务打勾即完成——不做周期/日期归因，
-  // 也不要求父任务先改到「进行中」；父行 x/y 与子行 = 全部已勾（快照式）。
+  // 呈现规则（2026-09-08）：已勾子任务 = 已完成、未勾子任务 = 待开展（快照式）；
+  // 有子任务即展示（不要求已有完成项）；项目任务同样纳入；远期任务（startDate > 本周结束日）不纳入周表。
 
-  it('返回有已勾子任务的推进中非项目父任务（父行 + 全部已勾子行，含早于周期/无日期项）', () => {
+  it('返回有子任务的待办/进行中任务（已完成 + 待开展两个列表，含项目任务）', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        title: '职称材料准备',
-        category: '内部招聘',
+        title: '机务跨序列',
+        category: '内外招聘',
         status: 'in-progress',
+        startDate: '2026-07-15',
         subtasks: [
           {
             id: 's1',
-            title: '清单核对',
+            title: '素质测评成绩反馈',
             status: 'done',
             completedDate: '2026-07-22',
           },
           {
             id: 's2',
-            title: '单位盖章',
+            title: '资格审查公示',
             status: 'done',
-            completedDate: '2026-07-10', // 早于本周 → 也计入子行
+            completedDate: '2026-07-10', // 早于本周 → 也计入已完成
           },
-          { id: 's3', title: '上报市局', status: 'todo' },
+          { id: 's3', title: '笔试安排', status: 'todo' },
+          { id: 's4', title: '面试安排', status: 'todo' },
         ],
       }),
       makeTask({
@@ -802,20 +804,36 @@ describe('getWeeklyNonProjectProgress', () => {
         title: '无日期旧完成项',
         category: '内部招聘',
         status: 'in-progress',
-        subtasks: [{ id: 's4', title: '旧完成', status: 'done' }],
+        subtasks: [{ id: 's5', title: '旧完成', status: 'done' }],
+      }),
+      makeTask({
+        id: '3',
+        projectId: 'p-1',
+        title: '项目任务',
+        category: '其他',
+        status: 'in-progress',
+        subtasks: [
+          { id: 's6', title: '项目子步a', status: 'done' },
+          { id: 's7', title: '项目子步b', status: 'todo' },
+        ],
       }),
     ];
-    const result = getWeeklyNonProjectProgress(tasks);
-    expect(result).toHaveLength(2);
-    expect(result[0].title).toBe('职称材料准备');
-    expect(result[0].total).toBe(3);
-    expect(result[0].done).toBe(2);
-    expect(result[0].doneTitles).toEqual(['清单核对', '单位盖章']);
+    const result = getWeeklyOngoingTasks(tasks, '2026-07-24');
+    expect(result).toHaveLength(3);
+    expect(result[0].title).toBe('机务跨序列');
+    expect(result[0].category).toBe('内外招聘');
+    expect(result[0].doneTitles).toEqual(['素质测评成绩反馈', '资格审查公示']);
+    expect(result[0].todoTitles).toEqual(['笔试安排', '面试安排']);
     expect(result[1].title).toBe('无日期旧完成项');
     expect(result[1].doneTitles).toEqual(['旧完成']);
+    expect(result[1].todoTitles).toEqual([]);
+    // 项目任务同样纳入列表
+    expect(result[2].title).toBe('项目任务');
+    expect(result[2].doneTitles).toEqual(['项目子步a']);
+    expect(result[2].todoTitles).toEqual(['项目子步b']);
   });
 
-  it('父任务停在「待办」但有已勾子任务 → 同样返回（用户可能不先改父状态）', () => {
+  it('父任务停在「待办」但有子任务 → 同样返回', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
@@ -825,10 +843,29 @@ describe('getWeeklyNonProjectProgress', () => {
         subtasks: [{ id: 's1', title: '已勾步骤', status: 'done' }],
       }),
     ];
-    const result = getWeeklyNonProjectProgress(tasks);
+    const result = getWeeklyOngoingTasks(tasks, '2026-07-24');
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe('待办父任务');
     expect(result[0].doneTitles).toEqual(['已勾步骤']);
+  });
+
+  it('子任务全部未勾 → 同样返回，已完成为空、待开展列出全部', () => {
+    const tasks: Task[] = [
+      makeTask({
+        id: '1',
+        title: '全待办',
+        category: '其他',
+        status: 'in-progress',
+        subtasks: [
+          { id: 's1', title: '子步a', status: 'todo' },
+          { id: 's2', title: '子步b', status: 'todo' },
+        ],
+      }),
+    ];
+    const result = getWeeklyOngoingTasks(tasks, '2026-07-24');
+    expect(result).toHaveLength(1);
+    expect(result[0].doneTitles).toEqual([]);
+    expect(result[0].todoTitles).toEqual(['子步a', '子步b']);
   });
 
   it('排除整单完成的父任务（归「本周完成任务」列表）', () => {
@@ -844,23 +881,7 @@ describe('getWeeklyNonProjectProgress', () => {
         ],
       }),
     ];
-    expect(getWeeklyNonProjectProgress(tasks)).toEqual([]);
-  });
-
-  it('排除项目归属任务（项目推进在 Section 2 呈现）', () => {
-    const tasks: Task[] = [
-      makeTask({
-        id: '1',
-        projectId: 'p-1',
-        title: '项目任务',
-        category: '其他',
-        status: 'in-progress',
-        subtasks: [
-          { id: 's1', title: 'a', status: 'done', completedDate: '2026-07-21' },
-        ],
-      }),
-    ];
-    expect(getWeeklyNonProjectProgress(tasks)).toEqual([]);
+    expect(getWeeklyOngoingTasks(tasks, '2026-07-24')).toEqual([]);
   });
 
   it('排除已取消任务', () => {
@@ -875,22 +896,41 @@ describe('getWeeklyNonProjectProgress', () => {
         ],
       }),
     ];
-    expect(getWeeklyNonProjectProgress(tasks)).toEqual([]);
+    expect(getWeeklyOngoingTasks(tasks, '2026-07-24')).toEqual([]);
   });
 
-  it('没有任何已勾子任务的任务不返回', () => {
+  it('没有任何子任务的任务不返回', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        title: '全待办',
+        title: '无子任务',
         category: '其他',
         status: 'in-progress',
-        subtasks: [
-          { id: 's1', title: 'a', status: 'todo' },
-          { id: 's2', title: 'b', status: 'todo' },
-        ],
       }),
     ];
-    expect(getWeeklyNonProjectProgress(tasks)).toEqual([]);
+    expect(getWeeklyOngoingTasks(tasks, '2026-07-24')).toEqual([]);
+  });
+
+  it('远期任务（起始日期晚于本周结束日）排除出周表，起始周当天起纳入', () => {
+    // 2026-W30 结束日为 7/24；startDate=7/27（下周）→ 排除；7/24 当天 → 纳入
+    const future = makeTask({
+      id: '1',
+      title: '下周一才开始的远期任务',
+      category: '其他',
+      status: 'todo',
+      startDate: '2026-07-27',
+      subtasks: [{ id: 's1', title: '步骤a', status: 'todo' }],
+    });
+    expect(getWeeklyOngoingTasks([future], '2026-07-24')).toEqual([]);
+
+    const startsThisWeek = {
+      ...future,
+      id: '2',
+      title: '本周内开始的任务',
+      startDate: '2026-07-24',
+    };
+    const result = getWeeklyOngoingTasks([startsThisWeek], '2026-07-24');
+    expect(result).toHaveLength(1);
+    expect(result[0].title).toBe('本周内开始的任务');
   });
 });

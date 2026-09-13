@@ -14,10 +14,13 @@
   2. 项目推进段（周 Section 2 / 月 Section 2 项目部分）仍按 `completedDate` 按期归因算 `% → %` 进度（`%` 语义必须有周期边界；无项目子任务旧数据场景，Phase B 再评估快照式）。
   3. 月报量化尾行"本月完成子任务 n 项"仍按真实日期统计——"本月完成"是日期语义，无日期子任务不冒充本月（其完成情况已由 Section 2 父行 x/y 承载）。
   4. 年报 progressRows 按"任务在目标年份存续"过滤（`createdDate` ≤ 年末），子任务不做年份归因。
+- **呈现句式 v3（2026-09-07 用户定稿，取代 v1/v2 的分类分组 + 列表/父行子行排版）**：总结正文**去分类、按任务逐句成行**——每个任务一行「任务名：进度情况，子任务完成情况。」，句末句号。分句式：整单完成句内联量化与子步骤（部分完成 `完成子步骤 x/y 项（「a」「b」）`、全部完成 `子步骤「a」「b」均已完成`）；推进父任务句 `进行中，x/y 子步骤已完成（标题、…）`；项目推进句 `进度 x% → y%，周期内完成 n 项子任务（标题）`。正文不再输出【分类】标题或「**分类**：」前缀；分类信息仅保留在月量化表列头与年报维度块等结构性位置。改动范围：周/月/年三页生成器（`WeeklySummary.tsx`/`MonthlySummary.tsx`/`YearlyReport.tsx` + 新建 `summarySentences.ts`）、AI 润色提示词（`scripts/polish.py`）；导出 Word（`launcher/summary.py`）自 2026-09-07 起改为**所见即所得排版**——不再调用 AI 改写全文（AI 改写曾两度走样：句式被自由发挥、子步骤被丢弃、已完成任务被写入"计划"节），docx 与页面小结逐节逐行一致，量化汇总表 `|…|` 行还原为 Word 表格；页面逐节「请求润色」仍作为导出前可选前置步骤。模板引擎阶段（E1–E4）配方直接产出句子行，无需再按本稿「呈现规则」表的父行/子行渲染。
 - 与冻结设计的**已知差异**（Phase B/C 落地时再评估）：
   1. `entry.tasks` 仍只收整单完成的任务 id，未按配方规则并入推进中父任务 id —— 保持"已完成任务"列表语义与数据安全；配方 taskIds 并集规则留给 v2 归档按 templateId 桶化时再定。
   2. 年量化行未追加"全年完成子任务 n 项"计数（该段没有任务级量化行可挂）；计数口径由周/月统计行与年度维度展开承担。
-  3. 原「呈现规则」表中"周/月子行仅列周期内完成标题、旧数据无日期不强行归因"等句已被 v2 取代（见上）。
+  3. 原「呈现规则」表中"周/月子行仅列周期内完成标题、旧数据无日期不强行归因"等句已被 v2 取代（见上）；父行/子行排版整体已被 v3 句式取代（见上）。
+  4. 分类标签自 v3 起不再写入小结正文；历史归档（v1/v2 时代生成的条目）在历史页仍按原样展示分类行，属历史内容不回写。
+  5. 导出 Word 不再调用 AI（2026-09-07 起 `launcher/summary.py` 所见即所得排版）；AI 仅保留页面逐节「请求润色」。未来若需"AI 文风"，应作为模板级 `aiStyle` 能力（本稿 Non-Goals）另立阶段，不回退全文改写。
 
 ## Problem Statement
 
@@ -172,15 +175,15 @@ export type AutoFillRecipe = (ctx: AutoFillContext) => AutoFillResult;
 
 **year-default「年度总结」**（`default`；= 现状 6 维度 + 一句话总结。字段名沿用 v1 的 camelCase）
 
-| key                 | title                | kind   | fill             | placeholder            |
-| ------------------- | -------------------- | ------ | ---------------- | ---------------------- |
-| personnelAllocation | 日常工作             | auto   | year.byDimension | （该维度暂无任务记录） |
-| internalRecruitment | 项目推进 | auto   | year.byDimension | 同上                   |
-| rewardDiscipline    | 奖惩管理             | auto   | year.byDimension | 同上                   |
-| performance         | 绩效管理             | auto   | year.byDimension | 同上                   |
-| laborRelations      | 劳动关系             | auto   | year.byDimension | 同上                   |
-| leaderAssigned      | 交办事项             | auto   | year.byDimension | 同上                   |
-| other               | 一句话总结           | manual | —                | 一句话概括全年工作…    |
+| key                 | title      | kind   | fill             | placeholder            |
+| ------------------- | ---------- | ------ | ---------------- | ---------------------- |
+| personnelAllocation | 日常工作   | auto   | year.byDimension | （该维度暂无任务记录） |
+| internalRecruitment | 项目推进   | auto   | year.byDimension | 同上                   |
+| rewardDiscipline    | 协作沟通   | auto   | year.byDimension | 同上                   |
+| performance         | 会议培训   | auto   | year.byDimension | 同上                   |
+| laborRelations      | 临时交办   | auto   | year.byDimension | 同上                   |
+| leaderAssigned      | 其他事务   | auto   | year.byDimension | 同上                   |
+| other               | 一句话总结 | manual | —                | 一句话概括全年工作…    |
 
 注：`other` 语义从 v1 即"一句话总结"（见 `YearlyReport.tsx` 的 `saveOneLiner` / `autoOneLiner` 逻辑），本期不改语义。
 
@@ -193,7 +196,7 @@ export type AutoFillRecipe = (ctx: AutoFillContext) => AutoFillResult;
 | problems     | 不足与改进   | manual | —                | 记录不足与改进计划…  |
 | nextYearPlan | 明年计划     | manual | —                | 记录明年重点计划…    |
 
-> 参考 guaguaguaxia 的 `hr_weekly`（招聘进展/培训发展/行政事务/员工关怀/下周重点）可作为后续 week 的第三套 preset 候选，本期不引入，避免预设泛滥。
+> 参考 guaguaguaxia 的 `hr_weekly` 模板可作为后续 week 的第三套 preset 候选，本期不引入，避免预设泛滥。
 
 ### AutoFill 配方注册表
 

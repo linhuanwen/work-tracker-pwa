@@ -16,7 +16,7 @@ const STORAGE_KEY = 'wjl-ai-config';
 export const DEFAULT_AI_CONFIG: AiConfig = {
   apiKey: '',
   endpoint: 'https://api.deepseek.com',
-  model: 'deepseek-chat',
+  model: 'deepseek-v4-flash',
 };
 
 export function loadAiConfig(): AiConfig {

@@ -347,7 +347,7 @@ describe('createTask', () => {
     expect(newTask.title).toBe('新任务');
     expect(newTask.category).toBe('绩效管理');
     expect(newTask.priority).toBe('important');
-    expect(newTask.status).toBe('todo');
+    expect(newTask.status).toBe('in-progress');
     expect(newTask.createdDate).toBeTruthy();
     expect(newTask.projectId).toBeNull();
     expect(newTask.deadline).toBeNull();
@@ -385,6 +385,30 @@ describe('createTask', () => {
       priority: 'normal',
     });
     expect(task.createdDate).toBe(today);
+  });
+
+  it('远期任务（起始日期晚于今天）默认状态为 todo，普通新任务为 in-progress', () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const future = new Date();
+    future.setDate(future.getDate() + 7);
+    const futureISO = future.toISOString().slice(0, 10);
+
+    const futureTask = createTask({
+      title: '远期任务',
+      category: '其他',
+      priority: 'normal',
+      startDate: futureISO,
+    });
+    expect(futureTask.startDate).toBe(futureISO);
+    expect(futureTask.status).toBe('todo');
+
+    const todayTask = createTask({
+      title: '今日任务',
+      category: '其他',
+      priority: 'normal',
+      startDate: today,
+    });
+    expect(todayTask.status).toBe('in-progress');
   });
 });
 

@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useData } from './DataContext';
 import { useToast } from './Toast';
 import { Icon } from './Icon';
-import type { DataJson, MonthEntry } from './types';
+import type { DataJson, MonthEntry, Task } from './types';
 import { createTask } from './taskUtils';
 import { useHashRoute } from './useHashRoute';
 import { aiConfigPayload } from './aiConfig';
@@ -16,6 +16,11 @@ import {
   getMonthlySubtaskStats,
   getNextMonthFocusCandidates,
 } from './monthlyUtils';
+import {
+  formatDoneTaskSentence,
+  formatOngoingTaskSentence,
+  formatProjectProgressSentence,
+} from './summarySentences';
 import styles from './MonthlySummary.module.css';
 
 export function MonthlySummary() {
@@ -69,19 +74,22 @@ function MonthlySummaryInner({ data }: { data: DataJson }) {
       );
     }
 
-    // Section 1 追加：重点任务内容（标题 + 具体内容；整单完成任务括注完成子任务计数）
+    // Section 1 追加：重点任务内容（句式 v3：整单完成任务逐句，内容并入句中）
     const notedTasks = monthDoneTasks.filter((t) => t.notes.trim());
     if (notedTasks.length > 0) {
-      const notedLines = ['重点任务内容：'];
-      for (const t of notedTasks) {
-        const doneSubCount = t.subtasks.filter(
-          (s) => s.status === 'done',
-        ).length;
-        const annotation =
-          doneSubCount > 0 ? `（完成子任务 ${doneSubCount} 项）` : '';
-        notedLines.push(`- ${t.title}${annotation}`);
-        notedLines.push(`  具体内容：${t.notes.trim()}`);
-      }
+      const doneSubtaskTitles = (t: Task) =>
+        t.subtasks.filter((s) => s.status === 'done').map((s) => s.title);
+      const notedLines = [
+        '重点任务内容：',
+        ...notedTasks.map((t) =>
+          formatDoneTaskSentence({
+            title: t.title,
+            notes: t.notes,
+            doneSubtaskTitles: doneSubtaskTitles(t),
+            subtaskTotal: t.subtasks.length,
+          }),
+        ),
+      ];
       quantPieces.push(notedLines.join('\n'));
     }
 
@@ -109,26 +117,27 @@ function MonthlySummaryInner({ data }: { data: DataJson }) {
     if (projectChanges.length === 0 && nonProjectRows.length === 0) {
       projectText = '（本月无任务或项目子任务推进）';
     } else {
-      const lines: string[] = [];
-      for (const p of projectChanges) {
-        lines.push(
-          `${p.projectTitle}  ${p.beforePercent}% → ${p.afterPercent}%，本月完成 ${p.completedThisWeek.length} 项子任务`,
-        );
-        for (const sub of p.completedThisWeek) {
-          lines.push(`  - ${sub}`);
-        }
-        lines.push('');
-      }
-      for (const row of nonProjectRows) {
-        lines.push(
-          `- 【推进中】${row.title}（${row.done}/${row.total} 已完成）`,
-        );
-        for (const sub of row.doneTitles) {
-          lines.push(`  - ${sub}`);
-        }
-        lines.push('');
-      }
-      projectText = lines.join('\n').trim();
+      // 句式 v3：项目推进（按期归因）+ 非项目已勾子任务快照，均逐句成行、去分类
+      const lines = [
+        ...projectChanges.map((p) =>
+          formatProjectProgressSentence({
+            projectTitle: p.projectTitle,
+            beforePercent: p.beforePercent,
+            afterPercent: p.afterPercent,
+            periodLabel: '本月',
+            completedTitles: p.completedThisWeek,
+          }),
+        ),
+        ...nonProjectRows.map((row) =>
+          formatOngoingTaskSentence({
+            title: row.title,
+            done: row.done,
+            total: row.total,
+            doneTitles: row.doneTitles,
+          }),
+        ),
+      ];
+      projectText = lines.join('\n');
     }
 
     // Section 3: Monthly reflection (always empty for manual input)
@@ -144,10 +153,7 @@ function MonthlySummaryInner({ data }: { data: DataJson }) {
     if (focusCandidates.length === 0) {
       focusText = '（暂无下月到期任务）';
     } else {
-      for (const f of focusCandidates) {
-        focusText += `☐ [${f.category}] ${f.title}\n`;
-      }
-      focusText = focusText.trim();
+      focusText = focusCandidates.map((f) => `☐ ${f.title}`).join('\n');
     }
 
     // Collect task IDs for completed tasks this month

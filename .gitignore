@@ -21,6 +21,7 @@ build/
 
 # Local runtime state
 .wjl-state.json
+wjl-config.txt
 data.json
 backups/
 .claude/
@@ -29,3 +30,6 @@ backups/
 release/
 工作清单.exe
 共享/
+
+# 示例数据需要入库（否则被上面的 data.json 规则误伤）
+!demo/data.json

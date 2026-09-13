@@ -17,38 +17,57 @@ export function isDateInYear(dateStr: string | null, year: number): boolean {
 // S4: 分类→维度映射 (mapCategoryToDimension)
 // ============================================================
 
-/** The six canonical dimensions for yearly reports */
+/**
+ * 年报表的六个维度（通用职场口径，与默认分类一一对应）。
+ *
+ * 维度名只影响界面标题与导出文档的标题；归档存储仍沿用历史字段名
+ * （见 `YearlyReport.dimToField`），因此**重命名维度不会影响既有 data.json**。
+ */
 export const YEARLY_DIMENSIONS = [
   '日常工作',
   '项目推进',
-  '奖惩管理',
-  '绩效管理',
-  '劳动关系',
-  '交办事项',
+  '协作沟通',
+  '会议培训',
+  '临时交办',
+  '其他事务',
 ] as const;
 
 /**
  * Map a task category to one of the six yearly report dimensions.
- * Exact matches for standard categories; "其他" and unknown categories
- * fall back to 交办事项.
+ *
+ * - 默认分类为一一映射；
+ * - 同时兼容早期内置的人力资源类分类名，保证老数据仍能正确归档；
+ * - 「其他」与未知分类统一落入「其他事务」。
  */
 export function mapCategoryToDimension(category: string): string {
   switch (category) {
+    // 默认分类（一一对应）
+    case '日常工作':
+      return '日常工作';
+    case '项目推进':
+      return '项目推进';
+    case '协作沟通':
+      return '协作沟通';
+    case '会议培训':
+      return '会议培训';
+    case '临时交办':
+      return '临时交办';
+    // 早期内置分类（老数据兼容）
     case '人员调配':
       return '日常工作';
     case '内部招聘':
       return '项目推进';
     case '奖惩管理':
-      return '奖惩管理';
+      return '其他事务';
     case '绩效管理':
-      return '绩效管理';
+      return '其他事务';
     case '劳动关系':
-      return '劳动关系';
-    case '交办事项':
-      return '交办事项';
+      return '协作沟通';
+    case '领导交办':
+      return '临时交办';
     default:
-      // "其他" and unknown categories → 交办事项
-      return '交办事项';
+      // "其他" and unknown categories → 其他事务
+      return '其他事务';
   }
 }
 
@@ -75,6 +94,8 @@ export interface DimensionSummary {
   taskNotes: string[];
   /** 与 taskTitles 对齐：整单完成任务展开的全部完成子任务标题（无子任务为空数组） */
   taskSubtasks: string[][];
+  /** 与 taskTitles 对齐：各任务的子任务总数（句式 v3 输出「完成子步骤 x/y 项」用） */
+  taskSubtaskTotals: number[];
   /** 推进中父任务（有已勾子任务即单列，快照式） */
   progressRows: YearProgressRow[];
   quantities: Quantity[];
@@ -120,6 +141,7 @@ export function getYearlyTasksByDimension(
       taskTitles: [],
       taskNotes: [],
       taskSubtasks: [],
+      taskSubtaskTotals: [],
       progressRows: [],
       quantities: [],
     };
@@ -140,6 +162,7 @@ export function getYearlyTasksByDimension(
       entry.taskSubtasks.push(
         task.subtasks.filter((s) => s.status === 'done').map((s) => s.title),
       );
+      entry.taskSubtaskTotals.push(task.subtasks.length);
 
       // Aggregate quantities
       for (const q of task.quantities) {

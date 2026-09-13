@@ -97,7 +97,7 @@ export function TitleBar({
             className={styles.controlBtn}
             onClick={onMinimize}
             aria-label="最小化"
-            title="最小化"
+            title="最小化（隐藏到托盘）"
           >
             <Icon name="minus" size={14} />
           </button>

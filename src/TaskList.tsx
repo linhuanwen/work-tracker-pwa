@@ -87,11 +87,13 @@ export function TaskList({
       {/* ================================================ */}
       {/* 活跃任务（按优先级分组，紧急区已提走） */}
       {/* ================================================ */}
-      {current.length === 0 && future.length === 0 && cancelled.length === 0 && (
-        <div className={styles.empty}>
-          暂无任务。在上方输入框添加第一个任务吧。
-        </div>
-      )}
+      {current.length === 0 &&
+        future.length === 0 &&
+        cancelled.length === 0 && (
+          <div className={styles.empty}>
+            暂无任务。在上方输入框添加第一个任务吧。
+          </div>
+        )}
 
       {current.length === 0 && future.length === 0 && cancelled.length > 0 && (
         <div className={styles.empty}>

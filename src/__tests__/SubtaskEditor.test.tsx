@@ -34,16 +34,12 @@ vi.mock('../SubtaskEditor.module.css', () => ({
     detailsLabel: 'detailsLabel',
     detailsInput: 'detailsInput',
     detailsTextarea: 'detailsTextarea',
-    detailsRow: 'detailsRow',
     quantityList: 'quantityList',
     quantityRow: 'quantityRow',
     quantityInput: 'quantityInput',
     quantityNumber: 'quantityNumber',
     quantityUnit: 'quantityUnit',
     addQuantityBtn: 'addQuantityBtn',
-    subtaskDeadline: 'subtaskDeadline',
-    subtaskPriority: 'subtaskPriority',
-    subtaskPriorityUrgent: 'subtaskPriorityUrgent',
   },
 }));
 
@@ -60,7 +56,6 @@ function makeSubtasks(): SubTask[] {
 
 function renderEditor(overrides?: {
   subtasks?: SubTask[];
-  categories?: string[];
   onAdd?: (title: string) => void;
   onToggle?: (id: string) => void;
   onDelete?: (id: string) => void;
@@ -68,7 +63,6 @@ function renderEditor(overrides?: {
 }) {
   const props = {
     subtasks: overrides?.subtasks ?? makeSubtasks(),
-    categories: overrides?.categories,
     onAdd: overrides?.onAdd ?? vi.fn(),
     onToggle: overrides?.onToggle ?? vi.fn(),
     onDelete: overrides?.onDelete ?? vi.fn(),
@@ -152,13 +146,12 @@ describe('T1 — SubtaskEditor', () => {
   });
 });
 
-describe('T1 — 子任务详情编辑（与父任务字段对齐）', () => {
+describe('T1 — 子任务详情编辑', () => {
   it('点击子任务标题展开详情表单', () => {
     renderEditor();
     fireEvent.click(screen.getByText('准备材料'));
     expect(screen.getByLabelText('具体内容')).toBeDefined();
-    expect(screen.getByLabelText('截止日期')).toBeDefined();
-    expect(screen.getByLabelText('优先级')).toBeDefined();
+    expect(screen.getByText('量化产出')).toBeDefined();
   });
 
   it('修改具体内容时调用 onUpdate', () => {
@@ -173,26 +166,6 @@ describe('T1 — 子任务详情编辑（与父任务字段对齐）', () => {
     });
   });
 
-  it('修改截止日期时调用 onUpdate', () => {
-    const onUpdate = vi.fn();
-    renderEditor({ onUpdate });
-    fireEvent.click(screen.getByText('准备材料'));
-    fireEvent.change(screen.getByLabelText('截止日期'), {
-      target: { value: '2026-09-01' },
-    });
-    expect(onUpdate).toHaveBeenCalledWith('s1', { deadline: '2026-09-01' });
-  });
-
-  it('修改优先级时调用 onUpdate', () => {
-    const onUpdate = vi.fn();
-    renderEditor({ onUpdate });
-    fireEvent.click(screen.getByText('准备材料'));
-    fireEvent.change(screen.getByLabelText('优先级'), {
-      target: { value: 'urgent' },
-    });
-    expect(onUpdate).toHaveBeenCalledWith('s1', { priority: 'urgent' });
-  });
-
   it('点击添加产出时调用 onUpdate 追加一条产出', () => {
     const onUpdate = vi.fn();
     renderEditor({ onUpdate });
@@ -201,48 +174,5 @@ describe('T1 — 子任务详情编辑（与父任务字段对齐）', () => {
     expect(onUpdate).toHaveBeenCalledWith('s1', {
       quantities: [expect.objectContaining({ label: '', value: 0, unit: '' })],
     });
-  });
-
-  it('有 categories 时显示分类下拉', () => {
-    renderEditor({
-      categories: ['人员调配', '其他'],
-      subtasks: [{ id: 's1', title: '分类子任务', status: 'todo' }],
-    });
-    fireEvent.click(screen.getByText('分类子任务'));
-    expect(screen.getByLabelText('分类')).toBeDefined();
-  });
-});
-
-describe('T1 — 子任务行内元信息（C4）', () => {
-  it('有截止日期时显示日期标签', () => {
-    renderEditor({
-      subtasks: [
-        { id: 's1', title: '带截止', status: 'todo', deadline: '2026-09-30' },
-      ],
-    });
-    expect(screen.getByText('9月30日')).toBeDefined();
-  });
-
-  it('优先级为紧急时显示紧急标签', () => {
-    renderEditor({
-      subtasks: [
-        { id: 's1', title: '紧急子任务', status: 'todo', priority: 'urgent' },
-      ],
-    });
-    expect(screen.getByText('紧急')).toBeDefined();
-  });
-
-  it('普通优先级且无截止时不额外显示标签', () => {
-    const { container } = render(
-      <SubtaskEditor
-        subtasks={[{ id: 's1', title: '普通', status: 'todo' }]}
-        onAdd={vi.fn()}
-        onToggle={vi.fn()}
-        onDelete={vi.fn()}
-        onUpdate={vi.fn()}
-      />,
-    );
-    expect(container.querySelector('.subtaskDeadline')).toBeNull();
-    expect(container.querySelector('.subtaskPriority')).toBeNull();
   });
 });

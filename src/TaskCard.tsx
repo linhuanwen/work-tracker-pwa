@@ -543,7 +543,6 @@ export function TaskCard({
           {/* 子任务 */}
           <SubtaskEditor
             subtasks={task.subtasks}
-            categories={categories}
             onAdd={(title) =>
               handleFieldChange({
                 subtasks: addSubtask(task.subtasks, title),

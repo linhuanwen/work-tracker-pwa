@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Task } from '../types';
+import { DEFAULT_CATEGORIES } from '../types';
 import {
   isDateInYear,
   mapCategoryToDimension,
@@ -73,40 +74,33 @@ describe('isDateInYear', () => {
 // ============================================================
 
 describe('mapCategoryToDimension', () => {
-  it('maps 人员调配 to 日常工作', () => {
+  it('默认分类一一映射到同名维度', () => {
+    for (const category of DEFAULT_CATEGORIES) {
+      if (category === '其他') continue;
+      expect(mapCategoryToDimension(category)).toBe(category);
+    }
+  });
+
+  it('maps 其他 to 其他事务 (fallback)', () => {
+    expect(mapCategoryToDimension('其他')).toBe('其他事务');
+  });
+
+  it('maps unknown category to 其他事务 (fallback)', () => {
+    expect(mapCategoryToDimension('未知分类')).toBe('其他事务');
+  });
+
+  it('maps empty string to 其他事务 (fallback)', () => {
+    expect(mapCategoryToDimension('')).toBe('其他事务');
+  });
+
+  // 老数据兼容：早期版本内置的人力资源类分类名，仍映射到最接近的通用维度
+  it('keeps legacy built-in categories mapping', () => {
     expect(mapCategoryToDimension('人员调配')).toBe('日常工作');
-  });
-
-  it('maps 内部招聘 to 项目推进', () => {
     expect(mapCategoryToDimension('内部招聘')).toBe('项目推进');
-  });
-
-  it('maps 奖惩管理 to 奖惩管理', () => {
-    expect(mapCategoryToDimension('奖惩管理')).toBe('奖惩管理');
-  });
-
-  it('maps 绩效管理 to 绩效管理', () => {
-    expect(mapCategoryToDimension('绩效管理')).toBe('绩效管理');
-  });
-
-  it('maps 劳动关系 to 劳动关系', () => {
-    expect(mapCategoryToDimension('劳动关系')).toBe('劳动关系');
-  });
-
-  it('maps 交办事项 to 交办事项', () => {
-    expect(mapCategoryToDimension('交办事项')).toBe('交办事项');
-  });
-
-  it('maps 其他 to 交办事项 (fallback)', () => {
-    expect(mapCategoryToDimension('其他')).toBe('交办事项');
-  });
-
-  it('maps unknown category to 交办事项 (fallback)', () => {
-    expect(mapCategoryToDimension('未知分类')).toBe('交办事项');
-  });
-
-  it('maps empty string to 交办事项 (fallback)', () => {
-    expect(mapCategoryToDimension('')).toBe('交办事项');
+    expect(mapCategoryToDimension('奖惩管理')).toBe('其他事务');
+    expect(mapCategoryToDimension('绩效管理')).toBe('其他事务');
+    expect(mapCategoryToDimension('劳动关系')).toBe('协作沟通');
+    expect(mapCategoryToDimension('领导交办')).toBe('临时交办');
   });
 });
 
@@ -115,22 +109,14 @@ describe('mapCategoryToDimension', () => {
 // ============================================================
 
 describe('getYearlyTasksByDimension', () => {
-  const defaultCategories = [
-    '人员调配',
-    '内部招聘',
-    '奖惩管理',
-    '绩效管理',
-    '劳动关系',
-    '交办事项',
-    '其他',
-  ];
+  const defaultCategories = DEFAULT_CATEGORIES;
 
   it('groups completed tasks by dimension within the target year', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
         title: '招聘任务',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
         quantities: [{ label: '资格审查', value: 30, unit: '人次' }],
@@ -138,17 +124,15 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '2',
         title: '绩效任务',
-        category: '绩效管理',
+        category: '会议培训',
         status: 'done',
         completedDate: '2026-06-20',
         quantities: [{ label: '考核', value: 120, unit: '人' }],
       }),
     ];
     const result = getYearlyTasksByDimension(tasks, 2026, defaultCategories);
-    const recruitment = result.find(
-      (d) => d.dimension === '项目推进',
-    );
-    const performance = result.find((d) => d.dimension === '绩效管理');
+    const recruitment = result.find((d) => d.dimension === '项目推进');
+    const performance = result.find((d) => d.dimension === '会议培训');
     expect(recruitment).toBeDefined();
     expect(performance).toBeDefined();
     expect(recruitment!.taskCount).toBe(1);
@@ -156,32 +140,32 @@ describe('getYearlyTasksByDimension', () => {
   });
 
   it('merges multiple categories into the same dimension', () => {
-    // 其他, 交办事项, and unknown categories all map to 交办事项
+    // 「其他」与未知分类都落入「其他事务」
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        title: '交办任务A',
-        category: '交办事项',
+        title: '遗留事项A',
+        category: '其他',
         status: 'done',
         completedDate: '2026-04-10',
         quantities: [{ label: '事项', value: 5, unit: '件' }],
       }),
       makeTask({
         id: '2',
-        title: '其它任务',
-        category: '其他',
+        title: '未分类事项B',
+        category: '未分类项',
         status: 'done',
         completedDate: '2026-04-15',
         quantities: [{ label: '事项', value: 3, unit: '件' }],
       }),
     ];
     const result = getYearlyTasksByDimension(tasks, 2026, defaultCategories);
-    const leader = result.find((d) => d.dimension === '交办事项');
-    expect(leader).toBeDefined();
-    expect(leader!.taskCount).toBe(2);
+    const other = result.find((d) => d.dimension === '其他事务');
+    expect(other).toBeDefined();
+    expect(other!.taskCount).toBe(2);
     // Quantities should be merged
-    expect(leader!.quantities).toHaveLength(1);
-    expect(leader!.quantities[0].value).toBe(8);
+    expect(other!.quantities).toHaveLength(1);
+    expect(other!.quantities[0].value).toBe(8);
   });
 
   it('aggregates quantities within each dimension', () => {
@@ -189,7 +173,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '1',
         title: '审查A',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-01',
         quantities: [{ label: '资格审查', value: 20, unit: '人次' }],
@@ -197,7 +181,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '2',
         title: '审查B',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-05-01',
         quantities: [
@@ -220,7 +204,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '1',
         title: '2026任务',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
         quantities: [{ label: '审查', value: 10, unit: '人次' }],
@@ -228,21 +212,19 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '2',
         title: '2025任务',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2025-03-15',
         quantities: [{ label: '审查', value: 10, unit: '人次' }],
       }),
     ];
     const result = getYearlyTasksByDimension(tasks, 2026, defaultCategories);
-    // All 6 dimensions returned, but only 内部招聘 has data
+    // All 6 dimensions returned, but only 项目推进 has data
     const dim = result.find((d) => d.dimension === '项目推进')!;
     expect(dim.taskCount).toBe(1);
     expect(dim.quantities[0].value).toBe(10);
     // Verify other dimensions are empty
-    const otherDims = result.filter(
-      (d) => d.dimension !== '项目推进',
-    );
+    const otherDims = result.filter((d) => d.dimension !== '项目推进');
     expect(otherDims.every((d) => d.taskCount === 0)).toBe(true);
   });
 
@@ -251,7 +233,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '1',
         title: '已完成',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
         quantities: [{ label: '审查', value: 5, unit: '人次' }],
@@ -259,21 +241,21 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '2',
         title: '待办',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'todo',
         quantities: [{ label: '审查', value: 5, unit: '人次' }],
       }),
       makeTask({
         id: '3',
         title: '进行中',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'in-progress',
         quantities: [{ label: '审查', value: 5, unit: '人次' }],
       }),
       makeTask({
         id: '4',
         title: '已取消',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'cancelled',
         completedDate: '2026-03-15',
         quantities: [{ label: '审查', value: 5, unit: '人次' }],
@@ -290,16 +272,16 @@ describe('getYearlyTasksByDimension', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        title: '劳动关系',
-        category: '劳动关系',
+        title: '临时交办',
+        category: '临时交办',
         status: 'done',
         completedDate: '2026-06-01',
         quantities: [{ label: '处理', value: 1, unit: '件' }],
       }),
       makeTask({
         id: '2',
-        title: '人员调配',
-        category: '人员调配',
+        title: '日常工作',
+        category: '日常工作',
         status: 'done',
         completedDate: '2026-01-01',
         quantities: [{ label: '调配', value: 1, unit: '人' }],
@@ -307,7 +289,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '3',
         title: '绩效',
-        category: '绩效管理',
+        category: '会议培训',
         status: 'done',
         completedDate: '2026-03-01',
         quantities: [{ label: '考核', value: 1, unit: '次' }],
@@ -318,7 +300,7 @@ describe('getYearlyTasksByDimension', () => {
     expect(result[1].dimension).toBe('项目推进');
     // 绩效 should appear after recruitment, labor relations after performance
     const dims = result.map((d) => d.dimension);
-    expect(dims.indexOf('绩效管理')).toBeLessThan(dims.indexOf('劳动关系'));
+    expect(dims.indexOf('会议培训')).toBeLessThan(dims.indexOf('临时交办'));
   });
 
   it('includes task titles in each dimension', () => {
@@ -326,20 +308,20 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '1',
         title: '招聘公告发布',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
       }),
       makeTask({
         id: '2',
         title: '面试组织',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-04-20',
       }),
     ];
     const result = getYearlyTasksByDimension(tasks, 2026, defaultCategories);
-    // 内部招聘 maps to dimension at index 1 (项目推进)
+    // 项目推进 maps to dimension at index 1 (项目推进)
     const dim = result.find((d) => d.dimension === '项目推进')!;
     expect(dim.taskTitles).toContain('招聘公告发布');
     expect(dim.taskTitles).toContain('面试组织');
@@ -350,7 +332,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '1',
         title: '招聘公告发布',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
         notes: '  发布 3 个岗位公告  ',
@@ -358,7 +340,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '2',
         title: '面试组织',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-04-20',
       }),
@@ -377,7 +359,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '1',
         title: '唯一任务',
-        category: '绩效管理',
+        category: '会议培训',
         status: 'done',
         completedDate: '2026-06-01',
       }),
@@ -389,10 +371,10 @@ describe('getYearlyTasksByDimension', () => {
     expect(dims).toEqual([
       '日常工作',
       '项目推进',
-      '奖惩管理',
-      '绩效管理',
-      '劳动关系',
-      '交办事项',
+      '协作沟通',
+      '会议培训',
+      '临时交办',
+      '其他事务',
     ]);
     // Empty dimensions have taskCount 0
     const personnel = result.find((d) => d.dimension === '日常工作');
@@ -411,7 +393,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '1',
         title: '招聘公告发布',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
         subtasks: [
@@ -433,7 +415,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '2',
         title: '面试组织',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-04-20',
       }),
@@ -453,7 +435,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '1',
         title: '跨年推进任务',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'in-progress',
         subtasks: [
           {
@@ -474,7 +456,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '2',
         title: '旧数据无日期步骤',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'todo', // 父任务停在待办也计入
         subtasks: [{ id: 's4', title: 'x', status: 'done' }],
       }),
@@ -496,7 +478,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '1',
         title: '无推进',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'in-progress',
         subtasks: [{ id: 's1', title: 'a', status: 'todo' }],
       }),
@@ -511,7 +493,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '1',
         title: '后年才建的任务',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'in-progress',
         createdDate: '2027-02-01',
         subtasks: [{ id: 's1', title: 'x', status: 'done' }],
@@ -527,7 +509,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '1',
         title: '完成',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
         quantities: [{ label: '审查', value: 10, unit: '人次' }],
@@ -535,7 +517,7 @@ describe('getYearlyTasksByDimension', () => {
       makeTask({
         id: '2',
         title: '推进中',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'in-progress',
         quantities: [{ label: '审查', value: 99, unit: '人次' }],
         subtasks: [
@@ -603,15 +585,7 @@ describe('isSubtaskDoneInYear', () => {
 // ============================================================
 
 describe('buildMonthlyTrendTable', () => {
-  const defaultCategories = [
-    '人员调配',
-    '内部招聘',
-    '奖惩管理',
-    '绩效管理',
-    '劳动关系',
-    '交办事项',
-    '其他',
-  ];
+  const defaultCategories = DEFAULT_CATEGORIES;
 
   it('returns 12 rows (one per month)', () => {
     const result = buildMonthlyTrendTable([], 2026, defaultCategories);
@@ -631,33 +605,33 @@ describe('buildMonthlyTrendTable', () => {
       makeTask({
         id: '1',
         title: '1月任务',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-01-15',
       }),
       makeTask({
         id: '2',
         title: '2月任务',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-02-10',
       }),
       makeTask({
         id: '3',
         title: '2月绩效',
-        category: '绩效管理',
+        category: '会议培训',
         status: 'done',
         completedDate: '2026-02-20',
       }),
     ];
     const result = buildMonthlyTrendTable(tasks, 2026, defaultCategories);
     // January
-    expect(result[0].categoryCounts['内部招聘']).toBe(1);
-    expect(result[0].categoryCounts['绩效管理']).toBe(0);
+    expect(result[0].categoryCounts['项目推进']).toBe(1);
+    expect(result[0].categoryCounts['会议培训']).toBe(0);
     expect(result[0].total).toBe(1);
     // February
-    expect(result[1].categoryCounts['内部招聘']).toBe(1);
-    expect(result[1].categoryCounts['绩效管理']).toBe(1);
+    expect(result[1].categoryCounts['项目推进']).toBe(1);
+    expect(result[1].categoryCounts['会议培训']).toBe(1);
     expect(result[1].total).toBe(2);
     // March
     expect(result[2].total).toBe(0);
@@ -667,64 +641,64 @@ describe('buildMonthlyTrendTable', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'todo',
         completedDate: '2026-01-15',
       }),
-      makeTask({ id: '2', category: '内部招聘', status: 'in-progress' }),
+      makeTask({ id: '2', category: '项目推进', status: 'in-progress' }),
       makeTask({
         id: '3',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'cancelled',
         completedDate: '2026-01-15',
       }),
       makeTask({
         id: '4',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-01-20',
       }),
     ];
     const result = buildMonthlyTrendTable(tasks, 2026, defaultCategories);
-    expect(result[0].categoryCounts['内部招聘']).toBe(1);
+    expect(result[0].categoryCounts['项目推进']).toBe(1);
   });
 
   it('filters by year only', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-01-15',
       }),
       makeTask({
         id: '2',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2025-01-15',
       }),
     ];
     const result = buildMonthlyTrendTable(tasks, 2026, defaultCategories);
-    expect(result[0].categoryCounts['内部招聘']).toBe(1);
+    expect(result[0].categoryCounts['项目推进']).toBe(1);
   });
 
   it('total column equals sum of all category counts', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-06-01',
       }),
       makeTask({
         id: '2',
-        category: '绩效管理',
+        category: '会议培训',
         status: 'done',
         completedDate: '2026-06-15',
       }),
       makeTask({
         id: '3',
-        category: '劳动关系',
+        category: '临时交办',
         status: 'done',
         completedDate: '2026-06-20',
       }),
@@ -776,14 +750,14 @@ describe('buildYearlyQuantityTable', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
         quantities: [{ label: '资格审查', value: 100, unit: '人次' }],
       }),
       makeTask({
         id: '2',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-06-15',
         quantities: [{ label: '资格审查', value: 38, unit: '人次' }],
@@ -798,7 +772,7 @@ describe('buildYearlyQuantityTable', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
         quantities: [
@@ -815,14 +789,14 @@ describe('buildYearlyQuantityTable', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-01-15',
         quantities: [{ label: '审查', value: 10, unit: '人次' }],
       }),
       makeTask({
         id: '2',
-        category: '绩效管理',
+        category: '会议培训',
         status: 'done',
         completedDate: '2026-03-15',
         quantities: [{ label: '审查', value: 5, unit: '人次' }],
@@ -837,13 +811,13 @@ describe('buildYearlyQuantityTable', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'todo',
         quantities: [{ label: '审查', value: 100, unit: '人次' }],
       }),
       makeTask({
         id: '2',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
         quantities: [{ label: '审查', value: 5, unit: '人次' }],
@@ -857,14 +831,14 @@ describe('buildYearlyQuantityTable', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
         quantities: [{ label: '审查', value: 10, unit: '人次' }],
       }),
       makeTask({
         id: '2',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2025-03-15',
         quantities: [{ label: '审查', value: 50, unit: '人次' }],
@@ -884,14 +858,14 @@ describe('buildYearlyQuantityTable', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
         quantities: [],
       }),
       makeTask({
         id: '2',
-        category: '绩效管理',
+        category: '会议培训',
         status: 'done',
         completedDate: '2026-06-15',
         quantities: [{ label: '考核', value: 5, unit: '次' }],
@@ -908,39 +882,31 @@ describe('buildYearlyQuantityTable', () => {
 // ============================================================
 
 describe('generateYearlyOneLiner', () => {
-  const defaultCategories = [
-    '人员调配',
-    '内部招聘',
-    '奖惩管理',
-    '绩效管理',
-    '劳动关系',
-    '交办事项',
-    '其他',
-  ];
+  const defaultCategories = DEFAULT_CATEGORIES;
 
   it('generates summary with category count and total task count', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
       }),
       makeTask({
         id: '2',
-        category: '绩效管理',
+        category: '会议培训',
         status: 'done',
         completedDate: '2026-06-20',
       }),
       makeTask({
         id: '3',
-        category: '劳动关系',
+        category: '临时交办',
         status: 'done',
         completedDate: '2026-09-10',
       }),
       makeTask({
         id: '4',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-11-15',
       }),
@@ -954,7 +920,7 @@ describe('generateYearlyOneLiner', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
         quantities: [
@@ -977,7 +943,7 @@ describe('generateYearlyOneLiner', () => {
     const tasks: Task[] = [
       makeTask({
         id: '1',
-        category: '内部招聘',
+        category: '项目推进',
         status: 'done',
         completedDate: '2026-03-15',
       }),

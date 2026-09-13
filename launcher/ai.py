@@ -89,7 +89,7 @@ def resolve_ai_config(request_config=None) -> dict:
                 or "https://api.deepseek.com"
             ),
             "model": (
-                str(request_config.get("model") or "").strip() or "deepseek-chat"
+                str(request_config.get("model") or "").strip() or "deepseek-v4-flash"
             ),
         }
     if isinstance(request_config, dict):

@@ -29,8 +29,8 @@
 
 - **首次启动会自动在桌面创建"工作清单"快捷方式**，之后可双击桌面快捷方式进入，exe 本体可以放在任意目录（保留整个文件夹即可）。
 - 桌面快捷方式如果已在，不会重复创建、也不会覆盖你自定义的图标或名称。
-- 关闭窗口（X）会最小化到系统托盘，不会退出程序
-- 在托盘图标上右键 → 退出，彻底关闭
+- 应用窗口**不出现在任务栏**：打开后任务栏保持干净，常驻入口在右下角系统托盘（左键单击显示主界面，右键菜单可退出）。
+- 最小化按钮、关闭窗口（X）都只是隐藏到托盘，不会退出程序；在托盘图标上右键 → 退出，彻底关闭
 
 ### 数据同步
 
@@ -103,7 +103,7 @@ AI 润色是可选功能，用于自动润色周/月/年小结的语言表达。
 # DeepSeek（推荐，便宜好用）
 AI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 AI_ENDPOINT=https://api.deepseek.com
-AI_MODEL=deepseek-chat
+AI_MODEL=deepseek-v4-flash
 
 # 或者通义千问（阿里云 DashScope）
 #AI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
